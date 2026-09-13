@@ -331,7 +331,7 @@ def user_batches(user_id):
     return [batch for batch in DATA_STORE if batch.get("farmer_id") == user_id]
 
 def default_profile(user):
-    return {"farmer_id": user["id"], "full_name": "", "latitude": None, "longitude": None, "location_name": "", "alert_phone": "", "phone_verified": False}
+    return {"farmer_id": user["id"], "full_name": "", "latitude": None, "longitude": None, "location_name": "", "alert_phone": "", "phone_verified": False, "email": ""}
 
 def load_profile(user):
     profile = default_profile(user)
@@ -420,7 +420,7 @@ def register_with_phone_email():
         user = getattr(result, "user", None)
         if not user:
             return jsonify({"error": "Registration could not be completed."}), 400
-        supabase.table("farmer_profiles").upsert({"farmer_id": user.id, "full_name": full_name, "latitude": latitude, "longitude": longitude, "alert_phone": phone, "phone_verified": True}).execute()
+        supabase.table("farmer_profiles").upsert({"farmer_id": user.id, "full_name": full_name, "latitude": latitude, "longitude": longitude, "alert_phone": phone, "phone_verified": True, "email": email}).execute()
         auth_session = getattr(result, "session", None)
         if not auth_session:
             return jsonify({"message": "Phone verified. Check your email to confirm your account, then log in."})
@@ -428,6 +428,44 @@ def register_with_phone_email():
     except Exception as error:
         return jsonify({"error": str(error)}), 400
     return jsonify({"success": True, "user": session["user"]})
+
+@app.route("/api/auth/phone-email/login", methods=["POST"])
+def phone_email_login():
+    data = request.json or {}
+    user_json_url = str(data.get("user_json_url", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
+    parsed_url = urlparse(user_json_url)
+    if parsed_url.scheme != "https" or parsed_url.hostname != "user.phone.email":
+        return jsonify({"error": "Invalid Phone.email verification response."}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Enter your password."}), 400
+    try:
+        response = requests.get(user_json_url, timeout=10, allow_redirects=False)
+        response.raise_for_status()
+        verified_data = response.json()
+        country_code = str(verified_data.get("user_country_code", "")).strip()
+        phone_number = str(verified_data.get("user_phone_number", "")).strip()
+        phone = f"+{country_code.lstrip('+')}{phone_number}"
+        profile_result = supabase.table("farmer_profiles").select("farmer_id,email,full_name").eq("alert_phone", phone).limit(1).execute()
+        profile = profile_result.data[0] if profile_result.data else None
+        if not profile:
+            return jsonify({"error": "No account is registered with this verified phone number."}), 401
+        account_email = profile.get("email") or email
+        if not account_email:
+            return jsonify({"error": "Enter the email used when you created this account."}), 400
+        result = supabase.auth.sign_in_with_password({"email": account_email, "password": password})
+        user = getattr(result, "user", None)
+        if not user:
+            return jsonify({"error": "Login failed. Check your password."}), 401
+        session["user"] = {"id": user.id, "email": user.email or account_email, "full_name": profile.get("full_name", "")}
+        return jsonify({"success": True, "user": session["user"]})
+    except Exception as error:
+        error_text = str(error).lower()
+        if "email not confirmed" in error_text or "not confirmed" in error_text:
+            return jsonify({"error": "Confirm your Supabase email before signing in, or disable Confirm email for testing."}), 401
+        app.logger.warning("Phone.email login failed: %s", error)
+        return jsonify({"error": "Phone login failed. Check your password and try again."}), 401
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
@@ -447,8 +485,14 @@ def login():
         if profile.get("full_name"):
             session["user"]["full_name"] = profile["full_name"]
         return jsonify({"success": True, "user": session["user"]})
-    except Exception:
-        return jsonify({"error": "Login failed. Check your email and password."}), 401
+    except Exception as error:
+        error_text = str(error).lower()
+        if "email not confirmed" in error_text or "not confirmed" in error_text:
+            return jsonify({"error": "Confirm your Supabase email before signing in. Check your inbox or disable Confirm email in Supabase for testing."}), 401
+        if "invalid login credentials" in error_text:
+            return jsonify({"error": "No account was found with that email and password. Register again after Phone.email verification."}), 401
+        app.logger.warning("Login failed: %s", error)
+        return jsonify({"error": "Login failed. Check the email and password, then try again."}), 401
 
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():

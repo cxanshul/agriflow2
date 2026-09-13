@@ -55,10 +55,12 @@ CREATE TABLE IF NOT EXISTS farmer_profiles (
     longitude NUMERIC,
     location_name TEXT DEFAULT '',
     alert_phone TEXT DEFAULT '',
+    email TEXT DEFAULT '',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS farmer_profiles_farmer_id_idx ON farmer_profiles (farmer_id);
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS alert_phone TEXT DEFAULT '';
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '';
 
