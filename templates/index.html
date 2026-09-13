@@ -34,6 +34,9 @@
             <button class="nav-item" onclick="switchTab('sell-decision')">
                 <span class="icon">⚖️</span> <span data-en="Sell Now or Wait?" data-hi="अभी बेचें या रुकें?">Sell Now or Wait?</span>
             </button>
+            <button class="nav-item" onclick="switchTab('storage-finder')">
+                <span class="icon">🏬</span> <span data-en="Nearest Storage Facility" data-hi="निकटतम भंडारण केंद्र">Nearest Storage Facility</span>
+            </button>
         </nav>
 
         <div class="nav-group-label">My Crops</div>
@@ -323,6 +326,127 @@
                 </div>
                 <button class="btn-primary-action" type="button" id="sell-decision-button" onclick="runSellDecision()" data-en="Analyze sell timing" data-hi="बिक्री का समय जांचें">Analyze sell timing</button>
                 <div id="sell-decision-result" class="sell-decision-result hidden"></div>
+            </div>
+        </div>
+
+        <!-- TAB: NEAREST STORAGE FINDER -->
+        <div id="tab-storage-finder" class="tab-panel">
+            <div class="form-container storage-finder-panel">
+                <div class="form-header">
+                    <div>
+                        <h3 data-en="Nearest Storage Facility Finder (Cold Storage &amp; Warehouses)" data-hi="निकटतम भंडारण केंद्र खोजें (कोल्ड स्टोरेज व वेयरहाउस)">Nearest Storage Facility Finder (Cold Storage &amp; Warehouses)</h3>
+                        <p class="subtitle" data-en="Locate verified Cold Storages, Central &amp; State Warehouses (CWC/SWC), and WDRA-accredited godowns across India to prevent crop spoilage and access e-NWR pledge loans." data-hi="सड़न रोकने और ई-एनडब्ल्यूआर बैंक ऋण लेने के लिए अपने निकटतम सत्यापित कोल्ड स्टोरेज, सरकारी वेयरहाउस (CWC/SWC) और साइलो खोजें।">Locate verified Cold Storages, Central &amp; State Warehouses (CWC/SWC), and WDRA-accredited godowns across India to prevent crop spoilage and access e-NWR pledge loans.</p>
+                    </div>
+                </div>
+
+                <!-- Live Storage Statistics Strip -->
+                <div class="storage-stat-strip">
+                    <div class="storage-stat-box">
+                        <span class="storage-stat-lbl" data-en="NEAREST FACILITY" data-hi="निकटतम केंद्र">NEAREST FACILITY</span>
+                        <strong class="storage-stat-val text-green" id="storage-stat-nearest">—</strong>
+                    </div>
+                    <div class="storage-stat-box">
+                        <span class="storage-stat-lbl" data-en="FACILITIES MATCHED" data-hi="कुल उपलब्ध केंद्र">FACILITIES MATCHED</span>
+                        <strong class="storage-stat-val text-turmeric" id="storage-stat-total">0</strong>
+                    </div>
+                    <div class="storage-stat-box">
+                        <span class="storage-stat-lbl" data-en="COLD STORAGES" data-hi="कोल्ड स्टोरेज">COLD STORAGES</span>
+                        <strong class="storage-stat-val" id="storage-stat-cold">0</strong>
+                    </div>
+                    <div class="storage-stat-box">
+                        <span class="storage-stat-lbl" data-en="WDRA PLEDGE LOAN READY" data-hi="ई-एनडब्ल्यूआर ऋण सुविधा">WDRA PLEDGE LOAN READY</span>
+                        <strong class="storage-stat-val text-green" id="storage-stat-wdra">0</strong>
+                    </div>
+                </div>
+
+                <!-- Filter and Search Bar -->
+                <div class="storage-filter-grid">
+                    <div class="form-group storage-search-box">
+                        <label data-en="Search District, State, PIN or Name" data-hi="जिला, राज्य, पिन कोड या नाम से खोजें">Search District, State, PIN or Name</label>
+                        <div class="storage-search-input-wrap">
+                            <input type="text" id="storage-query-input" placeholder="e.g. Agra, Nashik, Karnal, Deesa, 282001" oninput="debounceStorageSearch()">
+                            <button type="button" class="btn-search-icon" onclick="triggerStorageSearch()" title="Search">🔍</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-en="Storage Type" data-hi="भंडारण का प्रकार">Storage Type</label>
+                        <select id="storage-type-select" onchange="triggerStorageSearch()">
+                            <option value="all" data-en="All Facility Types (सभी प्रकार)" data-hi="सभी प्रकार (All Types)">All Facility Types (सभी प्रकार)</option>
+                            <option value="cold" data-en="❄️ Cold Storage / शीत गृह (Perishables)" data-hi="❄️ कोल्ड स्टोरेज (सब्जियां व फल)">❄️ Cold Storage / शीत गृह (Perishables)</option>
+                            <option value="warehouse" data-en="🌾 Dry Warehouse / सूखा गोदाम (Grains)" data-hi="🌾 सूखा गोदाम (अनाज व दालें)">🌾 Dry Warehouse / सूखा गोदाम (Grains)</option>
+                            <option value="cwc" data-en="🏛️ Government CWC &amp; SWC Warehouses" data-hi="🏛️ सरकारी CWC / SWC वेयरहाउस">🏛️ Government CWC &amp; SWC Warehouses</option>
+                            <option value="wdra" data-en="📜 WDRA Certified (Bank e-NWR Loan Eligible)" data-hi="📜 ई-एनडब्ल्यूआर ऋण अधिकृत (WDRA)">📜 WDRA Certified (Bank e-NWR Loan Eligible)</option>
+                            <option value="silo" data-en="🗼 Modern Grain Silos / अनाज साइलो" data-hi="🗼 अनाज साइलो (Modern Silo)">🗼 Modern Grain Silos / अनाज साइलो</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-en="Crop Suitability" data-hi="फसल के अनुसार">Crop Suitability</label>
+                        <select id="storage-crop-select" onchange="triggerStorageSearch()">
+                            <option value="" data-en="All Crops (सभी फसलें)" data-hi="सभी फसलें (All Crops)">All Crops (सभी फसलें)</option>
+                            <option value="potato" data-en="Potato (आलू)">Potato (आलू)</option>
+                            <option value="onion" data-en="Onion (प्याज)">Onion (प्याज)</option>
+                            <option value="tomato" data-en="Tomato (टमाटर)">Tomato (टमाटर)</option>
+                            <option value="wheat" data-en="Wheat (गेहूं)">Wheat (गेहूं)</option>
+                            <option value="paddy" data-en="Paddy / Basmati (धान)">Paddy / Basmati (धान)</option>
+                            <option value="mustard" data-en="Mustard / Sarson (सरसों)">Mustard / Sarson (सरसों)</option>
+                            <option value="soybean" data-en="Soybean (सोयाबीन)">Soybean (सोयाबीन)</option>
+                            <option value="maize" data-en="Maize (मक्का)">Maize (मक्का)</option>
+                            <option value="apple" data-en="Apple &amp; Fruits (सेब व फल)">Apple &amp; Fruits (सेब व फल)</option>
+                            <option value="chilli" data-en="Spices / Chilli / Cumin (मसाले / मिर्च)">Spices / Chilli / Cumin (मसाले / मिर्च)</option>
+                            <option value="pulses" data-en="Pulses / Gram (दालें / चना)">Pulses / Gram (दालें / चना)</option>
+                            <option value="garlic" data-en="Garlic (लहसुन)">Garlic (लहसुन)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-en="Distance Radius" data-hi="अधिकतम दूरी">Distance Radius</label>
+                        <select id="storage-radius-select" onchange="triggerStorageSearch()">
+                            <option value="25" data-en="Within 25 km (25 किमी के भीतर)" data-hi="25 किमी के भीतर">Within 25 km</option>
+                            <option value="50" selected data-en="Within 50 km (50 किमी के भीतर)" data-hi="50 किमी के भीतर">Within 50 km (Default)</option>
+                            <option value="100" data-en="Within 100 km (100 किमी के भीतर)" data-hi="100 किमी के भीतर">Within 100 km</option>
+                            <option value="200" data-en="Within 200 km (200 किमी के भीतर)" data-hi="200 किमी के भीतर">Within 200 km</option>
+                            <option value="0" data-en="All India (पूरे भारत में)" data-hi="पूरा भारत">All India (पूरे भारत में)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="storage-actions-bar">
+                    <button type="button" class="btn-secondary" onclick="useFarmLocationForStorage()">
+                        📍 <span data-en="Use My Farm Location" data-hi="मेरे खेत का स्थान उपयोग करें">Use My Farm Location</span>
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="resetStorageFilters()">
+                        ↺ <span data-en="Reset Filters" data-hi="फ़िल्टर रीसेट करें">Reset Filters</span>
+                    </button>
+                    <div id="storage-location-status" class="storage-location-status"></div>
+                </div>
+
+                <!-- Leaflet Interactive Map -->
+                <div class="storage-map-wrapper">
+                    <div class="storage-map-header">
+                        <span class="storage-map-title">🗺️ <span data-en="Interactive Storage Facilities Map" data-hi="इंटरैक्टिव भंडारण मानचित्र">Interactive Storage Facilities Map</span></span>
+                        <div class="storage-map-legend">
+                            <span class="legend-item"><i class="legend-dot cold"></i> <span data-en="Cold Storage" data-hi="कोल्ड स्टोरेज">Cold Storage</span></span>
+                            <span class="legend-item"><i class="legend-dot cwc"></i> <span data-en="CWC / SWC" data-hi="सरकारी">CWC / SWC</span></span>
+                            <span class="legend-item"><i class="legend-dot warehouse"></i> <span data-en="Warehouse" data-hi="गोदाम">Warehouse</span></span>
+                            <span class="legend-item"><i class="legend-dot silo"></i> <span data-en="Silo" data-hi="साइलो">Silo</span></span>
+                            <span class="legend-item"><i class="legend-dot farm"></i> <span data-en="Your Farm" data-hi="आपका खेत">Your Farm</span></span>
+                        </div>
+                    </div>
+                    <div id="storage-main-map" class="storage-main-map"></div>
+                </div>
+
+                <!-- Facilities Results Cards Header -->
+                <div class="section-bar" style="margin-top: 24px;">
+                    <h3 id="storage-results-heading" data-en="Nearby Storage Facilities" data-hi="निकटतम भंडारण केंद्र सूची">Nearby Storage Facilities</h3>
+                    <span class="badge-count" id="storage-results-count">0 Centers</span>
+                </div>
+
+                <!-- Facilities Grid -->
+                <div id="storage-cards-list" class="storage-cards-grid">
+                    <div class="storage-loading-state">⏳ <span data-en="Finding verified storage facilities near your location..." data-hi="निकटतम भंडारण केंद्र खोजे जा रहे हैं...">Finding verified storage facilities near your location...</span></div>
+                </div>
             </div>
         </div>
 

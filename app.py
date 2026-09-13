@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from google import genai
 from google.genai import types
+from storage_data import INDIAN_STORAGE_DATABASE, find_nearest_storage_facilities, get_all_districts_and_states
 
 # ============================================================
 # ENVIRONMENT & APP CONFIG
@@ -330,7 +331,7 @@ def user_batches(user_id):
     return [batch for batch in DATA_STORE if batch.get("farmer_id") == user_id]
 
 def default_profile(user):
-    return {"farmer_id": user["id"], "full_name": "", "latitude": None, "longitude": None, "location_name": "", "alert_phone": ""}
+    return {"farmer_id": user["id"], "full_name": "", "latitude": None, "longitude": None, "location_name": "", "alert_phone": "", "phone_verified": False}
 
 def load_profile(user):
     profile = default_profile(user)
@@ -357,28 +358,53 @@ def register():
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
     full_name = str(data.get("full_name", "")).strip()
+    phone = str(data.get("phone", "")).strip()
+    if phone and not phone.startswith("+"):
+        phone = f"+{phone}"
     latitude = safe_float(data.get("latitude"), None)
     longitude = safe_float(data.get("longitude"), None)
     if latitude is not None and longitude is not None and not (INDIA_BOUNDS["min_lat"] <= latitude <= INDIA_BOUNDS["max_lat"] and INDIA_BOUNDS["min_lon"] <= longitude <= INDIA_BOUNDS["max_lon"]):
         return jsonify({"error": "Farm coordinates must be within India."}), 400
     if not email or len(password) < 6:
         return jsonify({"error": "Enter a valid email and a password of at least 6 characters."}), 400
+    if not phone.startswith("+") or not phone[1:].isdigit() or not 10 <= len(phone[1:]) <= 15:
+        return jsonify({"error": "Enter a valid phone number with country code, for example +919876543210."}), 400
     try:
-        result = supabase.auth.sign_up({"email": email, "password": password})
+        result = supabase.auth.sign_up({
+            "phone": phone,
+            "password": password,
+            "options": {"data": {"email": email, "full_name": full_name}}
+        })
         user = getattr(result, "user", None)
-        auth_session = getattr(result, "session", None)
         if not user:
             return jsonify({"error": "Registration could not be completed."}), 400
         try:
-            supabase.table("farmer_profiles").upsert({"farmer_id": user.id, "full_name": full_name, "latitude": latitude, "longitude": longitude}).execute()
+            supabase.table("farmer_profiles").upsert({"farmer_id": user.id, "full_name": full_name, "latitude": latitude, "longitude": longitude, "alert_phone": phone, "phone_verified": False}).execute()
         except Exception as error:
             app.logger.warning("Could not create farmer profile: %s", error)
-        if not auth_session:
-            return jsonify({"message": "Account created. Check your email to confirm it, then log in."})
-        session["user"] = {"id": user.id, "email": user.email}
-        return jsonify({"success": True, "user": session["user"]})
+        session["signup_phone"] = phone
+        return jsonify({"success": False, "requires_otp": True, "message": "Verification code sent to your phone."})
     except Exception as error:
         return jsonify({"error": str(error)}), 400
+
+@app.route("/api/auth/verify-signup-otp", methods=["POST"])
+def verify_signup_otp():
+    data = request.json or {}
+    otp = str(data.get("otp", "")).strip()
+    phone = session.get("signup_phone")
+    if not phone:
+        return jsonify({"error": "No pending phone registration. Please register again."}), 400
+    try:
+        result = supabase.auth.verify_otp({"phone": phone, "token": otp, "type": "sms"})
+        user = getattr(result, "user", None)
+        if not user:
+            return jsonify({"error": "Phone verification failed."}), 400
+        session.pop("signup_phone", None)
+        session["user"] = {"id": user.id, "email": user.email or phone}
+        supabase.table("farmer_profiles").update({"phone_verified": True}).eq("farmer_id", user.id).execute()
+    except Exception as error:
+        return jsonify({"error": str(error)}), 400
+    return jsonify({"success": True, "user": session["user"]})
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
@@ -388,11 +414,12 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
     try:
-        result = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        credentials = {"phone": email, "password": password} if email.startswith("+") else {"email": email, "password": password}
+        result = supabase.auth.sign_in_with_password(credentials)
         user = getattr(result, "user", None)
         if not user:
             return jsonify({"error": "Login failed. Check your email and password."}), 401
-        session["user"] = {"id": user.id, "email": user.email}
+        session["user"] = {"id": user.id, "email": user.email or user.phone or email}
         profile = load_profile(session["user"])
         if profile.get("full_name"):
             session["user"]["full_name"] = profile["full_name"]
@@ -597,7 +624,15 @@ def send_twilio_message(phone, channel, message, content_sid=None, content_varia
         data=payload,
         timeout=12
     )
-    response.raise_for_status()
+    if not response.ok:
+        try:
+            details = response.json()
+            error_code = details.get("code", response.status_code)
+            error_message = details.get("message", "Twilio rejected the message.")
+        except ValueError:
+            error_code = response.status_code
+            error_message = "Twilio rejected the message."
+        raise RuntimeError(f"Twilio error {error_code}: {error_message}")
     return True, None
 
 @app.route("/api/alerts/request-otp", methods=["POST"])
@@ -624,9 +659,10 @@ def request_alert_otp():
             {"1": otp}
         )
         return jsonify({"success": True, "message": f"Verification code sent by {channel}."})
-    except requests.RequestException:
+    except (requests.RequestException, RuntimeError) as error:
         session.pop("alert_otp", None)
-        return jsonify({"success": False, "error": "The verification code could not be delivered."}), 502
+        app.logger.warning("OTP delivery failed: %s", error)
+        return jsonify({"success": False, "error": str(error)}), 502
 
 @app.route("/api/alerts/verify-otp", methods=["POST"])
 @require_auth
@@ -880,6 +916,104 @@ def search_tomtom_storage(latitude, longitude):
     return places
 
 
+# ============================================================
+# STORAGE FACILITIES API (NEAREST STORAGE FINDER)
+# ============================================================
+
+@app.route("/api/storage/nearest", methods=["GET"])
+def get_nearest_storage():
+    """
+    Find nearest verified storage facilities (Cold Storages, CWC/SWC Warehouses,
+    WDRA Accredited Godowns, Grain Silos) for Indian farmers with real-time distance
+    sorting, crop suitability matching, and district/PIN code search.
+    """
+    lat = safe_float(request.args.get("latitude"), None)
+    lon = safe_float(request.args.get("longitude"), None)
+
+    # If coordinates not provided in query, attempt to load from session user's profile
+    user = current_user()
+    if (lat is None or lon is None) and user:
+        profile = load_profile(user)
+        lat = safe_float(profile.get("latitude"), None)
+        lon = safe_float(profile.get("longitude"), None)
+
+    radius_km = safe_float(request.args.get("radius_km"), 50.0)
+    category = request.args.get("category", "all")
+    crop = request.args.get("crop", "")
+    query = request.args.get("query", "")
+    limit = max(1, min(int(safe_float(request.args.get("limit", 50), 50)), 100))
+
+    result = find_nearest_storage_facilities(
+        lat=lat,
+        lon=lon,
+        radius_km=radius_km,
+        category=category,
+        crop=crop,
+        query=query,
+        limit=limit
+    )
+
+    # If TomTom key is configured and coords given, optionally merge places
+    if TOMTOM_API_KEY and lat is not None and lon is not None and radius_km > 0:
+        try:
+            extra_places = search_tomtom_storage(lat, lon)
+            if extra_places:
+                existing_names = {f["name"].lower().strip() for f in result["facilities"]}
+                for p in extra_places:
+                    if p["name"].lower().strip() not in existing_names:
+                        result["facilities"].append({
+                            "id": f"tomtom-{p.get('place_id')}",
+                            "name": p["name"],
+                            "category": "Commercial Storage",
+                            "type": "warehouse",
+                            "state": "India",
+                            "district": "",
+                            "address": p["formatted_address"],
+                            "lat": p["lat"],
+                            "lng": p["lng"],
+                            "distance_km": round(p["distance_km"], 1),
+                            "capacity_mt": 5000,
+                            "cold_storage": "cold" in p["name"].lower(),
+                            "wdra_registered": False,
+                            "enwr_loan_eligible": False,
+                            "estimated_rate": "Contact facility for current rates",
+                            "phone": "Contact via local APMC",
+                            "suitable_crops": ["Wheat", "Potato", "Grains", "Vegetables"],
+                            "facilities": ["On-site Storage", "Loading/Unloading Support"]
+                        })
+                result["facilities"].sort(key=lambda x: (x.get("distance_km") if x.get("distance_km") is not None else 999999))
+                result["total_found"] = len(result["facilities"])
+        except Exception as err:
+            app.logger.warning("TomTom merge in nearest storage failed: %s", err)
+
+    result["places"] = result["facilities"]  # For backwards compatibility
+    return jsonify(result)
+
+
+@app.route("/api/storage/rpc-search", methods=["GET"])
+def storage_rpc_search():
+    """Backward compatibility alias for frontend storage searches."""
+    return get_nearest_storage()
+
+
+@app.route("/api/storage/districts", methods=["GET"])
+def storage_districts():
+    """Return all states and districts represented in the storage database."""
+    return jsonify({
+        "success": True,
+        "states": get_all_districts_and_states()
+    })
+
+
+@app.route("/api/storage/facility/<facility_id>", methods=["GET"])
+def get_storage_facility(facility_id):
+    """Return complete details for a single storage facility."""
+    facility = next((f for f in INDIAN_STORAGE_DATABASE if f["id"] == facility_id), None)
+    if not facility:
+        return jsonify({"success": False, "error": "Storage facility not found."}), 404
+    return jsonify({"success": True, "facility": facility})
+
+
 @app.route("/api/storage/search-tomtom", methods=["GET"])
 @require_auth
 def search_storage_tomtom():
@@ -900,11 +1034,17 @@ def search_storage_tomtom():
 
 
 @app.route("/api/storage/search", methods=["GET"])
-@require_auth
 def search_storage_facilities():
-    """Search nearby storage facilities through OpenStreetMap and Overpass."""
+    """Search nearby storage facilities with verified database first, falling back to OpenStreetMap."""
     latitude = safe_float(request.args.get("latitude"), None)
     longitude = safe_float(request.args.get("longitude"), None)
+    if latitude is None or longitude is None:
+        user = current_user()
+        if user:
+            profile = load_profile(user)
+            latitude = safe_float(profile.get("latitude"), None)
+            longitude = safe_float(profile.get("longitude"), None)
+
     if latitude is None or longitude is None:
         return jsonify({"success": False, "error": "latitude and longitude are required."}), 400
     if not (
@@ -913,116 +1053,99 @@ def search_storage_facilities():
     ):
         return jsonify({"success": False, "error": "Coordinates must be within India."}), 400
 
+    radius_km = safe_float(request.args.get("radius_km"), 50.0)
+    verified = find_nearest_storage_facilities(lat=latitude, lon=longitude, radius_km=radius_km)
     places = []
     seen = set()
-    radius_km = 50
-    radius_degrees = radius_km / 111.0
-    viewbox = ",".join([
-        str(longitude - radius_degrees),
-        str(latitude + radius_degrees),
-        str(longitude + radius_degrees),
-        str(latitude - radius_degrees),
-    ])
 
-    # Nominatim is lighter than Overpass and works better for village/city named facilities.
-    for search_term in ("cold storage", "warehouse", "godown"):
-        try:
-            response = requests.get(
-                "https://nominatim.openstreetmap.org/search",
-                params={
-                    "q": search_term,
-                    "format": "jsonv2",
-                    "addressdetails": 1,
-                    "limit": 20,
-                    "countrycodes": "in",
-                    "viewbox": viewbox,
-                    "bounded": 1,
-                },
-                headers={"User-Agent": "HackBhoomi/1.0 (agriculture storage finder)"},
-                timeout=3.0,
-            )
-            response.raise_for_status()
-            for item in response.json():
-                place_id = f"nominatim-{item.get('osm_type')}-{item.get('osm_id')}"
-                place_lat = safe_float(item.get("lat"), None)
-                place_lon = safe_float(item.get("lon"), None)
-                if place_id in seen or place_lat is None or place_lon is None:
-                    continue
-                seen.add(place_id)
-                address = item.get("address", {})
-                address_text = ", ".join(
-                    value for value in [
-                        address.get("road"), address.get("village"), address.get("town"),
-                        address.get("city"), address.get("district"), address.get("state")
-                    ] if value
-                ) or item.get("display_name", "Location details not listed")
-                places.append({
-                    "place_id": place_id,
-                    "name": item.get("name") or item.get("display_name", "Storage facility").split(",")[0],
-                    "category": search_term.title(),
-                    "address": address_text,
-                    "latitude": place_lat,
-                    "longitude": place_lon,
-                    "distance_km": haversine_distance_km(latitude, longitude, place_lat, place_lon),
-                })
-        except (requests.RequestException, ValueError, TypeError) as error:
-            app.logger.warning("Nominatim storage search failed for %s: %s", search_term, error)
+    # Add verified facilities first
+    for f in verified.get("facilities", []):
+        place_id = f["id"]
+        seen.add(place_id)
+        places.append({
+            "place_id": place_id,
+            "name": f["name"],
+            "category": f["category"],
+            "address": f["address"],
+            "latitude": f["lat"],
+            "longitude": f["lng"],
+            "lat": f["lat"],
+            "lng": f["lng"],
+            "distance_km": f["distance_km"],
+            "capacity_mt": f.get("capacity_mt"),
+            "wdra_registered": f.get("wdra_registered", False),
+            "phone": f.get("phone", ""),
+            "estimated_rate": f.get("estimated_rate", ""),
+            "suitable_crops": f.get("suitable_crops", []),
+            "source": "Verified Database"
+        })
 
-    # Overpass finds unnamed warehouses and storage buildings that text search misses.
-    query = f"""
-[out:json][timeout:15];
-(
-  nwr["amenity"~"warehouse|storage|cold_storage",i](around:{radius_km * 1000},{latitude},{longitude});
-  nwr["building"~"warehouse|silo",i](around:{radius_km * 1000},{latitude},{longitude});
-  nwr["man_made"="silo"](around:{radius_km * 1000},{latitude},{longitude});
-);
-out center tags;
-"""
-    for overpass_url in OVERPASS_API_URLS[:2]:
-        try:
-            response = requests.post(
-                overpass_url,
-                data=query.encode("utf-8"),
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    "User-Agent": "HackBhoomi/1.0 (agriculture storage finder)",
-                },
-                timeout=8.0,
-            )
-            response.raise_for_status()
-            for element in response.json().get("elements", []):
-                tags = element.get("tags", {})
-                point = element.get("center", element)
-                place_lat = safe_float(point.get("lat"), None)
-                place_lon = safe_float(point.get("lon"), None)
-                distance_km = haversine_distance_km(latitude, longitude, place_lat, place_lon) if place_lat is not None and place_lon is not None else None
-                place_id = f"osm-{element.get('type')}-{element.get('id')}"
-                if place_id in seen or distance_km is None or distance_km > radius_km:
-                    continue
-                seen.add(place_id)
-                places.append({
-                    "place_id": place_id,
-                    "name": tags.get("name") or tags.get("official_name") or "Unnamed storage facility",
-                    "category": tags.get("amenity") or tags.get("building") or tags.get("man_made") or "Storage facility",
-                    "address": tags.get("addr:full") or tags.get("description") or "Location details not listed",
-                    "latitude": place_lat,
-                    "longitude": place_lon,
-                    "distance_km": distance_km,
-                })
-            if places:
-                break
-        except (requests.RequestException, ValueError, TypeError) as error:
-            app.logger.warning("Overpass storage search failed at %s: %s", overpass_url, error)
+    # If verified facilities are fewer than 5, supplement with Nominatim
+    if len(places) < 5:
+        radius_degrees = radius_km / 111.0
+        viewbox = ",".join([
+            str(longitude - radius_degrees),
+            str(latitude + radius_degrees),
+            str(longitude + radius_degrees),
+            str(latitude - radius_degrees),
+        ])
 
-    places.sort(key=lambda place: place["distance_km"])
+        for search_term in ("cold storage", "warehouse", "godown"):
+            try:
+                response = requests.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={
+                        "q": search_term,
+                        "format": "jsonv2",
+                        "addressdetails": 1,
+                        "limit": 10,
+                        "countrycodes": "in",
+                        "viewbox": viewbox,
+                        "bounded": 1,
+                    },
+                    headers={"User-Agent": "HackBhoomi/1.0 (agriculture storage finder)"},
+                    timeout=3.0,
+                )
+                if response.status_code == 200:
+                    for item in response.json():
+                        place_id = f"nominatim-{item.get('osm_type')}-{item.get('osm_id')}"
+                        place_lat = safe_float(item.get("lat"), None)
+                        place_lon = safe_float(item.get("lon"), None)
+                        if place_id in seen or place_lat is None or place_lon is None:
+                            continue
+                        seen.add(place_id)
+                        address = item.get("address", {})
+                        address_text = ", ".join(
+                            value for value in [
+                                address.get("road"), address.get("village"), address.get("town"),
+                                address.get("city"), address.get("district"), address.get("state")
+                            ] if value
+                        ) or item.get("display_name", "Location details not listed")
+                        places.append({
+                            "place_id": place_id,
+                            "name": item.get("name") or item.get("display_name", "Storage facility").split(",")[0],
+                            "category": search_term.title(),
+                            "address": address_text,
+                            "latitude": place_lat,
+                            "longitude": place_lon,
+                            "lat": place_lat,
+                            "lng": place_lon,
+                            "distance_km": round(haversine_distance_km(latitude, longitude, place_lat, place_lon), 1),
+                            "source": "OpenStreetMap"
+                        })
+            except Exception as error:
+                app.logger.warning("Nominatim storage supplement failed for %s: %s", search_term, error)
+
+    places.sort(key=lambda place: (place["distance_km"] if place["distance_km"] is not None else 999999))
     return jsonify({
         "success": True,
         "facilities": places[:50],
+        "places": places[:50],
         "radius_km": radius_km,
-        "source": "OpenStreetMap",
-        "message": None if places else "No mapped storage facilities were found within 50 km.",
+        "source": "Verified Database" if verified.get("facilities") else "OpenStreetMap",
+        "message": None if places else "No mapped storage facilities were found within the selected radius.",
     })
+
 
 @app.route("/api/produce/list", methods=["GET"])
 @require_auth
@@ -1675,9 +1798,10 @@ def assistant_chat():
         relevant_terms = (
             "farm", "farmer", "crop", "crops", "plant", "soil", "seed", "sowing", "harvest", "yield", "weather",
             "rain", "irrigation", "water", "fertilizer", "pesticide", "disease", "storage", "spoilage", "mandi",
-            "market price", "profit", "cost", "sale", "selling", "tomato", "wheat", "potato", "onion", "खेत",
-            "किसान", "फसल", "पौधा", "मिट्टी", "बीज", "बुवाई", "कटाई", "पैदावार", "मौसम", "बारिश", "सिंचाई",
-            "खाद", "कीटनाशक", "बीमारी", "भंडारण", "मंडी", "भाव", "मुनाफा", "लागत", "बिक्री"
+            "market price", "profit", "cost", "sale", "selling", "tomato", "wheat", "potato", "onion", "cold storage",
+            "warehouse", "godown", "silo", "wdra", "enwr", "खेत", "किसान", "फसल", "पौधा", "मिट्टी", "बीज",
+            "बुवाई", "कटाई", "पैदावार", "मौसम", "बारिश", "सिंचाई", "खाद", "कीटनाशक", "बीमारी", "भंडारण", "मंडी",
+            "भाव", "मुनाफा", "लागत", "बिक्री", "कोल्ड स्टोरेज", "वेयरहाउस", "गोदाम"
         )
         if not user_message and not image_base64:
             return jsonify({"reply": "Please ask a farming, crop, weather, mandi, or farm-finance question.", "updated_batches": user_batches(current_user()["id"])})
@@ -1705,9 +1829,10 @@ Farmer's Stored Batches Database:
 Capabilities:
 1. Explain pre-production costs, yield estimates, and break-even mandi prices.
 2. Multimodal: If an image is provided, identify crop defects, plant rot, or diseases.
-3. Give complete, clear answers that are easy for a farmer to understand. Prefer 2-5 short paragraphs or a short bullet list when useful.
-4. Never stop in the middle of a sentence. Finish the answer before reaching the response limit.
-5. If the user asks to modify a batch, add at the bottom:
+3. Guide farmers on nearest storage options, Cold Storages, CWC/SWC Government Warehouses, and WDRA e-NWR pledge loans (which allow farmers to get bank loans up to 75% without distress-selling). Mention they can use the 'Nearest Storage Facility' tab in this app to see map routes and contact details.
+4. Give complete, clear answers that are easy for a farmer to understand. Prefer 2-5 short paragraphs or a short bullet list when useful.
+5. Never stop in the middle of a sentence. Finish the answer before reaching the response limit.
+6. If the user asks to modify a batch, add at the bottom:
 ACTION_UPDATE: {{"batch_id": "<id>", "storage_type": "<val>", "recommendation": "<val>"}}
 """
         contents = [f"{system_instruction}\n\nUser Question: {user_message}"]

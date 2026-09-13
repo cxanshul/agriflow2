@@ -60,4 +60,5 @@ CREATE TABLE IF NOT EXISTS farmer_profiles (
 
 CREATE INDEX IF NOT EXISTS farmer_profiles_farmer_id_idx ON farmer_profiles (farmer_id);
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS alert_phone TEXT DEFAULT '';
+ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
 
