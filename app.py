@@ -67,6 +67,8 @@ TWILIO_SMS_FROM = env_value("TWILIO_SMS_FROM")
 TWILIO_WHATSAPP_FROM = env_value("TWILIO_WHATSAPP_FROM")
 TWILIO_WHATSAPP_OTP_CONTENT_SID = env_value("TWILIO_WHATSAPP_OTP_CONTENT_SID")
 TWILIO_WHATSAPP_ALERT_CONTENT_SID = env_value("TWILIO_WHATSAPP_ALERT_CONTENT_SID")
+WAPPFLY_API_TOKEN = env_value("WAPPFLY_API_TOKEN")
+WAPPFLY_SEND_URL = "https://wappfly.com/api/messages/send"
 OTP_TTL_SECONDS = 300
 ACCUWEATHER_BASE_URL = "https://dataservice.accuweather.com"
 NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
@@ -648,29 +650,20 @@ def send_spoilage_alert():
     verified_phone = session.get("verified_alert_phone")
     if verified_phone != phone:
         return jsonify({"success": False, "error": "Verify this phone number with OTP before sending an alert.", "requires_verification": True}), 403
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({"success": False, "configured": False, "error": "SMS/WhatsApp alerts are not configured on the server yet."}), 503
-    sender = TWILIO_WHATSAPP_FROM if channel == "whatsapp" else TWILIO_SMS_FROM
-    if not sender:
-        return jsonify({"success": False, "configured": False, "error": f"Twilio {channel} sender is not configured."}), 503
-    destination = f"whatsapp:{phone}" if channel == "whatsapp" else phone
-    sender_value = sender if channel != "whatsapp" or sender.startswith("whatsapp:") else f"whatsapp:{sender}"
+    if channel == "whatsapp" and not WAPPFLY_API_TOKEN:
+        return jsonify({"success": False, "configured": False, "error": "WhatsApp alerts are not configured. Add WAPPFLY_API_TOKEN to the server environment."}), 503
+    if channel == "sms" and (not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN):
+        return jsonify({"success": False, "configured": False, "error": "SMS alerts are not configured on the server yet."}), 503
+    if channel == "sms" and not TWILIO_SMS_FROM:
+        return jsonify({"success": False, "configured": False, "error": "Twilio SMS sender is not configured."}), 503
     message = f"HackBhoomi alert: {batch.get('crop_name', 'Your crop')} has {batch.get('spoilage_risk')} spoilage risk and about {batch.get('shelf_life_days', 'limited')} days of shelf life left. Check storage and selling options today."
     try:
-        payload = {"From": sender_value, "To": destination, "Body": message}
-        if channel == "whatsapp" and TWILIO_WHATSAPP_ALERT_CONTENT_SID:
-            payload["ContentSid"] = TWILIO_WHATSAPP_ALERT_CONTENT_SID
-            payload["ContentVariables"] = json.dumps({"1": batch.get("crop_name", "Your crop"), "2": str(batch.get("shelf_life_days", "limited"))})
-            payload.pop("Body", None)
-        response = requests.post(
-            f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json",
-            auth=(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
-            data=payload,
-            timeout=12
-        )
-        response.raise_for_status()
+        if channel == "whatsapp":
+            send_wappfly_message(phone, message)
+        else:
+            send_twilio_message(phone, channel, message)
         return jsonify({"success": True, "channel": channel, "message": f"{channel.title()} alert sent."})
-    except requests.RequestException as error:
+    except (requests.RequestException, RuntimeError) as error:
         app.logger.warning("Spoilage alert delivery failed: %s", error)
         return jsonify({"success": False, "error": "The alert provider could not deliver this message."}), 502
 
@@ -702,6 +695,20 @@ def send_twilio_message(phone, channel, message, content_sid=None, content_varia
         raise RuntimeError(f"Twilio error {error_code}: {error_message}")
     return True, None
 
+def send_wappfly_message(phone, message):
+    digits = "".join(character for character in str(phone) if character.isdigit())
+    if not digits:
+        raise RuntimeError("Wappfly recipient phone number is invalid.")
+    response = requests.post(
+        WAPPFLY_SEND_URL,
+        headers={"X-API-Token": WAPPFLY_API_TOKEN, "Content-Type": "application/json"},
+        json={"to": f"{digits}@s.whatsapp.net", "text": message},
+        timeout=12
+    )
+    if not response.ok:
+        raise RuntimeError(f"Wappfly rejected the message ({response.status_code}).")
+    return True, None
+
 @app.route("/api/alerts/request-otp", methods=["POST"])
 @require_auth
 def request_alert_otp():
@@ -709,8 +716,10 @@ def request_alert_otp():
     channel = str(data.get("channel", "sms")).lower()
     if channel not in {"sms", "whatsapp"}:
         return jsonify({"success": False, "error": "Choose SMS or WhatsApp."}), 400
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        return jsonify({"success": False, "error": "SMS/WhatsApp alerts are not configured on the server yet."}), 503
+    if channel == "whatsapp" and not WAPPFLY_API_TOKEN:
+        return jsonify({"success": False, "error": "WhatsApp verification is not configured. Add WAPPFLY_API_TOKEN to the server environment."}), 503
+    if channel == "sms" and (not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN or not TWILIO_SMS_FROM):
+        return jsonify({"success": False, "error": "SMS verification is not configured on the server yet."}), 503
     profile_data = load_profile(current_user())
     phone = str(profile_data.get("alert_phone") or "").strip()
     if not phone:
@@ -718,13 +727,11 @@ def request_alert_otp():
     otp = f"{secrets.randbelow(1000000):06d}"
     session["alert_otp"] = {"phone": phone, "hash": hashlib.sha256(otp.encode()).hexdigest(), "expires_at": time.time() + OTP_TTL_SECONDS, "attempts": 0}
     try:
-        send_twilio_message(
-            phone,
-            channel,
-            f"HackBhoomi verification code: {otp}. It expires in 5 minutes. Do not share this code.",
-            TWILIO_WHATSAPP_OTP_CONTENT_SID if channel == "whatsapp" else None,
-            {"1": otp}
-        )
+        otp_message = f"HackBhoomi verification code: {otp}. It expires in 5 minutes. Do not share this code."
+        if channel == "whatsapp":
+            send_wappfly_message(phone, otp_message)
+        else:
+            send_twilio_message(phone, channel, otp_message)
         return jsonify({"success": True, "message": f"Verification code sent by {channel}."})
     except (requests.RequestException, RuntimeError) as error:
         session.pop("alert_otp", None)
