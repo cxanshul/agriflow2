@@ -433,13 +433,9 @@ def register_with_phone_email():
 def phone_email_login():
     data = request.json or {}
     user_json_url = str(data.get("user_json_url", "")).strip()
-    email = str(data.get("email", "")).strip().lower()
-    password = str(data.get("password", ""))
     parsed_url = urlparse(user_json_url)
     if parsed_url.scheme != "https" or parsed_url.hostname != "user.phone.email":
         return jsonify({"error": "Invalid Phone.email verification response."}), 400
-    if len(password) < 6:
-        return jsonify({"error": "Enter your password."}), 400
     try:
         response = requests.get(user_json_url, timeout=10, allow_redirects=False)
         response.raise_for_status()
@@ -451,21 +447,11 @@ def phone_email_login():
         profile = profile_result.data[0] if profile_result.data else None
         if not profile:
             return jsonify({"error": "No account is registered with this verified phone number."}), 401
-        account_email = profile.get("email") or email
-        if not account_email:
-            return jsonify({"error": "Enter the email used when you created this account."}), 400
-        result = supabase.auth.sign_in_with_password({"email": account_email, "password": password})
-        user = getattr(result, "user", None)
-        if not user:
-            return jsonify({"error": "Login failed. Check your password."}), 401
-        session["user"] = {"id": user.id, "email": user.email or account_email, "full_name": profile.get("full_name", "")}
+        session["user"] = {"id": profile["farmer_id"], "email": profile.get("email") or phone, "full_name": profile.get("full_name", "")}
         return jsonify({"success": True, "user": session["user"]})
     except Exception as error:
-        error_text = str(error).lower()
-        if "email not confirmed" in error_text or "not confirmed" in error_text:
-            return jsonify({"error": "Confirm your Supabase email before signing in, or disable Confirm email for testing."}), 401
         app.logger.warning("Phone.email login failed: %s", error)
-        return jsonify({"error": "Phone login failed. Check your password and try again."}), 401
+        return jsonify({"error": "Phone login failed. Please verify your phone again."}), 401
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
