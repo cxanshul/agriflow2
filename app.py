@@ -9,7 +9,7 @@ from functools import wraps
 from io import BytesIO
 from datetime import datetime, date
 import time
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from PIL import Image
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for
@@ -387,21 +387,44 @@ def register():
     except Exception as error:
         return jsonify({"error": str(error)}), 400
 
-@app.route("/api/auth/verify-signup-otp", methods=["POST"])
-def verify_signup_otp():
+@app.route("/api/auth/phone-email/register", methods=["POST"])
+def register_with_phone_email():
     data = request.json or {}
-    otp = str(data.get("otp", "")).strip()
-    phone = session.get("signup_phone")
-    if not phone:
-        return jsonify({"error": "No pending phone registration. Please register again."}), 400
+    user_json_url = str(data.get("user_json_url", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
+    full_name = str(data.get("full_name", "")).strip()
+    latitude = safe_float(data.get("latitude"), None)
+    longitude = safe_float(data.get("longitude"), None)
+    parsed_url = urlparse(user_json_url)
+    if parsed_url.scheme != "https" or parsed_url.hostname != "user.phone.email":
+        return jsonify({"error": "Invalid Phone.email verification response."}), 400
+    if not email or len(password) < 6:
+        return jsonify({"error": "Enter an email and a password of at least 6 characters."}), 400
+    if latitude is not None and longitude is not None and not (INDIA_BOUNDS["min_lat"] <= latitude <= INDIA_BOUNDS["max_lat"] and INDIA_BOUNDS["min_lon"] <= longitude <= INDIA_BOUNDS["max_lon"]):
+        return jsonify({"error": "Farm coordinates must be within India."}), 400
     try:
-        result = supabase.auth.verify_otp({"phone": phone, "token": otp, "type": "sms"})
+        response = requests.get(user_json_url, timeout=10, allow_redirects=False)
+        response.raise_for_status()
+        verified_data = response.json()
+        country_code = str(verified_data.get("user_country_code", "")).strip()
+        phone_number = str(verified_data.get("user_phone_number", "")).strip()
+        phone = f"+{country_code.lstrip('+')}{phone_number}"
+        if not country_code or not phone_number or not phone[1:].isdigit() or not 10 <= len(phone[1:]) <= 15:
+            return jsonify({"error": "Phone.email returned an invalid phone number."}), 400
+        result = supabase.auth.sign_up({
+            "email": email,
+            "password": password,
+            "options": {"data": {"full_name": full_name, "phone": phone}}
+        })
         user = getattr(result, "user", None)
         if not user:
-            return jsonify({"error": "Phone verification failed."}), 400
-        session.pop("signup_phone", None)
-        session["user"] = {"id": user.id, "email": user.email or phone}
-        supabase.table("farmer_profiles").update({"phone_verified": True}).eq("farmer_id", user.id).execute()
+            return jsonify({"error": "Registration could not be completed."}), 400
+        supabase.table("farmer_profiles").upsert({"farmer_id": user.id, "full_name": full_name, "latitude": latitude, "longitude": longitude, "alert_phone": phone, "phone_verified": True}).execute()
+        auth_session = getattr(result, "session", None)
+        if not auth_session:
+            return jsonify({"message": "Phone verified. Check your email to confirm your account, then log in."})
+        session["user"] = {"id": user.id, "email": user.email or email}
     except Exception as error:
         return jsonify({"error": str(error)}), 400
     return jsonify({"success": True, "user": session["user"]})

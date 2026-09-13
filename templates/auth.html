@@ -49,9 +49,9 @@
                     <button class="btn-secondary" type="button" onclick="useSignupLocation()" data-en="Use my current location" data-hi="मेरा वर्तमान स्थान उपयोग करें">Use my current location</button>
                 </div>
                 <div id="register-phone-field" class="hidden">
-                    <label for="auth-phone" data-en="Phone number" data-hi="फोन नंबर">Phone number</label>
-                    <input id="auth-phone" type="tel" autocomplete="tel" data-placeholder-en="+919876543210" data-placeholder-hi="+919876543210" placeholder="+919876543210">
-                    <small data-en="Include your country code. We will send a verification code by SMS." data-hi="देश कोड सहित नंबर डालें। हम SMS से सत्यापन कोड भेजेंगे।">Include your country code. We will send a verification code by SMS.</small>
+                    <label data-en="Verify your phone number" data-hi="अपना फोन नंबर सत्यापित करें">Verify your phone number</label>
+                    <div class="pe_signin_button" data-client-id="18864760194641214174"><script src="https://www.phone.email/sign_in_button_v1.js" async></script></div>
+                    <small data-en="Phone.email will send and verify the OTP." data-hi="Phone.email OTP भेजकर आपका नंबर सत्यापित करेगा।">Phone.email will send and verify the OTP.</small>
                 </div>
                 <label for="auth-email" data-en="Email or phone number" data-hi="ईमेल या फोन नंबर">Email or phone number</label>
                 <input id="auth-email" type="text" autocomplete="username" data-placeholder-en="you@example.com or +919876543210" data-placeholder-hi="you@example.com या +919876543210" placeholder="you@example.com or +919876543210">
@@ -59,11 +59,6 @@
                 <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required data-placeholder-en="At least 6 characters" data-placeholder-hi="कम से कम 6 अक्षर" placeholder="At least 6 characters">
                 <button id="auth-submit" class="auth-submit" type="submit" data-en="Log in" data-hi="लॉग इन">Log in</button>
             </form>
-            <div id="signup-otp-fields" class="hidden">
-                <label for="signup-otp" data-en="Enter 6-digit verification code" data-hi="6 अंकों का सत्यापन कोड दर्ज करें">Enter 6-digit verification code</label>
-                <input id="signup-otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456">
-                <button class="auth-submit" type="button" onclick="verifySignupOtp()" data-en="Verify phone number" data-hi="फोन नंबर सत्यापित करें">Verify phone number</button>
-            </div>
             <p id="auth-message" class="auth-message" role="status"></p>
         </section>
     </main>
@@ -97,10 +92,17 @@
             document.getElementById('auth-name').required = mode === 'register';
             document.getElementById('auth-latitude').required = mode === 'register';
             document.getElementById('auth-longitude').required = mode === 'register';
+            document.getElementById('auth-email').required = mode === 'register';
             document.getElementById('auth-message').innerText = '';
         }
         async function submitAuth(event) {
             event.preventDefault();
+            if (authMode === 'register') {
+                const message = document.getElementById('auth-message');
+                message.className = 'auth-message';
+                message.innerText = 'Verify your phone with the Phone.email button above to create your account.';
+                return;
+            }
             const button = document.getElementById('auth-submit');
             const message = document.getElementById('auth-message');
             button.disabled = true;
@@ -114,7 +116,6 @@
                         email: document.getElementById('auth-email').value,
                         password: document.getElementById('auth-password').value,
                         full_name: document.getElementById('auth-name').value,
-                        phone: document.getElementById('auth-phone').value,
                         latitude: document.getElementById('auth-latitude').value,
                         longitude: document.getElementById('auth-longitude').value
                     })
@@ -125,10 +126,6 @@
                     window.location.href = '/';
                     return;
                 }
-                if (data.requires_otp) {
-                    document.getElementById('auth-form').classList.add('hidden');
-                    document.getElementById('signup-otp-fields').classList.remove('hidden');
-                }
                 message.className = 'auth-message success';
                 message.innerText = data.message || authCopy[authLang].checkEmail;
             } catch (error) {
@@ -138,22 +135,35 @@
                 button.disabled = false;
             }
         }
-        async function verifySignupOtp() {
+        async function completePhoneEmailRegistration(userJsonUrl) {
             const message = document.getElementById('auth-message');
-            const otp = document.getElementById('signup-otp').value.trim();
+            message.className = 'auth-message';
+            message.innerText = authCopy[authLang].wait;
             try {
-                const response = await fetch('/api/auth/verify-signup-otp', {
+                const response = await fetch('/api/auth/phone-email/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ otp })
+                    body: JSON.stringify({
+                        user_json_url: userJsonUrl,
+                        email: document.getElementById('auth-email').value,
+                        password: document.getElementById('auth-password').value,
+                        full_name: document.getElementById('auth-name').value,
+                        latitude: document.getElementById('auth-latitude').value,
+                        longitude: document.getElementById('auth-longitude').value
+                    })
                 });
                 const data = await response.json();
-                if (!response.ok || !data.success) throw new Error(data.error || 'Phone verification failed.');
-                window.location.href = '/';
+                if (!response.ok) throw new Error(data.error || 'Phone registration failed.');
+                if (data.success) window.location.href = '/';
+                else message.innerText = data.message || 'Phone verified. Check your email to continue.';
             } catch (error) {
                 message.className = 'auth-message error';
                 message.innerText = error.message;
             }
+        }
+        function phoneEmailListener(userObj) {
+            if (!userObj?.user_json_url) return;
+            completePhoneEmailRegistration(userObj.user_json_url);
         }
         setAuthLanguage(authLang);
         function useSignupLocation() {
