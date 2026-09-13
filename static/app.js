@@ -1056,7 +1056,7 @@ async function handleProduceSubmit(e) {
             removeImage();
             showToast(translations[currentLang].toastSaved, "success");
             if (result.batch.spoilage_risk === "High" || result.batch.spoilage_risk === "Medium") {
-                sendSpoilageAlert(result.batch.id, "sms", true);
+                sendSpoilageAlert(result.batch.id, "whatsapp", true);
             }
             switchTab('ledger-stored');
         } else {
