@@ -58,6 +58,7 @@
                 <label for="auth-password" data-en="Password" data-hi="पासवर्ड">Password</label>
                 <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required data-placeholder-en="At least 6 characters" data-placeholder-hi="कम से कम 6 अक्षर" placeholder="At least 6 characters">
                 <button id="auth-submit" class="auth-submit" type="submit" data-en="Log in" data-hi="लॉग इन">Log in</button>
+                <button id="forgot-password" class="btn-secondary hidden" type="button" onclick="requestPasswordReset()" data-en="Forgot password? Send reset email" data-hi="पासवर्ड भूल गए? रीसेट ईमेल भेजें">Forgot password? Send reset email</button>
             </form>
             <p id="auth-message" class="auth-message" role="status"></p>
         </section>
@@ -94,6 +95,7 @@
             document.getElementById('auth-latitude').required = mode === 'register';
             document.getElementById('auth-longitude').required = mode === 'register';
             document.getElementById('auth-email').required = mode === 'register';
+            document.getElementById('forgot-password').classList.toggle('hidden', mode !== 'login');
             document.getElementById('phone-verification-label').textContent = mode === 'register' ? 'Verify your phone number' : 'Log in with your phone';
             document.getElementById('phone-verification-status').textContent = mode === 'register' ? 'Phone.email will send and verify the OTP.' : 'Verify your phone, then enter your password below.';
             document.getElementById('auth-message').innerText = '';
@@ -140,6 +142,26 @@
                 message.innerText = error.message;
             } finally {
                 button.disabled = false;
+            }
+        }
+        async function requestPasswordReset() {
+            const message = document.getElementById('auth-message');
+            const email = document.getElementById('auth-email').value.trim();
+            message.className = 'auth-message';
+            message.innerText = 'Sending reset email...';
+            try {
+                const response = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || 'Password reset failed.');
+                message.className = 'auth-message success';
+                message.innerText = data.message;
+            } catch (error) {
+                message.className = 'auth-message error';
+                message.innerText = error.message;
             }
         }
         async function completePhoneEmailRegistration(userJsonUrl) {

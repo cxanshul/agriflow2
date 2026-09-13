@@ -447,7 +447,7 @@ def phone_email_login():
         country_code = str(verified_data.get("user_country_code", "")).strip()
         phone_number = str(verified_data.get("user_phone_number", "")).strip()
         phone = f"+{country_code.lstrip('+')}{phone_number}"
-        profile_result = supabase.table("farmer_profiles").select("farmer_id,email,full_name").eq("alert_phone", phone).limit(1).execute()
+        profile_result = supabase.table("farmer_profiles").select("*").eq("alert_phone", phone).limit(1).execute()
         profile = profile_result.data[0] if profile_result.data else None
         if not profile:
             return jsonify({"error": "No account is registered with this verified phone number."}), 401
@@ -493,6 +493,20 @@ def login():
             return jsonify({"error": "No account was found with that email and password. Register again after Phone.email verification."}), 401
         app.logger.warning("Login failed: %s", error)
         return jsonify({"error": "Login failed. Check the email and password, then try again."}), 401
+
+@app.route("/api/auth/reset-password", methods=["POST"])
+def reset_password():
+    if not supabase:
+        return jsonify({"error": "Supabase is not configured on the server."}), 503
+    email = str((request.json or {}).get("email", "")).strip().lower()
+    if not email or "@" not in email:
+        return jsonify({"error": "Enter a valid email address."}), 400
+    try:
+        supabase.auth.reset_password_for_email(email)
+        return jsonify({"success": True, "message": "If an account exists, a password reset email has been sent."})
+    except Exception as error:
+        app.logger.warning("Password reset request failed: %s", error)
+        return jsonify({"error": "Password reset is temporarily unavailable. Try again later."}), 502
 
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():
