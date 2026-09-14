@@ -1833,13 +1833,21 @@ html::before {
 
 .auth-intro {
     position: relative;
-    background: linear-gradient(160deg, #cdeafd 0%, #a9dcf5 55%, #8fd0ee 100%);
+    background:
+        linear-gradient(180deg, rgba(10, 25, 30, 0.15), rgba(10, 25, 30, 0.2)),
+        url('/static/auth-background.png') center center / cover no-repeat;
     padding: 56px 46px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     overflow: hidden;
 }
+
+.auth-scene,
+.auth-scene-image {
+    display: none !important;
+}
+
 .scene-sun {
     position: absolute;
     top: 14%; right: 12%;
