@@ -1615,12 +1615,10 @@ html::before {
 .auth-page {
     background: linear-gradient(135deg, #eaf6ff 0%, #d9ecfb 35%, #fff6da 70%, #fff0c2 100%);
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
     position: relative;
-    overflow: hidden;
+}
+.auth-shell {
+    margin: 40px auto 80px;
 }
 .auth-page::before, .auth-page::after {
     content: "";
