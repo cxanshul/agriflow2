@@ -20,7 +20,7 @@
 }
 
 body {
-    background-color: var(--bg-field);
+    background-color: transparent;
     color: var(--text-loam);
     font-family: var(--font-sans);
     display: flex;

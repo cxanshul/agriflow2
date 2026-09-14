@@ -12,6 +12,14 @@
 </head>
 <body>
 
+    <!-- Background video only (no navbar/typewriter/pills) -->
+    <video id="site-bg-video" muted playsinline preload="auto"
+        style="position:fixed; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; object-position:70% center;"
+        onerror="this.style.display='none'">
+        <source src="/static/hero-video.mp4" type="video/mp4">
+    </video>
+    <div id="site-bg-fallback" style="position:fixed; inset:0; z-index:-1; background:linear-gradient(135deg,#eaf6ff,#d9ecfb 35%,#fff6da 70%,#fff0c2);"></div>
+
     <div id="toast-container" class="toast-container"></div>
 
     <aside class="sidebar">
@@ -732,5 +740,41 @@
 
     <script src="/static/app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // Scrub the background video gently with horizontal mouse movement.
+        (function siteBgVideoScrub() {
+            const video = document.getElementById('site-bg-video');
+            if (!video) return;
+            let previousX = null;
+            let targetTime = 0;
+            let seeking = false;
+            const sensitivity = 0.8;
+
+            video.addEventListener('loadedmetadata', () => { targetTime = 0; });
+            video.addEventListener('seeked', () => {
+                seeking = false;
+                if (Math.abs(video.currentTime - targetTime) > 0.05) queueSeek();
+            });
+
+            function queueSeek() {
+                if (seeking || !video.duration) return;
+                seeking = true;
+                video.currentTime = targetTime;
+            }
+
+            window.addEventListener('mousemove', event => {
+                if (!video.duration) return;
+                if (previousX === null) {
+                    previousX = event.clientX;
+                    return;
+                }
+                const delta = event.clientX - previousX;
+                previousX = event.clientX;
+                const offset = (delta / window.innerWidth) * sensitivity * video.duration;
+                targetTime = Math.min(video.duration, Math.max(0, targetTime + offset));
+                queueSeek();
+            });
+        })();
+    </script>
 </body>
 </html>
