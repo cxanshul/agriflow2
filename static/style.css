@@ -2100,3 +2100,118 @@ input, select, textarea, .admin-filter, .weather-location-form input, #auth-form
 /* ---- Misc ---- */
 .assistant-panel { border-radius: 20px !important; }
 ::-webkit-scrollbar-thumb { background: rgba(124, 92, 255, 0.35) !important; }
+
+/* ============================================================================
+   LIQUID GLASS PASS — auth background photo, text contrast, top-right glass
+   menu. Purely additive; no existing selectors removed, only layered on top.
+   ============================================================================ */
+
+/* ---- Auth page: photo as full-page background, glass panels on top ---- */
+.auth-page {
+    min-height: 100vh;
+    background:
+        linear-gradient(160deg, rgba(10, 9, 18, 0.66), rgba(91, 61, 224, 0.35)),
+        url('/static/auth-background.png') center center / cover no-repeat fixed !important;
+}
+.auth-page::before, .auth-page::after { display: none !important; }
+
+.auth-shell {
+    background: radial-gradient(120% 140% at 12% 0%, rgba(255,255,255,0.30), transparent 55%),
+                rgba(255, 255, 255, 0.14) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(28px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+}
+
+.auth-intro { background: transparent !important; }
+.auth-kicker {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(10px);
+}
+.auth-intro h1 { color: #fff !important; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.55) !important; }
+.auth-intro > p:last-child { color: rgba(255, 255, 255, 0.9) !important; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45) !important; }
+
+.auth-card {
+    background: radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,0.55), transparent 55%),
+                rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(22px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(180%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 20px 50px rgba(20, 18, 31, 0.22) !important;
+}
+.auth-tabs { background: rgba(255, 255, 255, 0.45) !important; backdrop-filter: blur(8px); }
+.auth-tab { color: #4a4560; }
+.auth-tab.active { color: var(--turmeric-dark) !important; }
+#auth-form input { background: rgba(255, 255, 255, 0.55) !important; border: 1px solid rgba(20, 18, 31, 0.12) !important; }
+
+/* ---- Top-right hamburger: opens a liquid-glass profile menu ---- */
+.hamburger-btn {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 1200;
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: radial-gradient(120% 140% at 25% 0%, rgba(255,255,255,0.55), transparent 55%),
+                rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    box-shadow: 0 8px 24px rgba(20, 18, 31, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.hamburger-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(20, 18, 31, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+.hamburger-btn span { width: 18px; height: 2px; border-radius: 2px; background: var(--text-loam); transition: transform 0.25s ease, opacity 0.25s ease; }
+.hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.top-menu-panel {
+    position: fixed;
+    top: 74px;
+    right: 24px;
+    z-index: 1199;
+    min-width: 220px;
+    padding: 14px;
+    border-radius: 20px;
+    background: radial-gradient(120% 140% at 20% 0%, rgba(255,255,255,0.6), transparent 55%),
+                rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 20px 50px rgba(20, 18, 31, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.top-menu-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.top-menu-panel .farmer-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-loam);
+    white-space: nowrap;
+}
+.top-menu-panel .btn-profile {
+    margin-left: auto;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+    background: var(--accent-gradient);
+    cursor: pointer;
+}

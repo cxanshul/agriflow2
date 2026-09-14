@@ -65,13 +65,19 @@
                 <button id="btn-en" class="btn-lang active" onclick="setLanguage('en')">English</button>
                 <button id="btn-hi" class="btn-lang" onclick="setLanguage('hi')">हिंदी</button>
             </div>
-            <div class="farmer-profile">
-                <span class="status-indicator"></span>
-                <span id="display-farmer">Signed in</span>
-                <button class="btn-profile" onclick="openProfile()" title="Open profile">Profile</button>
-            </div>
         </div>
     </aside>
+
+    <button id="top-menu-toggle" class="hamburger-btn" onclick="toggleTopMenu()" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+    <div id="top-menu-panel" class="top-menu-panel">
+        <div class="farmer-profile">
+            <span class="status-indicator"></span>
+            <span id="display-farmer">Signed in</span>
+            <button class="btn-profile" onclick="openProfile()" title="Open profile">Profile</button>
+        </div>
+    </div>
 
     <main class="main-content">
         
@@ -732,5 +738,26 @@
 
     <script src="/static/app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        // Top-right glass menu toggle — isolated, touches no existing function/markup.
+        (function topMenuController() {
+            const toggle = document.getElementById('top-menu-toggle');
+            const panel = document.getElementById('top-menu-panel');
+            if (!toggle || !panel) return;
+            function closeMenu() {
+                panel.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+            window.toggleTopMenu = function () {
+                const isOpen = panel.classList.toggle('open');
+                toggle.classList.toggle('open', isOpen);
+                toggle.setAttribute('aria-expanded', String(isOpen));
+            };
+            document.addEventListener('click', event => {
+                if (!panel.contains(event.target) && !toggle.contains(event.target)) closeMenu();
+            });
+        })();
+    </script>
 </body>
 </html>
