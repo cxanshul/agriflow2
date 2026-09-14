@@ -6,19 +6,11 @@
     <title>HackBhoomi - Krishi Ledger, Pre-Cost Calculator & Agritech Advisory</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 </head>
 <body>
-
-    <!-- Background video only (no navbar/typewriter/pills) — same file as /auth's hero -->
-    <video id="site-bg-video" muted playsinline preload="auto"
-        style="position:fixed; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; object-position:70% center;"
-        onerror="this.style.display='none'">
-        <source src="/static/hero-video.mp4" type="video/mp4">
-    </video>
-    <div id="site-bg-fallback" style="position:fixed; inset:0; z-index:-1; background:linear-gradient(135deg,#eaf6ff,#d9ecfb 35%,#fff6da 70%,#fff0c2);"></div>
 
     <div id="toast-container" class="toast-container"></div>
 
@@ -740,35 +732,5 @@
 
     <script src="/static/app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script>
-        // Background video mouse-scrub only — isolated from app.js, touches no existing function.
-        (function siteBgVideoScrub() {
-            const video = document.getElementById('site-bg-video');
-            if (!video) return;
-            let prevX = null;
-            let targetTime = 0;
-            let seeking = false;
-            const SENSITIVITY = 0.8;
-            video.addEventListener('loadedmetadata', () => { targetTime = 0; });
-            video.addEventListener('seeked', () => {
-                seeking = false;
-                if (Math.abs(video.currentTime - targetTime) > 0.05) queueSeek();
-            });
-            function queueSeek() {
-                if (seeking || !video.duration) return;
-                seeking = true;
-                video.currentTime = targetTime;
-            }
-            window.addEventListener('mousemove', event => {
-                if (!video.duration) return;
-                if (prevX === null) { prevX = event.clientX; return; }
-                const delta = event.clientX - prevX;
-                prevX = event.clientX;
-                const offset = (delta / window.innerWidth) * SENSITIVITY * video.duration;
-                targetTime = Math.min(video.duration, Math.max(0, targetTime + offset));
-                queueSeek();
-            });
-        })();
-    </script>
 </body>
 </html>

@@ -1953,3 +1953,150 @@ html::before {
     .auth-intro { padding: 36px 28px; min-height: 220px; }
     .auth-card { padding: 32px 26px !important; border-left: none; border-top: 1px solid rgba(255,255,255,0.6); }
 }
+/* ============================================================================
+   MODERN THEME OVERRIDE — clean, simple-developer / Gen-Z aesthetic
+   Appended on top of the original stylesheet. Recolors + retypes the whole
+   site via the existing CSS variables plus targeted component rules.
+   No HTML markup, IDs, classes, or JS were touched — everything below is
+   purely visual and layers on top of what already exists.
+   ============================================================================ */
+
+:root {
+    --bg-field: #F6F5FB;
+    --text-loam: #14121F;
+    --text-muted: #6E6B85;
+    --turmeric: #7C5CFF;
+    --turmeric-dark: #5B3DE0;
+    --leaf-green: #FF4FA3;
+    --leaf-light: #FF6FB5;
+    --risk-red: #EF4444;
+    --card-surface: rgba(255, 255, 255, 0.7);
+    --card-surface-strong: rgba(255, 255, 255, 0.88);
+    --border-ledger: rgba(20, 18, 31, 0.08);
+    --glass-border: rgba(20, 18, 31, 0.07);
+    --glass-border-strong: rgba(255, 255, 255, 0.9);
+    --glass-border-left: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 10px 32px rgba(76, 60, 140, 0.08);
+    --accent-gradient: linear-gradient(135deg, #7C5CFF 0%, #FF4FA3 100%);
+    --font-serif: 'Space Grotesk', 'Inter', sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html {
+    background:
+        radial-gradient(circle at 10% 6%, rgba(124, 92, 255, 0.12), transparent 40%),
+        radial-gradient(circle at 92% 10%, rgba(255, 79, 163, 0.12), transparent 42%),
+        linear-gradient(160deg, #FBFAFF 0%, #F6F5FB 55%, #F3F1FA 100%);
+}
+
+body { background: transparent; letter-spacing: -0.01em; }
+
+h1, h2, h3, h4, .logo, .page-title { font-family: var(--font-serif); letter-spacing: -0.01em; }
+
+/* ---- Buttons: bold gradient pills ---- */
+.btn-primary-action, .btn-secondary, .btn-quick-demo, .auth-submit,
+.btn-chat-toggle, .btn-send-assistant, .btn-head-voice, .assistant-bubble {
+    border-radius: 999px !important;
+    border: none !important;
+    font-weight: 700;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.btn-primary-action, .auth-submit, .btn-chat-toggle, .btn-send-assistant, .assistant-bubble {
+    background: var(--accent-gradient) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px rgba(124, 92, 255, 0.28);
+}
+.btn-primary-action:hover, .auth-submit:hover:not(:disabled),
+.btn-chat-toggle:hover, .btn-send-assistant:hover, .assistant-bubble:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(124, 92, 255, 0.38) !important;
+}
+.btn-primary-action:active { transform: translateY(0); }
+
+.btn-secondary, .btn-quick-demo, .btn-head-voice {
+    background: #fff !important;
+    color: var(--text-loam) !important;
+    border: 1.5px solid rgba(20, 18, 31, 0.1) !important;
+}
+.btn-secondary:hover, .btn-quick-demo:hover, .btn-head-voice:hover {
+    border-color: var(--turmeric) !important;
+    color: var(--turmeric-dark) !important;
+    background: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(124, 92, 255, 0.14) !important;
+}
+
+.btn-lang { border-radius: 999px !important; }
+.btn-lang.active { background: var(--accent-gradient) !important; color: #fff !important; border-color: transparent !important; }
+
+/* ---- Sidebar: near-black, modern ---- */
+.sidebar { background: #0D0C14 !important; border-radius: 0 28px 28px 0 !important; }
+.sidebar::after { display: none !important; }
+.brand .logo {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.nav-item { color: #B8B5C9; border-radius: 12px !important; }
+.nav-item:hover, .nav-item.active { background: rgba(124, 92, 255, 0.22) !important; color: #fff !important; }
+.nav-item.active::after { background: #fff; box-shadow: 0 0 0 5px rgba(124, 92, 255, 0.25); }
+
+/* ---- Cards / panels: softer, rounder ---- */
+.main-content { border-radius: 28px; background: rgba(255, 255, 255, 0.6); }
+.form-container, .weather-action-box, .weather-metric, .weather-alert,
+.batch-card, .history-card, .analysis-panel, .profile-card, .auth-card,
+.admin-kpi, .admin-insight-strip, .top-header, .section-bar,
+.ledger-stat-strip, .sell-decision-result, .alert-verification-card {
+    border-radius: 20px !important;
+}
+.analysis-panel { background: #ffffff; }
+input, select, textarea, .admin-filter, .weather-location-form input, #auth-form input {
+    border-radius: 12px !important;
+}
+
+/* ---- KPI tiles + status colors: new accent set ---- */
+.kpi-forest { background: linear-gradient(135deg, #7C5CFF, #5B3DE0) !important; color: #fff !important; }
+.kpi-gold { background: linear-gradient(135deg, #FF4FA3, #FF6FB5) !important; color: #fff !important; }
+.kpi-sage { background: #EFEBFF !important; color: #3A2E7A !important; }
+.kpi-ink { background: #14121F !important; color: #fff !important; }
+
+.bar-fill { background: var(--turmeric) !important; }
+.bar-fill.state { background: var(--leaf-green) !important; }
+.risk-dot.risk-high { background: #EF4444 !important; }
+.risk-dot.risk-medium { background: #F59E0B !important; }
+.risk-dot.risk-low { background: #10B981 !important; }
+.admin-table .positive { color: #10B981 !important; }
+.admin-table .negative { color: #EF4444 !important; }
+.activity-mark { background: var(--turmeric) !important; box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.14) !important; }
+.activity-mark.high { background: #EF4444 !important; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14) !important; }
+.admin-live-dot { color: var(--turmeric-dark) !important; }
+.admin-live-dot i { background: #10B981 !important; box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.15) !important; }
+.batch-card.risk-high { border-left-color: #EF4444 !important; background: #FFF5F5 !important; }
+.batch-card.risk-medium { border-left-color: #F59E0B !important; }
+
+/* ---- Auth page: simplify the ornamental gold-foil / farm-scene motifs ---- */
+.auth-page { background: linear-gradient(160deg, #FBFAFF 0%, #F3F1FA 60%, #F6F5FB 100%) !important; }
+.auth-page::before { background: rgba(124, 92, 255, 0.18) !important; }
+.auth-page::after { background: rgba(255, 79, 163, 0.16) !important; }
+.auth-shell { background: rgba(255, 255, 255, 0.8) !important; border-radius: 28px !important; }
+.auth-card { background: #fff !important; transform: none !important; border-radius: 24px !important; }
+.auth-shell:hover .auth-card { transform: none !important; }
+.auth-card::before, .auth-card::after, .brand::after,
+.scene-sun, .scene-hill-1, .scene-hill-2, .scene-hill-3, .scene-leaf { display: none !important; }
+.auth-intro {
+    background:
+        linear-gradient(160deg, rgba(13, 12, 20, 0.82), rgba(91, 61, 224, 0.55)),
+        url('/static/auth-background.png') center center / cover no-repeat !important;
+}
+.auth-kicker { border-color: rgba(124, 92, 255, 0.4) !important; color: #C9BEFF !important; }
+.auth-tabs { background: rgba(124, 92, 255, 0.08) !important; border-color: rgba(124, 92, 255, 0.14) !important; }
+.auth-tab.active { color: var(--turmeric-dark) !important; }
+#auth-form input:focus { border-color: var(--turmeric) !important; box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.14) !important; }
+
+/* ---- Misc ---- */
+.assistant-panel { border-radius: 20px !important; }
+::-webkit-scrollbar-thumb { background: rgba(124, 92, 255, 0.35) !important; }
