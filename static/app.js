@@ -1,13 +1,13 @@
 function detectPreferredLanguage() {
-    const stored = localStorage.getItem('hackbhoomi-language');
+    const stored = localStorage.getItem('agriflow-language');
     if (stored === 'en' || stored === 'hi') return stored;
     const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
     return browserLang.startsWith('hi') ? 'hi' : 'en';
 }
 
 let currentLang = detectPreferredLanguage();
-if (!localStorage.getItem('hackbhoomi-language')) {
-    localStorage.setItem('hackbhoomi-language', currentLang);
+    if (!localStorage.getItem('agriflow-language')) {
+        localStorage.setItem('agriflow-language', currentLang);
 }
 let produceBatches = [];
 let mandiRecordsCache = [];
@@ -327,7 +327,7 @@ function showToast(msg, type = "info") {
 
 function setLanguage(lang) {
     currentLang = lang;
-    localStorage.setItem('hackbhoomi-language', lang);
+    localStorage.setItem('agriflow-language', lang);
     document.documentElement.lang = lang;
     const btnEn = document.getElementById('btn-en');
     const btnHi = document.getElementById('btn-hi');
@@ -1652,7 +1652,7 @@ function toggleSellDecisionMode() {
 }
 
 async function sendSpoilageAlert(batchId, channel = 'sms', automatic = false) {
-    const key = `hackbhoomi-alert-${batchId}-${channel}`;
+    const key = `agriflow-alert-${batchId}-${channel}`;
     if (automatic && localStorage.getItem(key)) return;
     try {
         const response = await fetch('/api/alerts/spoilage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_id: batchId, channel }) });

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: krishisahayak-app
+    name: agriflow-app
     env: python
     plan: free
     buildCommand: pip install --no-cache-dir -r requirements.txt

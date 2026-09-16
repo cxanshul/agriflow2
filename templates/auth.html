@@ -12,7 +12,7 @@
 <body class="auth-page">
     <main class="auth-shell">
         <section class="auth-intro">
-            <p class="auth-kicker">HACKBHOOMI</p>
+            <p class="auth-kicker">AGRIFLOW</p>
             <h1 data-en="Know your farm. Grow with confidence." data-hi="अपने खेत को जानें। भरोसे के साथ बढ़ें।">Know your farm. Grow with confidence.</h1>
             <p data-en="Securely manage your crop records, costs, mandi rates, and AI advice in one place." data-hi="अपने फसल रिकॉर्ड, लागत, मंडी भाव और एआई सलाह को एक जगह सुरक्षित संभालें।">Securely manage your crop records, costs, mandi rates, and AI advice in one place.</p>
         </section>
@@ -60,14 +60,14 @@
     <script>
         let authMode = 'login';
         function detectPreferredLanguage() {
-            const stored = localStorage.getItem('hackbhoomi-language');
+            const stored = localStorage.getItem('agriflow-language');
             if (stored === 'en' || stored === 'hi') return stored;
             const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
             return browserLang.startsWith('hi') ? 'hi' : 'en';
         }
         let authLang = detectPreferredLanguage();
-        if (!localStorage.getItem('hackbhoomi-language')) {
-            localStorage.setItem('hackbhoomi-language', authLang);
+        if (!localStorage.getItem('agriflow-language')) {
+            localStorage.setItem('agriflow-language', authLang);
         }
         let phoneEmailVerificationUrl = '';
         let loginMethod = 'email';
@@ -77,7 +77,7 @@
         };
         function setAuthLanguage(lang) {
             authLang = lang;
-            localStorage.setItem('hackbhoomi-language', lang);
+            localStorage.setItem('agriflow-language', lang);
             document.documentElement.lang = lang;
             document.querySelectorAll('[data-en]').forEach(el => { const value = el.getAttribute(`data-${lang}`); if (value) el.textContent = value; });
             document.querySelectorAll('[data-placeholder-en]').forEach(el => { el.placeholder = el.getAttribute(`data-placeholder-${lang}`) || el.placeholder; });

@@ -273,7 +273,7 @@ def reverse_geocode_india(latitude, longitude):
         response = requests.get(
             NOMINATIM_REVERSE_URL,
             params={"lat": latitude, "lon": longitude, "format": "jsonv2", "zoom": 10, "addressdetails": 1},
-            headers={"User-Agent": "KrishiSahayak/1.0 (student agriculture project)"},
+            headers={"User-Agent": "AgriFlow/1.0 (student agriculture project)"},
             timeout=3.0
         )
         response.raise_for_status()
@@ -656,7 +656,7 @@ def send_spoilage_alert():
         return jsonify({"success": False, "configured": False, "error": "SMS alerts are not configured on the server yet."}), 503
     if channel == "sms" and not TWILIO_SMS_FROM:
         return jsonify({"success": False, "configured": False, "error": "Twilio SMS sender is not configured."}), 503
-    message = f"HackBhoomi alert: {batch.get('crop_name', 'Your crop')} has {batch.get('spoilage_risk')} spoilage risk and about {batch.get('shelf_life_days', 'limited')} days of shelf life left. Check storage and selling options today."
+    message = f"AgriFlow alert: {batch.get('crop_name', 'Your crop')} has {batch.get('spoilage_risk')} spoilage risk and about {batch.get('shelf_life_days', 'limited')} days of shelf life left. Check storage and selling options today."
     try:
         if channel == "whatsapp":
             send_wappfly_message(phone, message)
@@ -737,7 +737,7 @@ def request_alert_otp():
     otp = f"{secrets.randbelow(1000000):06d}"
     session["alert_otp"] = {"phone": phone, "hash": hashlib.sha256(otp.encode()).hexdigest(), "expires_at": time.time() + OTP_TTL_SECONDS, "attempts": 0}
     try:
-        otp_message = f"HackBhoomi verification code: {otp}. It expires in 5 minutes. Do not share this code."
+        otp_message = f"AgriFlow verification code: {otp}. It expires in 5 minutes. Do not share this code."
         if channel == "whatsapp":
             send_wappfly_message(phone, otp_message)
         else:
@@ -1187,7 +1187,7 @@ def search_storage_facilities():
                         "viewbox": viewbox,
                         "bounded": 1,
                     },
-                    headers={"User-Agent": "HackBhoomi/1.0 (agriculture storage finder)"},
+                    headers={"User-Agent": "AgriFlow/1.0 (agriculture storage finder)"},
                     timeout=3.0,
                 )
                 if response.status_code == 200:
@@ -1903,7 +1903,7 @@ def assistant_chat():
         target_lang = "Hindi (हिंदी)" if lang == "hi" else "English"
 
         system_instruction = f"""
-You are KrishiSahayak, an agronomist and financial advisor for Indian farmers.
+    You are AgriFlow, an agronomist and financial advisor for Indian farmers.
 Always respond strictly in: {target_lang}.
 Only answer questions directly related to farming, crops, soil, weather, irrigation, crop health, storage, mandi markets, farm costs, sales, profit, or crop planning. For anything unrelated, politely say that you only support those topics and do not answer the unrelated request.
 
@@ -1993,7 +1993,7 @@ ACTION_UPDATE: {{"batch_id": "<id>", "storage_type": "<val>", "recommendation": 
 
 if __name__ == "__main__":
     print("================================================")
-    print("KrishiSahayak AI Server Starting...")
+    print("AgriFlow AI Server Starting...")
     print(f"Gemini Model: {GEMINI_MODEL}")
     print(f"Supabase Database Connected: {'YES' if supabase else 'NO'}")
     print("================================================")

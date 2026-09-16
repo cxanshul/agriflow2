@@ -1,5 +1,5 @@
 let adminData = null;
-let adminLang = localStorage.getItem('hackbhoomi-language') || 'en';
+let adminLang = localStorage.getItem('agriflow-language') || 'en';
 
 const adminTranslations = {
     en: {
@@ -30,7 +30,7 @@ function at(key) {
 
 function setAdminLanguage(lang) {
     adminLang = lang;
-    localStorage.setItem('hackbhoomi-language', lang);
+     localStorage.setItem('agriflow-language', lang);
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-en]').forEach(element => {
         const value = element.getAttribute(`data-${lang}`);
@@ -138,7 +138,7 @@ function exportAdminCsv() {
     const csv = [headers, ...rows].map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    link.download = `hackbhoomi-farmer-report-${new Date().toISOString().slice(0, 10)}.csv`;
+     link.download = `agriflow-farmer-report-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
 }
