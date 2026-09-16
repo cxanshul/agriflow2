@@ -225,6 +225,47 @@ def fallback_next_crop_plan(crop_name):
         }
     ]
 
+def fallback_crop_analysis(crop_name, crop_status, storage_type, harvest_date):
+    """Provide useful crop-specific analysis when an external AI is unavailable."""
+    if crop_status == "growing":
+        return {
+            "quality_grade": "Growing",
+            "spoilage_risk": "Not applicable",
+            "shelf_life_days": 14,
+            "defect_summary": "Visual quality analysis will be available after harvest.",
+            "recommendation": "Continue regular field monitoring and follow crop-specific care.",
+            "processing_idea": "Review processing options after harvest.",
+        }
+
+    crop = crop_name.strip().lower()
+    shelf_life_by_crop = {
+        "tomato": 7, "potato": 30, "onion": 45, "wheat": 180,
+        "mustard": 180, "soybean": 120, "cotton": 180, "paddy": 180,
+        "rice": 180, "maize": 120, "gram": 120, "chana": 120,
+        "moong": 120, "groundnut": 120, "cumin": 180,
+    }
+    base_days = next((days for name, days in shelf_life_by_crop.items() if name in crop), 14)
+    storage = storage_type.strip().lower()
+    if "cold" in storage:
+        base_days = round(base_days * 1.8)
+    elif "open air" in storage or "shade" in storage:
+        base_days = max(2, round(base_days * 0.7))
+
+    try:
+        age_days = max(0, (date.today() - datetime.strptime(harvest_date, "%Y-%m-%d").date()).days)
+    except (TypeError, ValueError):
+        age_days = 0
+    remaining_days = max(1, base_days - age_days)
+    risk = "High" if remaining_days <= 5 else ("Medium" if remaining_days <= 14 else "Low")
+    return {
+        "quality_grade": "A",
+        "spoilage_risk": risk,
+        "shelf_life_days": remaining_days,
+        "defect_summary": "No crop image supplied; quality estimated from crop, storage, and harvest date.",
+        "recommendation": f"Keep {crop_name} dry and ventilated, and plan sale or processing within {remaining_days} days.",
+        "processing_idea": "Sort and grade the produce before sale to reduce post-harvest loss.",
+    }
+
 def weather_description(weather_code):
     descriptions = {
         0: "Clear sky",
@@ -1287,12 +1328,13 @@ def analyze_and_add_produce():
         costs = data.get("production_costs", {})
         production_cost = sum(safe_float(v) for v in costs.values())
 
-        quality_grade = "Growing" if crop_status == "growing" else "A"
-        spoilage_risk = "Not applicable" if crop_status == "growing" else "Low"
-        shelf_life_days = 14
-        defects = "Clean surface; uniform maturity."
-        recommendation = "Continue regular field monitoring and follow crop-specific care."
-        processing_idea = "Standard wholesale grading and sorting."
+        fallback_analysis = fallback_crop_analysis(crop_name, crop_status, storage_type, harvest_date)
+        quality_grade = fallback_analysis["quality_grade"]
+        spoilage_risk = fallback_analysis["spoilage_risk"]
+        shelf_life_days = fallback_analysis["shelf_life_days"]
+        defects = fallback_analysis["defect_summary"]
+        recommendation = fallback_analysis["recommendation"]
+        processing_idea = fallback_analysis["processing_idea"]
         suggested_harvest_date = harvest_date if crop_status == "harvested" else None
         next_crop_recommendation = fallback_next_crop_plan(crop_name) if crop_status == "harvested" else []
 
