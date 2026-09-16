@@ -49,7 +49,10 @@
                 <label for="auth-email" data-en="Email or phone number" data-hi="ईमेल या फोन नंबर">Email or phone number</label>
                 <input id="auth-email" type="text" autocomplete="username" data-placeholder-en="you@example.com or +919876543210" data-placeholder-hi="you@example.com या +919876543210" placeholder="you@example.com or +919876543210">
                 <label for="auth-password" data-en="Password" data-hi="पासवर्ड">Password</label>
-                <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required data-placeholder-en="At least 6 characters" data-placeholder-hi="कम से कम 6 अक्षर" placeholder="At least 6 characters">
+                <div class="password-input-wrap" style="position: relative; display: flex; align-items: center;">
+                    <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required data-placeholder-en="At least 6 characters" data-placeholder-hi="कम से कम 6 अक्षर" placeholder="At least 6 characters" style="padding-right: 42px;">
+                    <button type="button" id="toggle-password-btn" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; padding: 4px;" aria-label="Toggle password visibility">👁️</button>
+                </div>
                 <p id="phone-login-help" class="auth-subtitle hidden">Complete Phone.email verification above. No email or password is required.</p>
                 <button id="auth-submit" class="auth-submit" type="submit" data-en="Log in" data-hi="लॉग इन">Log in</button>
                 <button id="forgot-password" class="btn-secondary hidden" type="button" onclick="requestPasswordReset()" data-en="Forgot password? Send reset email" data-hi="पासवर्ड भूल गए? रीसेट ईमेल भेजें">Forgot password? Send reset email</button>
@@ -59,6 +62,18 @@
     </main>
     <script>
         let authMode = 'login';
+        function togglePasswordVisibility() {
+            const pw = document.getElementById('auth-password');
+            const btn = document.getElementById('toggle-password-btn');
+            if (!pw || !btn) return;
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                btn.textContent = '🔒';
+            } else {
+                pw.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
         function detectPreferredLanguage() {
             const stored = localStorage.getItem('agriflow-language');
             if (stored === 'en' || stored === 'hi') return stored;

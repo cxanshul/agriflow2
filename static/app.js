@@ -298,9 +298,52 @@ async function deleteAllProduce() {
     }
 }
 
+const tabMeta = {
+    'pre-cost': {
+        en: { title: "Farm Financial & Pre-Cost Engine", sub: "Estimate inputs, expected yield, real-time market selling rates, and profit per acre." },
+        hi: { title: "फसल पूर्व लागत एवं वित्तीय सलाहकार", sub: "जमीन का रकबा, इनपुट खर्च भरें और मंडी भाव के आधार पर संभावित शुद्ध मुनाफा जानें।" }
+    },
+    'weather': {
+        en: { title: "Weather, Soil & Irrigation Signals", sub: "Real-time meteorological and agronomic signals for your farm coordinates." },
+        hi: { title: "मौसम, मिट्टी और सिंचाई संकेत", sub: "आपके खेत के निर्देशांकों के लिए वास्तविक मौसम व कृषि संकेत।" }
+    },
+    'mandi': {
+        en: { title: "Verified APMC Mandi Market Rates", sub: "Live commodity prices across major agricultural markets in India." },
+        hi: { title: "सत्यापित APMC मंडी भाव", sub: "भारत की प्रमुख कृषि मंडियों के दैनिक व मॉडल विक्रय भाव।" }
+    },
+    'sell-decision': {
+        en: { title: "AI Sell Now or Wait Decision Engine", sub: "Data-driven pricing, storage cost, and market trend recommendation." },
+        hi: { title: "एआई: अभी बेचें या रुकें?", sub: "लाइव भाव, भंडारण खर्च और मंडी रुझान के आधार पर श्रेष्ठ निर्णय।" }
+    },
+    'storage-finder': {
+        en: { title: "Nearest Storage Facilities & Warehouses", sub: "Locate verified cold storages, CWC/SWC warehouses, and WDRA accredited godowns." },
+        hi: { title: "निकटतम भंडारण केंद्र खोजें", sub: "अपने निकटतम सत्यापित कोल्ड स्टोरेज, वेयरहाउस (CWC/SWC) और साइलो खोजें।" }
+    },
+    'add-batch': {
+        en: { title: "Register Crops with AI Analysis", sub: "Upload crop photos for Gemini vision quality detection and shelf-life prediction." },
+        hi: { title: "एआई जांच के साथ फसल दर्ज करें", sub: "फसल की फोटो अपलोड करें और जेमिनी विज़न गुणवत्ता जांच व सड़न जोखिम जानें।" }
+    },
+    'ledger-stored': {
+        en: { title: "Active Inventory Batches in Storage", sub: "Track produce volume, harvest date, and monitor real-time spoilage risk." },
+        hi: { title: "सक्रिय भंडारित उपज बैच", sub: "भंडारित उपज मात्रा, कटाई की तारीख और सड़न जोखिम की निगरानी करें।" }
+    },
+    'ledger-sold': {
+        en: { title: "Settle Sale & Calculate Financials", sub: "Combine production expenses with logistics and selling costs for exact profit/loss." },
+        hi: { title: "अंतिम बिक्री मूल्य एवं विपणन खर्च दर्ज करें", sub: "उत्पादन लागत और अंतिम विपणन खर्च को जोड़कर सटीक शुद्ध लाभ/हानि निकालें।" }
+    },
+    'ledger-history': {
+        en: { title: "Historical Crop Records & AI Rotation Plans", sub: "Review past yield profits and discover intelligent next crop recommendations." },
+        hi: { title: "ऐतिहासिक फसल रिकॉर्ड एवं अगली फसल योजनाएं", sub: "पिछले फसल मुनाफे का विश्लेषण और अगली फसल चक्र के लिए एआई सुझाव।" }
+    }
+};
+
 function switchTab(tabId) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(b => {
+        const attr = b.getAttribute('onclick') || '';
+        b.classList.toggle('active', attr.includes(`switchTab('${tabId}')`));
+    });
 
     const target = document.getElementById(`tab-${tabId}`);
     if (target) target.classList.add('active');
@@ -311,6 +354,27 @@ function switchTab(tabId) {
             btn.classList.add('active');
         }
     });
+
+    // Dynamically update Header Title and Subtitle
+    if (tabMeta[tabId]) {
+        const meta = tabMeta[tabId][currentLang] || tabMeta[tabId].en;
+        const titleEl = document.getElementById('page-title');
+        const subEl = document.querySelector('.top-header .subtitle');
+        if (titleEl) {
+            titleEl.textContent = meta.title;
+            titleEl.setAttribute('data-en', tabMeta[tabId].en.title);
+            titleEl.setAttribute('data-hi', tabMeta[tabId].hi.title);
+        }
+        if (subEl) {
+            subEl.textContent = meta.sub;
+            subEl.setAttribute('data-en', tabMeta[tabId].en.sub);
+            subEl.setAttribute('data-hi', tabMeta[tabId].hi.sub);
+        }
+    }
+
+    if (tabId === 'storage-finder' && typeof triggerStorageSearch === 'function') {
+        setTimeout(triggerStorageSearch, 150);
+    }
 }
 
 function showToast(msg, type = "info") {
@@ -489,6 +553,35 @@ async function handlePreCostCalculation(e) {
 
             const unitEl = document.getElementById("res-profit-unit");
             if (unitEl) unitEl.innerText = `${d.profit_per_selected_unit >= 0 ? '+' : '-'} ₹ ${Math.abs(d.profit_per_selected_unit).toLocaleString()} / ${unit}`;
+
+            // Render Visual Cost Breakdown Bar
+            const breakdownItems = [
+                { name: currentLang === 'hi' ? 'बीज' : 'Seeds', val: payload.cost_seeds, color: '#15803D' },
+                { name: currentLang === 'hi' ? 'उर्वरक' : 'Fertilizer', val: payload.cost_fertilizer, color: '#0284C7' },
+                { name: currentLang === 'hi' ? 'कीटनाशक' : 'Pesticide', val: payload.cost_pesticide, color: '#D97706' },
+                { name: currentLang === 'hi' ? 'सिंचाई' : 'Irrigation', val: payload.cost_irrigation, color: '#2563EB' },
+                { name: currentLang === 'hi' ? 'मजदूरी' : 'Labor', val: payload.cost_labor, color: '#7C3AED' },
+                { name: currentLang === 'hi' ? 'मशीनरी' : 'Machinery', val: payload.cost_machinery, color: '#DB2777' },
+                { name: currentLang === 'hi' ? 'डीजल/बिजली' : 'Fuel', val: payload.cost_fuel, color: '#EA580C' },
+                { name: currentLang === 'hi' ? 'अन्य' : 'Misc', val: payload.cost_misc, color: '#64748B' }
+            ];
+            const sumCost = breakdownItems.reduce((acc, it) => acc + it.val, 0) || 1;
+            const barContainer = document.getElementById("cost-breakdown-bar");
+            const legendContainer = document.getElementById("cost-breakdown-legend");
+            const totalBreakdownEl = document.getElementById("cost-breakdown-total");
+            if (totalBreakdownEl) totalBreakdownEl.innerText = `₹ ${Math.round(sumCost).toLocaleString()}`;
+            if (barContainer) {
+                barContainer.innerHTML = breakdownItems.filter(it => it.val > 0).map(it => {
+                    const pct = ((it.val / sumCost) * 100).toFixed(1);
+                    return `<div class="cost-bar-seg" style="width: ${pct}%; background: ${it.color};" title="${it.name}: ₹ ${it.val.toLocaleString()} (${pct}%)"></div>`;
+                }).join('');
+            }
+            if (legendContainer) {
+                legendContainer.innerHTML = breakdownItems.filter(it => it.val > 0).map(it => {
+                    const pct = Math.round((it.val / sumCost) * 100);
+                    return `<span class="cost-legend-item"><i class="cost-legend-dot" style="background: ${it.color}"></i> ${it.name} (${pct}%)</span>`;
+                }).join('');
+            }
         }
     } catch (err) {
         console.error("Calculator error:", err);
@@ -566,6 +659,18 @@ function renderMandiTable(records) {
         `;
         tbody.appendChild(row);
     });
+}
+
+function quickFilterMandi(cropName) {
+    document.querySelectorAll('.quick-chip').forEach(c => c.classList.remove('active'));
+    if (window.event && window.event.target) {
+        window.event.target.classList.add('active');
+    }
+    const searchInput = document.getElementById("mandi-search-crop");
+    if (searchInput) {
+        searchInput.value = cropName;
+        filterMandi();
+    }
 }
 
 function filterMandi() {
@@ -1717,5 +1822,184 @@ async function verifyAlertOtp() {
         await sendSpoilageAlert(alert.batchId, alert.channel);
     } catch (error) {
         if (status) status.textContent = error.message;
+    }
+}
+
+// ============================================================
+// QUICK PROMPT & STORAGE FINDER TAB CONTROLLER
+// ============================================================
+
+function sendQuickPrompt(text) {
+    const queryInput = document.getElementById('assistant-query');
+    if (queryInput) {
+        queryInput.value = text;
+        sendAssistantMessage();
+    }
+}
+
+let mainStorageMap = null;
+let mainStorageLayer = null;
+let storageSearchDebounceTimer = null;
+
+function debounceStorageSearch() {
+    clearTimeout(storageSearchDebounceTimer);
+    storageSearchDebounceTimer = setTimeout(triggerStorageSearch, 300);
+}
+
+function resetStorageFilters() {
+    const q = document.getElementById('storage-query-input');
+    const t = document.getElementById('storage-type-select');
+    const c = document.getElementById('storage-crop-select');
+    const r = document.getElementById('storage-radius-select');
+    if (q) q.value = '';
+    if (t) t.value = 'all';
+    if (c) c.value = '';
+    if (r) r.value = '50';
+    triggerStorageSearch();
+}
+
+async function useFarmLocationForStorage() {
+    const statusEl = document.getElementById('storage-location-status');
+    if (statusEl) statusEl.innerText = currentLang === 'hi' ? 'खेत का स्थान खोजा जा रहा है...' : 'Detecting farm location...';
+    try {
+        if (!navigator.geolocation) throw new Error('Geolocation not supported');
+        const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: true });
+        });
+        farmerProfile = { ...(farmerProfile || {}), latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        if (statusEl) statusEl.innerText = `📍 ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+        triggerStorageSearch();
+    } catch (e) {
+        if (statusEl) statusEl.innerText = currentLang === 'hi' ? 'स्थान प्राप्त नहीं हुआ' : 'Could not detect location';
+    }
+}
+
+async function triggerStorageSearch() {
+    const cardsList = document.getElementById('storage-cards-list');
+    const mapEl = document.getElementById('storage-main-map');
+    if (!cardsList) return;
+
+    let userLat = Number(farmerProfile?.latitude) || 28.6139;
+    let userLng = Number(farmerProfile?.longitude) || 77.2090;
+
+    const query = document.getElementById('storage-query-input')?.value.trim() || '';
+    const type = document.getElementById('storage-type-select')?.value || 'all';
+    const crop = document.getElementById('storage-crop-select')?.value || '';
+    const radius = Number(document.getElementById('storage-radius-select')?.value) || 50;
+
+    cardsList.innerHTML = `<div class="storage-loading-state" style="padding: 24px; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">⏳ ${currentLang === 'hi' ? 'सत्यापित भंडारण केंद्र खोजे जा रहे हैं...' : 'Finding verified storage facilities near your location...'}</div>`;
+
+    try {
+        const params = new URLSearchParams();
+        params.append('latitude', userLat);
+        params.append('longitude', userLng);
+        if (radius > 0) params.append('radius_km', radius);
+        if (query) params.append('q', query);
+        if (crop) params.append('crop', crop);
+        if (type !== 'all') params.append('type', type);
+
+        const res = await fetch(`/api/storage/search?${params.toString()}`);
+        const data = await res.json();
+        const facilities = data.facilities || data.places || [];
+
+        // Update stats
+        const totalEl = document.getElementById('storage-stat-total');
+        const coldEl = document.getElementById('storage-stat-cold');
+        const wdraEl = document.getElementById('storage-stat-wdra');
+        const nearestEl = document.getElementById('storage-stat-nearest');
+        const countEl = document.getElementById('storage-results-count');
+
+        if (totalEl) totalEl.innerText = facilities.length;
+        if (countEl) countEl.innerText = `${facilities.length} ${currentLang === 'hi' ? 'केंद्र' : 'Centers'}`;
+
+        let coldCount = 0;
+        let wdraCount = 0;
+        let minDistance = Infinity;
+
+        facilities.forEach(f => {
+            const cat = String(f.category || f.type || '').toLowerCase();
+            if (cat.includes('cold') || cat.includes('शीत')) coldCount++;
+            if (f.is_wdra || cat.includes('wdra') || cat.includes('cwc') || cat.includes('swc')) wdraCount++;
+            const dist = Number(f.distance_km ?? f.distance);
+            if (Number.isFinite(dist) && dist < minDistance) minDistance = dist;
+        });
+
+        if (coldEl) coldEl.innerText = coldCount;
+        if (wdraEl) wdraEl.innerText = wdraCount;
+        if (nearestEl) nearestEl.innerText = Number.isFinite(minDistance) && minDistance < Infinity ? `${minDistance.toFixed(1)} km` : '—';
+
+        // Initialize / Update Map
+        if (window.L && mapEl) {
+            if (!mainStorageMap) {
+                mainStorageMap = L.map(mapEl).setView([userLat, userLng], 9);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(mainStorageMap);
+                mainStorageLayer = L.layerGroup().addTo(mainStorageMap);
+            } else {
+                mainStorageLayer.clearLayers();
+                mainStorageMap.setView([userLat, userLng], 9);
+            }
+
+            const farmIcon = L.divIcon({ className: 'farm-location-marker', html: '<span></span>', iconSize: [18, 18], iconAnchor: [9, 9] });
+            L.marker([userLat, userLng], { icon: farmIcon }).addTo(mainStorageLayer).bindPopup(`<strong>${currentLang === 'hi' ? 'आपका खेत' : 'Your Farm'}</strong>`);
+
+            facilities.forEach(f => {
+                const lat = Number(f.lat ?? f.latitude);
+                const lng = Number(f.lng ?? f.longitude);
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+                const name = f.name || 'Storage Facility';
+                const dist = Number(f.distance_km ?? f.distance);
+                const distStr = Number.isFinite(dist) ? `<br><small>📍 ${dist.toFixed(1)} km</small>` : '';
+                L.marker([lat, lng]).addTo(mainStorageLayer).bindPopup(`<strong>${name}</strong>${distStr}`);
+            });
+            setTimeout(() => { mainStorageMap.invalidateSize(); }, 200);
+        }
+
+        // Render Cards
+        if (facilities.length === 0) {
+            cardsList.innerHTML = `<div style="padding: 24px; color: var(--text-muted); text-align: center; grid-column: 1 / -1;">${currentLang === 'hi' ? 'इस क्षेत्र में कोई भंडारण केंद्र नहीं मिला।' : 'No storage facilities found for this filter.'}</div>`;
+            return;
+        }
+
+        cardsList.innerHTML = facilities.map(f => {
+            const lat = Number(f.lat ?? f.latitude);
+            const lng = Number(f.lng ?? f.longitude);
+            const dist = Number(f.distance_km ?? f.distance);
+            const distBadge = Number.isFinite(dist) ? `<span class="facility-distance-pill">📍 ${dist.toFixed(1)} km</span>` : '';
+            const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            const category = f.category || f.type || 'Warehouse / Cold Storage';
+            const isCold = category.toLowerCase().includes('cold');
+            const typeBadge = `<span class="facility-type-badge ${isCold ? 'cold' : 'warehouse'}">${isCold ? '❄️ Cold Storage' : '🌾 Warehouse'}</span>`;
+
+            return `
+                <div class="storage-facility-card">
+                    <div>
+                        <div class="facility-top-row">
+                            <h4 class="facility-name">${f.name}</h4>
+                            ${distBadge}
+                        </div>
+                        <div style="margin-top: 6px;">
+                            ${typeBadge}
+                            ${f.is_wdra ? '<span class="facility-type-badge wdra" style="margin-left: 4px;">📜 WDRA e-NWR Loan</span>' : ''}
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">${f.address || f.formatted_address || 'District Warehouse'}</p>
+                        ${f.capacity ? `<p style="font-size: 0.78rem; color: var(--text-body); margin-top: 4px;">Capacity: <strong>${f.capacity}</strong></p>` : ''}
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <a href="${dirUrl}" target="_blank" rel="noopener" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center; text-decoration: none;">
+                            🧭 ${currentLang === 'hi' ? 'रास्ता देखें' : 'Get Directions'}
+                        </a>
+                        ${f.phone ? `<a href="tel:${f.phone}" class="btn-secondary" style="text-decoration: none;">📞</a>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        console.error('Storage search failed:', err);
+        cardsList.innerHTML = `<div style="padding: 24px; color: var(--risk-red); text-align: center; grid-column: 1 / -1;">Storage search encountered an error. Please try again.</div>`;
     }
 }

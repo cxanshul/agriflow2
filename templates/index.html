@@ -14,48 +14,58 @@
 
     <div id="toast-container" class="toast-container"></div>
 
-    <aside class="sidebar">
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+    <aside class="sidebar" id="app-sidebar">
         <div class="brand">
-            <h1 class="logo"><span class="brand-mark">A</span> AGRIFLOW</h1>
-            <p class="tagline" data-en="Agri-Financial & Pre-Cost Engine" data-hi="कृषि लागत, मंडी भाव एवं खाता">Agri-Financial & Pre-Cost Engine</p>
+            <div class="brand-logo-wrap">
+                <div class="brand-badge">
+                    <span class="brand-mark">🌾</span>
+                </div>
+                <div>
+                    <h1 class="logo">AGRIFLOW</h1>
+                    <p class="tagline" data-en="Farm Intelligence Workspace" data-hi="कृषि वित्तीय व मंडी सलाहकार">Farm Intelligence Workspace</p>
+                </div>
+            </div>
+            <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="Close menu">✕</button>
         </div>
 
         <div class="nav-group-label">Plan &amp; Market</div>
         <nav class="nav-menu">
-            <button class="nav-item active" onclick="switchTab('pre-cost')">
+            <button class="nav-item active" onclick="switchTab('pre-cost'); closeMobileSidebar();">
                 <span class="icon">🧮</span> <span data-en="Pre-Cost Calculator" data-hi="फसल पूर्व लागत कैलकुलेटर">Pre-Cost Calculator</span>
             </button>
-            <button class="nav-item" onclick="switchTab('weather')">
+            <button class="nav-item" onclick="switchTab('weather'); closeMobileSidebar();">
                 <span class="icon">🌦️</span> <span data-en="Weather & Soil" data-hi="मौसम व मिट्टी">Weather & Soil</span>
             </button>
-            <button class="nav-item" onclick="switchTab('mandi')">
+            <button class="nav-item" onclick="switchTab('mandi'); closeMobileSidebar();">
                 <span class="icon">🏛️</span> <span data-en="Mandi Market Rates" data-hi="मंडी भाव">Mandi Market Rates</span>
             </button>
-            <button class="nav-item" onclick="switchTab('sell-decision')">
+            <button class="nav-item" onclick="switchTab('sell-decision'); closeMobileSidebar();">
                 <span class="icon">⚖️</span> <span data-en="Sell Now or Wait?" data-hi="अभी बेचें या रुकें?">Sell Now or Wait?</span>
             </button>
-            <button class="nav-item" onclick="switchTab('storage-finder')">
+            <button class="nav-item" onclick="switchTab('storage-finder'); closeMobileSidebar();">
                 <span class="icon">🏬</span> <span data-en="Nearest Storage Facility" data-hi="निकटतम भंडारण केंद्र">Nearest Storage Facility</span>
             </button>
         </nav>
 
         <div class="nav-group-label">My Crops</div>
         <nav class="nav-menu">
-            <button class="nav-item" onclick="switchTab('add-batch')">
+            <button class="nav-item" onclick="switchTab('add-batch'); closeMobileSidebar();">
                 <span class="icon">➕</span> <span data-en="Register a Crop" data-hi="फसल दर्ज करें">Register a Crop</span>
             </button>
-            <button class="nav-item" onclick="switchTab('ledger-stored')">
+            <button class="nav-item" onclick="switchTab('ledger-stored'); closeMobileSidebar();">
                 <span class="icon">📦</span> <span data-en="Active / Stored Batches" data-hi="भंडारित उपज">Active / Stored Batches</span>
             </button>
-            <button class="nav-item" onclick="switchTab('ledger-sold')">
+            <button class="nav-item" onclick="switchTab('ledger-sold'); closeMobileSidebar();">
                 <span class="icon">💰</span> <span data-en="Settle a Sale" data-hi="बिक्री दर्ज करें">Settle a Sale</span>
             </button>
-            <button class="nav-item" onclick="switchTab('ledger-history')">
+            <button class="nav-item" onclick="switchTab('ledger-history'); closeMobileSidebar();">
                 <span class="icon">📜</span> <span data-en="History & Next Crop" data-hi="उपज इतिहास व अगली फसल">History & Next Crop</span>
             </button>
             {% if is_admin %}
             <a class="nav-item admin-link" href="/admin">
-                <span class="icon">▦</span> <span data-en="Admin analysis" data-hi="व्यवस्थापक विश्लेषण">Admin analysis</span>
+                <span class="icon">▦</span> <span data-en="Admin Analysis" data-hi="व्यवस्थापक विश्लेषण">Admin Analysis</span>
             </a>
             {% endif %}
         </nav>
@@ -68,31 +78,25 @@
         </div>
     </aside>
 
-    <button id="top-menu-toggle" class="hamburger-btn" onclick="toggleTopMenu()" aria-label="Open menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-    </button>
-    <div id="top-menu-panel" class="top-menu-panel">
-        <div class="farmer-profile">
-            <span class="status-indicator"></span>
-            <span id="display-farmer">Signed in</span>
-            <button class="btn-profile" onclick="openProfile()" title="Open profile">Profile</button>
-        </div>
-    </div>
-
     <main class="main-content">
         
         <header class="top-header">
-            <div>
-                <h2 id="page-title" class="page-title" data-en="Farm Financial & Yield Advisory" data-hi="कृषि लागत, पैदावार व मंडी सलाहकार">Farm Financial & Yield Advisory</h2>
-                <p class="subtitle" data-en="Calculate production costs, fetch verified mandi rates, and manage farm finances." data-hi="लागत का अग्रिम अनुमान लगाएं, सटीक मंडी भाव देखें और शुद्ध मुनाफा बढ़ाएं।">Calculate production costs, fetch verified mandi rates, and manage farm finances.</p>
+            <div class="top-header-left">
+                <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open navigation menu">☰</button>
+                <div>
+                    <h2 id="page-title" class="page-title" data-en="Farm Financial & Pre-Cost Engine" data-hi="फसल पूर्व लागत एवं वित्तीय सलाहकार">Farm Financial & Pre-Cost Engine</h2>
+                    <p class="subtitle" data-en="Calculate production costs, fetch verified mandi rates, and manage farm finances." data-hi="लागत का अग्रिम अनुमान लगाएं, सटीक मंडी भाव देखें और शुद्ध मुनाफा बढ़ाएं।">Calculate production costs, fetch verified mandi rates, and manage farm finances.</p>
+                </div>
             </div>
-            <div class="farm-visual" aria-hidden="true">
-                <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=720&q=82" alt="">
-                <span>FIELD NOTES <b>24 / 7</b></span>
+            <div class="top-header-actions">
+                <button class="btn-quick-demo" onclick="fillDemoBatch()">
+                    ⚡ <span data-en="Load Tomato Demo" data-hi="डेमो लोड करें (टमाटर)">Load Tomato Demo</span>
+                </button>
+                <div class="farmer-profile-chip" onclick="openProfile()" title="Open profile">
+                    <span class="status-indicator"></span>
+                    <span id="display-farmer">Signed in</span>
+                </div>
             </div>
-            <button class="btn-quick-demo" onclick="fillDemoBatch()">
-                ⚡ <span data-en="Load Tomato Demo" data-hi="डेमो लोड करें (टमाटर)">Load Tomato Demo</span>
-            </button>
         </header>
 
         <section class="ledger-stat-strip">
@@ -202,6 +206,15 @@
                         </div>
                     </div>
 
+                    <div id="cost-breakdown-wrapper" class="cost-breakdown-wrapper">
+                        <div class="cost-breakdown-label">
+                            <span data-en="Cost Distribution Breakdown" data-hi="लागत का श्रेणीवार विभाजन">Cost Distribution Breakdown</span>
+                            <span id="cost-breakdown-total">₹ 28,000</span>
+                        </div>
+                        <div id="cost-breakdown-bar" class="cost-breakdown-bar"></div>
+                        <div id="cost-breakdown-legend" class="cost-breakdown-legend"></div>
+                    </div>
+
                     <div id="calc-results-card" class="calc-results-card">
                         <h4 class="calc-results-title">📊 <span data-en="Financial & Profit Projection Summary" data-hi="अनुमानित वित्तीय व लाभ समीक्षा">Financial & Profit Projection Summary</span></h4>
                         <div class="calc-stat-grid">
@@ -288,6 +301,18 @@
                 </select>
                 <input type="text" id="mandi-search-market" placeholder="Filter Market / District" oninput="filterMandi()">
                 <button class="btn-secondary" onclick="fetchMandiRates()">🔄 <span data-en="Refresh Rates" data-hi="भाव रीफ्रेश करें">Refresh Rates</span></button>
+            </div>
+
+            <div class="mandi-quick-chips">
+                <span class="quick-chip-label" data-en="Quick Filter:" data-hi="त्वरित फ़िल्टर:">Quick Filter:</span>
+                <button type="button" class="quick-chip active" onclick="quickFilterMandi('')" data-en="All Crops" data-hi="सभी">All</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Wheat')">🌾 Wheat (गेहूं)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Potato')">🥔 Potato (आलू)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Tomato')">🍅 Tomato (टमाटर)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Mustard')">🌿 Mustard (सरसों)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Onion')">🧅 Onion (प्याज)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Soybean')">🌱 Soybean (सोयाबीन)</button>
+                <button type="button" class="quick-chip" onclick="quickFilterMandi('Cotton')">☁️ Cotton (कपास)</button>
             </div>
 
             <div id="mandi-alert-box" class="mandi-alert hidden"></div>
@@ -724,6 +749,13 @@
             <button class="btn-remove-chat-media" onclick="removeChatMedia()">✖</button>
         </div>
 
+        <div class="assistant-quick-prompts">
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What is today\'s mandi rate for potato in Uttar Pradesh?')">🥔 Potato mandi rates</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('How to protect tomato crops from late blight?')">🍅 Tomato disease advice</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What are best storage conditions for wheat?')">🌾 Wheat storage advice</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('Suggest high profit crop rotation after mustard')">🌿 Mustard rotation plan</button>
+        </div>
+
         <div class="assistant-input-area">
             <label class="btn-chat-icon" title="Upload Crop Photo">
                 📷
@@ -737,28 +769,48 @@
         </div>
     </div>
 
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="mobile-bottom-nav" aria-label="Quick mobile navigation">
+        <button class="bottom-nav-item active" onclick="switchTab('pre-cost'); closeMobileSidebar();">
+            <span class="icon">🧮</span>
+            <span data-en="Pre-Cost" data-hi="लागत">Pre-Cost</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('mandi'); closeMobileSidebar();">
+            <span class="icon">🏛️</span>
+            <span data-en="Mandi" data-hi="मंडी">Mandi</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('storage-finder'); closeMobileSidebar();">
+            <span class="icon">🏬</span>
+            <span data-en="Storage" data-hi="भंडार">Storage</span>
+        </button>
+        <button class="bottom-nav-item" onclick="switchTab('ledger-stored'); closeMobileSidebar();">
+            <span class="icon">📦</span>
+            <span data-en="Batches" data-hi="उपज">Batches</span>
+        </button>
+        <button class="bottom-nav-item" onclick="toggleAssistant()">
+            <span class="icon">🤖</span>
+            <span data-en="AI Copilot" data-hi="एआई">AI Copilot</span>
+        </button>
+    </nav>
+
     <script src="/static/app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
-        // Top-right glass menu toggle — isolated, touches no existing function/markup.
-        (function topMenuController() {
-            const toggle = document.getElementById('top-menu-toggle');
-            const panel = document.getElementById('top-menu-panel');
-            if (!toggle || !panel) return;
-            function closeMenu() {
-                panel.classList.remove('open');
-                toggle.classList.remove('open');
-                toggle.setAttribute('aria-expanded', 'false');
-            }
-            window.toggleTopMenu = function () {
-                const isOpen = panel.classList.toggle('open');
-                toggle.classList.toggle('open', isOpen);
-                toggle.setAttribute('aria-expanded', String(isOpen));
-            };
-            document.addEventListener('click', event => {
-                if (!panel.contains(event.target) && !toggle.contains(event.target)) closeMenu();
-            });
-        })();
+        // Mobile Sidebar Drawer Navigation
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+            const isOpen = sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active', isOpen);
+        }
+
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById('app-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            if (overlay) overlay.classList.remove('active');
+        }
     </script>
 </body>
 </html>
