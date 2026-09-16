@@ -1319,23 +1319,42 @@ async function sendAssistantMessage() {
     if (!chatBody) return;
 
     const userBubble = document.createElement("div");
-    userBubble.className = "user-msg";
+    userBubble.className = "user-msg message-bubble";
+
+    const userMeta = document.createElement("div");
+    userMeta.className = "message-meta";
+    userMeta.innerHTML = "<span>👤 You</span><span>Now</span>";
+
+    const userBody = document.createElement("div");
+    userBody.className = "message-body";
     if (text) {
-        userBubble.innerText = text;
+        userBody.innerText = text;
     } else {
         const attachmentLabel = document.createElement("em");
         attachmentLabel.innerText = "[Photo Attached for AI Diagnosis]";
-        userBubble.appendChild(attachmentLabel);
+        userBody.appendChild(attachmentLabel);
     }
+
+    userBubble.appendChild(userMeta);
+    userBubble.appendChild(userBody);
     chatBody.appendChild(userBubble);
     
-    // Clear the input box instantly so it doesn't double-send
     input.value = "";
     chatBody.scrollTop = chatBody.scrollHeight;
 
     const botBubble = document.createElement("div");
-    botBubble.className = "bot-msg";
-    botBubble.innerText = (currentLang === 'hi') ? "कृषि डेटा का विश्लेषण हो रहा है..." : "Analyzing crop data & financial benchmarks...";
+    botBubble.className = "bot-msg message-bubble";
+
+    const botMeta = document.createElement("div");
+    botMeta.className = "message-meta";
+    botMeta.innerHTML = "<span>🤖 AI Advisor</span><span>Working</span>";
+
+    const botBody = document.createElement("div");
+    botBody.className = "message-body";
+    botBody.innerText = (currentLang === 'hi') ? "कृषि डेटा का विश्लेषण हो रहा है..." : "Analyzing crop data & financial benchmarks...";
+
+    botBubble.appendChild(botMeta);
+    botBubble.appendChild(botBody);
     chatBody.appendChild(botBubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 
@@ -1356,7 +1375,7 @@ async function sendAssistantMessage() {
         if (!res.ok || data.error) {
             throw new Error(data.error || `Chat request failed (${res.status})`);
         }
-        botBubble.innerText = data.reply || "The assistant returned no response. Please try again.";
+        botBody.innerText = data.reply || "The assistant returned no response. Please try again.";
         
         if (data.updated_batches) {
             produceBatches = data.updated_batches;
@@ -1367,7 +1386,7 @@ async function sendAssistantMessage() {
             speakAssistantResponse(data.reply);
         }
     } catch (e) {
-        botBubble.innerText = `AI error: ${e.message}`;
+        botBody.innerText = `AI error: ${e.message}`;
         if (isLiveVoiceActive) {
             setTimeout(() => recordAudioMessage(), 1000); 
         }

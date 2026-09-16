@@ -693,11 +693,14 @@
     <div id="assistant-panel" class="assistant-panel">
         <div class="assistant-header">
             <div>
-                <h4>🌾 KrishiSahayak AI</h4>
+                <h4>🤖 KrishiSahayak AI</h4>
                 <p class="assistant-sub" data-en="Multimodal & Voice Farm Copilot" data-hi="बहुभाषी व आवाज-सक्षम कृषि सहायक">Multimodal & Voice Farm Copilot</p>
+                <div class="assistant-badge-row">
+                    <span class="assistant-badge">🧠 Smart Advisor</span>
+                    <span class="assistant-badge">📈 Farm Insights</span>
+                </div>
             </div>
             <div class="assistant-head-actions">
-                <!-- HINDI/ENGLISH TOGGLE BUTTON IN CHAT -->
                 <button id="btn-chat-lang-toggle" class="btn-chat-toggle" onclick="toggleChatLanguage()" title="Switch Chat Language">
                     🌐 <span id="chat-lang-indicator">HI</span>
                 </button>
@@ -709,11 +712,9 @@
         </div>
 
         <div class="assistant-chat-body" id="chat-messages">
-            <div class="bot-msg">
-                <span data-en="Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos." 
-                      data-hi="नमस्ते! मैं आपका कृषि AI सहायक हूँ। मुझसे लागत, मंडी भाव, फसल बीमारी या मुनाफे के बारे में पूछें।">
-                      Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos.
-                </span>
+            <div class="bot-msg message-bubble">
+                <div class="message-meta"><span>🤖 AI Advisor</span><span>Now</span></div>
+                <div class="message-body" data-en="Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos." data-hi="नमस्ते! मैं आपका कृषि AI सहायक हूँ। मुझसे लागत, मंडी भाव, फसल बीमारी या मुनाफे के बारे में पूछें।">Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos.</div>
             </div>
         </div>
 
