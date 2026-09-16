@@ -384,6 +384,75 @@ body {
     transform: translateY(-1px);
 }
 
+.btn-whatsapp-toggle {
+    background: rgba(37, 211, 102, 0.12);
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    color: #166534;
+    padding: 7px 15px;
+    font-weight: 600;
+    font-size: 0.84rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-whatsapp-toggle:hover {
+    background: rgba(37, 211, 102, 0.22);
+    border-color: #25D366;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+}
+
+.btn-whatsapp-toggle.disabled {
+    background: var(--surface-card-subtle);
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+
+.btn-whatsapp-toggle.disabled:hover {
+    background: var(--surface-card-muted);
+    border-color: var(--border-strong);
+    color: var(--text-main);
+    box-shadow: none;
+}
+
+.wa-indicator-dot {
+    width: 8px;
+    height: 8px;
+    background: #25D366;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.3);
+    display: inline-block;
+    flex-shrink: 0;
+    animation: waPulse 2s infinite ease-in-out;
+}
+
+.wa-indicator-dot.off {
+    background: #9CA3AF;
+    box-shadow: none;
+    animation: none;
+}
+
+.btn-whatsapp-toggle.disabled .wa-indicator-dot {
+    background: #9CA3AF;
+    box-shadow: none;
+    animation: none;
+}
+
+@keyframes waPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.3);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.15);
+    }
+}
+
 .farmer-profile-chip {
     background: var(--surface-card-subtle);
     border: 1px solid var(--border);
@@ -1498,6 +1567,232 @@ textarea:focus {
     font-weight: 600;
     cursor: pointer;
 }
+
+/* ============================================================
+   WHATSAPP HIGH-RISK ALERTS & CONTROLS
+   ============================================================ */
+.high-risk-alert-bar {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.alert-info-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--risk-red);
+}
+
+.pulse-warning {
+    display: inline-block;
+    animation: alertWarnPulse 1.5s infinite;
+}
+
+@keyframes alertWarnPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.alert-btn-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wa-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.wa-status-badge.cooldown {
+    background: rgba(245, 158, 11, 0.15);
+    color: #B45309;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.wa-status-badge.disabled {
+    background: var(--surface-card-subtle);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.btn-small-wa {
+    background: #25D366;
+    color: #FFFFFF;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(37, 211, 102, 0.35);
+}
+
+.btn-small-wa:hover {
+    background: #20BA5A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(37, 211, 102, 0.45);
+}
+
+.btn-small-wa-mute {
+    background: #FFFFFF;
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-small-wa-mute:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: #DC2626;
+}
+
+.btn-small-wa-enable {
+    background: #166534;
+    color: #FFFFFF;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-small-wa-enable:hover {
+    background: #15803D;
+}
+
+.wa-risk-note {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-left: 4px;
+}
+
+/* Profile Modal WhatsApp Card & Switch */
+.whatsapp-alert-setting-card {
+    background: var(--surface-card-subtle);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wa-setting-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.wa-setting-info {
+    flex: 1;
+}
+
+.wa-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.wa-cooldown-tag {
+    background: rgba(245, 158, 11, 0.15);
+    color: #B45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wa-setting-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+}
+
+/* Switch Toggle UI */
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-toggle .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #D1D5DB;
+    transition: 0.25s;
+    border-radius: 24px;
+}
+
+.switch-toggle .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.25s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+.switch-toggle input:checked + .slider {
+    background-color: #25D366;
+}
+
+.switch-toggle input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
 
 /* ============================================================
    FLOATING AI ASSISTANT (ASK KRISHI AI)

@@ -59,8 +59,9 @@ CREATE TABLE IF NOT EXISTS farmer_profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS farmer_profiles_farmer_id_idx ON farmer_profiles (farmer_id);
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS alert_phone TEXT DEFAULT '';
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '';
+ALTER TABLE farmer_profiles ADD COLUMN IF NOT EXISTS whatsapp_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE produce_batches ADD COLUMN IF NOT EXISTS last_whatsapp_alert_at TIMESTAMP WITH TIME ZONE;
 

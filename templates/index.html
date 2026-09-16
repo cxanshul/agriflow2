@@ -89,6 +89,11 @@
                 </div>
             </div>
             <div class="top-header-actions">
+                <button id="btn-toggle-whatsapp" class="btn-whatsapp-toggle active" type="button" onclick="quickToggleWhatsApp()" title="Toggle WhatsApp High-Risk Spoilage Alerts">
+                    <span class="wa-indicator-dot"></span>
+                    <span class="wa-icon">💬</span>
+                    <span id="wa-toggle-label" data-en="WhatsApp Alerts: ON" data-hi="व्हाट्सएप अलर्ट: चालू">WhatsApp Alerts: ON</span>
+                </button>
                 <button class="btn-quick-demo" onclick="fillDemoBatch()">
                     ⚡ <span data-en="Load Tomato Demo" data-hi="डेमो लोड करें (टमाटर)">Load Tomato Demo</span>
                 </button>
@@ -693,6 +698,25 @@
                 <div class="auth-location-grid"><div><label for="profile-latitude">Latitude</label><input id="profile-latitude" type="number" step="any" min="6" max="37.5" required></div><div><label for="profile-longitude">Longitude</label><input id="profile-longitude" type="number" step="any" min="68" max="98" required></div></div>
                 <label for="profile-location-name">Location label</label><input id="profile-location-name" type="text" placeholder="Village / district name">
                 <label for="profile-alert-phone">Alert phone with country code</label><input id="profile-alert-phone" type="tel" placeholder="+91XXXXXXXXXX">
+                <div class="whatsapp-alert-setting-card">
+                    <div class="wa-setting-header">
+                        <div class="wa-setting-info">
+                            <div class="wa-title-row">
+                                <span class="wa-icon">💬</span>
+                                <strong><span data-en="WhatsApp High-Risk Alerts" data-hi="व्हाट्सएप उच्च-जोखिम अलर्ट">WhatsApp High-Risk Alerts</span></strong>
+                                <span class="wa-cooldown-tag" data-en="24h Throttle" data-hi="24 घंटे का अंतराल">24h Throttle</span>
+                            </div>
+                            <p class="subtitle" data-en="Sends direct WhatsApp updates exclusively when stored crop reaches High Spoilage Risk (throttled to max 1 alert per 24 hours per crop)." data-hi="फसल में उच्च सड़न जोखिम होने पर ही व्हाट्सएप पर सीधा संदेश भेजता है (प्रति फसल 24 घंटे में अधिकतम 1 बार)।">Sends direct WhatsApp updates exclusively when stored crop reaches High Spoilage Risk (throttled to max 1 alert per 24 hours per crop).</p>
+                        </div>
+                        <label class="switch-toggle" title="Turn WhatsApp alerts On or Off">
+                            <input type="checkbox" id="profile-whatsapp-enabled" checked onchange="toggleWhatsAppAlertsFromSwitch(this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="wa-setting-status" class="wa-setting-status text-green">
+                        <span class="wa-indicator-dot"></span> <span data-en="Active: 24-hour interval for high-risk crop updates" data-hi="सक्रिय: 24 घंटे के अंतराल पर उच्च-जोखिम अपडेट चालू हैं">Active: 24-hour interval for high-risk crop updates</span>
+                    </div>
+                </div>
                 <div class="profile-actions"><button class="btn-secondary" type="button" onclick="useProfileLocation()">Use my location</button><button class="auth-submit" type="submit">Save profile</button></div>
             </form>
             <div class="profile-danger"><button class="btn-delete-data" onclick="deleteAllProduce()" type="button">Delete my crop data</button><button class="btn-logout" onclick="logout()" type="button">Log out</button></div>

@@ -7,7 +7,7 @@ import uuid
 import secrets
 from functools import wraps
 from io import BytesIO
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import time
 from urllib.parse import quote, urlparse
 
@@ -70,6 +70,8 @@ TWILIO_WHATSAPP_ALERT_CONTENT_SID = env_value("TWILIO_WHATSAPP_ALERT_CONTENT_SID
 WAPPFLY_API_TOKEN = env_value("WAPPFLY_API_TOKEN")
 WAPPFLY_SEND_URL = "https://wappfly.com/api/messages/send"
 OTP_TTL_SECONDS = 300
+WHATSAPP_COOLDOWN_SECONDS = 24 * 3600  # 24-hour rate limit between WhatsApp updates for any batch
+WHATSAPP_ALERT_LOG = {}  # In-memory alert log: (farmer_id, batch_id) -> float(timestamp)
 ACCUWEATHER_BASE_URL = "https://dataservice.accuweather.com"
 NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
 OVERPASS_API_URL = "https://overpass-api.de/api/interpreter"
@@ -166,6 +168,7 @@ MANDI_FALLBACK_DATABASE = [
 ]
 
 DATA_STORE = [] # Starts empty to rely on Supabase
+PROFILE_STORE = {} # In-memory profile fallback for local development & testing
 
 # ============================================================
 # HELPER FUNCTIONS
@@ -374,15 +377,28 @@ def user_batches(user_id):
     return [batch for batch in DATA_STORE if batch.get("farmer_id") == user_id]
 
 def default_profile(user):
-    return {"farmer_id": user["id"], "full_name": "", "latitude": None, "longitude": None, "location_name": "", "alert_phone": "", "phone_verified": False, "email": ""}
+    return {
+        "farmer_id": user["id"],
+        "full_name": "",
+        "latitude": None,
+        "longitude": None,
+        "location_name": "",
+        "alert_phone": "",
+        "phone_verified": False,
+        "whatsapp_alerts_enabled": True,
+        "email": ""
+    }
 
 def load_profile(user):
     profile = default_profile(user)
+    if user.get("id") in PROFILE_STORE:
+        profile.update(PROFILE_STORE[user["id"]])
     if supabase:
         try:
             result = supabase.table("farmer_profiles").select("*").eq("farmer_id", user["id"]).limit(1).execute()
             if result.data:
                 profile.update(result.data[0])
+                PROFILE_STORE[user["id"]] = dict(profile)
         except Exception as error:
             app.logger.warning("Could not load farmer profile: %s", error)
     return profile
@@ -658,7 +674,23 @@ def profile():
     alert_phone = str(data.get("alert_phone", "")).strip()
     if alert_phone and not alert_phone.startswith("+"):
         return jsonify({"success": False, "error": "Alert phone must include the country code, for example +91XXXXXXXXXX."}), 400
-    updated = {"farmer_id": user["id"], "full_name": full_name, "latitude": latitude, "longitude": longitude, "location_name": location_name, "alert_phone": alert_phone, "updated_at": datetime.utcnow().isoformat()}
+    current_prof = load_profile(user)
+    whatsapp_enabled = data.get("whatsapp_alerts_enabled")
+    if whatsapp_enabled is not None:
+        whatsapp_alerts_enabled = bool(whatsapp_enabled)
+    else:
+        whatsapp_alerts_enabled = bool(current_prof.get("whatsapp_alerts_enabled", True))
+
+    updated = {
+        "farmer_id": user["id"],
+        "full_name": full_name,
+        "latitude": latitude,
+        "longitude": longitude,
+        "location_name": location_name,
+        "alert_phone": alert_phone,
+        "whatsapp_alerts_enabled": whatsapp_alerts_enabled,
+        "updated_at": datetime.utcnow().isoformat()
+    }
     if supabase:
         try:
             result = supabase.table("farmer_profiles").upsert(updated).execute()
@@ -667,8 +699,49 @@ def profile():
             return jsonify({"success": False, "error": f"Profile could not be saved: {error}"}), 502
     else:
         profile_data = updated
+    PROFILE_STORE[user["id"]] = dict(profile_data)
     session["user"]["full_name"] = full_name
     return jsonify({"success": True, "profile": profile_data})
+
+@app.route("/api/profile/whatsapp-alerts", methods=["GET", "POST"])
+@require_auth
+def manage_whatsapp_alerts():
+    user = current_user()
+    profile_data = load_profile(user)
+    if request.method == "POST":
+        data = request.json or {}
+        if "enabled" in data:
+            new_state = bool(data["enabled"])
+        else:
+            new_state = not bool(profile_data.get("whatsapp_alerts_enabled", True))
+
+        updated = {
+            "farmer_id": user["id"],
+            "whatsapp_alerts_enabled": new_state,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        if supabase:
+            try:
+                result = supabase.table("farmer_profiles").upsert(updated).execute()
+                if result.data:
+                    profile_data.update(result.data[0])
+            except Exception as e:
+                app.logger.warning("Could not persist whatsapp_alerts_enabled to Supabase: %s", e)
+                profile_data["whatsapp_alerts_enabled"] = new_state
+        else:
+            profile_data["whatsapp_alerts_enabled"] = new_state
+
+        PROFILE_STORE[user["id"]] = dict(profile_data)
+
+        return jsonify({
+            "success": True,
+            "whatsapp_alerts_enabled": new_state,
+            "message": f"WhatsApp alerts {'turned ON' if new_state else 'turned OFF'} successfully."
+        })
+    return jsonify({
+        "success": True,
+        "whatsapp_alerts_enabled": bool(profile_data.get("whatsapp_alerts_enabled", True))
+    })
 
 @app.route("/api/alerts/spoilage", methods=["POST"])
 @require_auth
@@ -682,31 +755,117 @@ def send_spoilage_alert():
     batch = next((item for item in user_batches(user["id"]) if str(item.get("id")) == batch_id), None)
     if not batch:
         return jsonify({"success": False, "error": "Crop batch not found."}), 404
-    if batch.get("spoilage_risk") not in {"High", "Medium"}:
-        return jsonify({"success": False, "error": "This batch does not currently need a spoilage alert."}), 400
+    
     profile_data = load_profile(user)
+
+    # Specific WhatsApp restrictions:
+    if channel == "whatsapp":
+        # 1. Direct Turn Off / On check
+        if not profile_data.get("whatsapp_alerts_enabled", True):
+            return jsonify({
+                "success": False,
+                "whatsapp_disabled": True,
+                "error": "WhatsApp alerts are currently turned OFF. Turn them on to receive updates."
+            }), 403
+
+        # 2. High risk crops ONLY
+        if batch.get("spoilage_risk") != "High":
+            return jsonify({
+                "success": False,
+                "error": "WhatsApp updates are reserved for crops at High spoilage risk only."
+            }), 400
+
+        # 3. 24-Hour Cooldown check
+        now_ts = time.time()
+        last_sent_ts = WHATSAPP_ALERT_LOG.get((user["id"], batch_id))
+        if not last_sent_ts and batch.get("last_whatsapp_alert_at"):
+            try:
+                dt_str = str(batch["last_whatsapp_alert_at"]).replace("Z", "+00:00")
+                last_sent_ts = datetime.fromisoformat(dt_str).timestamp()
+            except Exception:
+                last_sent_ts = None
+
+        if last_sent_ts:
+            elapsed = now_ts - last_sent_ts
+            if elapsed < WHATSAPP_COOLDOWN_SECONDS:
+                remaining_seconds = int(WHATSAPP_COOLDOWN_SECONDS - elapsed)
+                remaining_hours = round(remaining_seconds / 3600.0, 1)
+                next_eligible_iso = (datetime.utcnow() + timedelta(seconds=remaining_seconds)).isoformat()
+                return jsonify({
+                    "success": False,
+                    "cooldown": True,
+                    "remaining_seconds": remaining_seconds,
+                    "remaining_hours": remaining_hours,
+                    "next_eligible_at": next_eligible_iso,
+                    "error": f"WhatsApp alerts for this crop can only be sent once every 24 hours. Next alert available in {remaining_hours} hours."
+                }), 429
+    else:
+        # SMS: allow High or Medium
+        if batch.get("spoilage_risk") not in {"High", "Medium"}:
+            return jsonify({"success": False, "error": "This batch does not currently need a spoilage alert."}), 400
+
     phone = str(profile_data.get("alert_phone") or batch.get("farmer_phone") or "").strip()
     if not phone or phone == "9876543210":
         return jsonify({"success": False, "error": "Add a phone number with country code in your Profile first."}), 400
     verified_phone = session.get("verified_alert_phone")
     if verified_phone != phone:
         return jsonify({"success": False, "error": "Verify this phone number with OTP before sending an alert.", "requires_verification": True}), 403
-    if channel == "whatsapp" and not WAPPFLY_API_TOKEN:
-        return jsonify({"success": False, "configured": False, "error": "WhatsApp alerts are not configured. Add WAPPFLY_API_TOKEN to the server environment."}), 503
+    
+    if channel == "whatsapp" and not WAPPFLY_API_TOKEN and not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM):
+        return jsonify({"success": False, "configured": False, "error": "WhatsApp alerts are not configured. Add WAPPFLY_API_TOKEN or Twilio WhatsApp to the server environment."}), 503
     if channel == "sms" and (not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN):
         return jsonify({"success": False, "configured": False, "error": "SMS alerts are not configured on the server yet."}), 503
     if channel == "sms" and not TWILIO_SMS_FROM:
         return jsonify({"success": False, "configured": False, "error": "Twilio SMS sender is not configured."}), 503
-    message = f"AgriFlow alert: {batch.get('crop_name', 'Your crop')} has {batch.get('spoilage_risk')} spoilage risk and about {batch.get('shelf_life_days', 'limited')} days of shelf life left. Check storage and selling options today."
+
+    message = (
+        f"🚨 AgriFlow High-Risk Spoilage Alert:\n"
+        f"Crop: {batch.get('crop_name', 'Your crop')} ({batch.get('variety', 'produce')})\n"
+        f"Risk: {batch.get('spoilage_risk')} | Est. Shelf Life: ~{batch.get('shelf_life_days', 'limited')} days left\n"
+        f"Storage: {batch.get('storage_type', 'Godown')}\n"
+        f"Advisory: {batch.get('recommendation', 'Inspect produce immediately and consider selling or cold storage.')}\n"
+        f"Open AgriFlow to find nearby cold storage or settle sale."
+    )
     try:
         if channel == "whatsapp":
-            send_wappfly_message(phone, message)
+            if WAPPFLY_API_TOKEN:
+                try:
+                    send_wappfly_message(phone, message)
+                except Exception as wapp_err:
+                    if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM:
+                        app.logger.info("Wappfly failed (%s), falling back to Twilio WhatsApp", wapp_err)
+                        send_twilio_message(phone, "whatsapp", message, content_sid=TWILIO_WHATSAPP_ALERT_CONTENT_SID)
+                    else:
+                        raise wapp_err
+            elif TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM:
+                send_twilio_message(phone, "whatsapp", message, content_sid=TWILIO_WHATSAPP_ALERT_CONTENT_SID)
+            else:
+                return jsonify({"success": False, "error": "WhatsApp provider not configured."}), 503
         else:
             send_twilio_message(phone, channel, message)
-        return jsonify({"success": True, "channel": channel, "message": f"{channel.title()} alert sent."})
+
+        # Record timestamp for 24-hour rate limiting
+        now_ts = time.time()
+        now_iso = datetime.utcnow().isoformat()
+        if channel == "whatsapp":
+            WHATSAPP_ALERT_LOG[(user["id"], batch_id)] = now_ts
+            batch["last_whatsapp_alert_at"] = now_iso
+            if supabase:
+                try:
+                    supabase.table("produce_batches").update({"last_whatsapp_alert_at": now_iso}).eq("id", batch_id).execute()
+                except Exception as e:
+                    app.logger.warning("Could not update last_whatsapp_alert_at in Supabase: %s", e)
+
+        return jsonify({
+            "success": True, 
+            "channel": channel, 
+            "message": f"{channel.title()} alert sent successfully.",
+            "last_whatsapp_alert_at": now_iso if channel == "whatsapp" else None,
+            "cooldown_seconds": WHATSAPP_COOLDOWN_SECONDS if channel == "whatsapp" else 0
+        })
     except (requests.RequestException, RuntimeError) as error:
         app.logger.warning("Spoilage alert delivery failed: %s", error)
-        return jsonify({"success": False, "error": "The alert provider could not deliver this message."}), 502
+        return jsonify({"success": False, "error": f"The alert provider could not deliver this message: {error}"}), 502
 
 def send_twilio_message(phone, channel, message, content_sid=None, content_variables=None):
     sender = TWILIO_WHATSAPP_FROM if channel == "whatsapp" else TWILIO_SMS_FROM

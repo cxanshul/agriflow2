@@ -168,6 +168,7 @@ async function loadProfile() {
     farmerProfile = data.profile || null;
     const displayName = document.getElementById("display-farmer");
     if (displayName && farmerProfile?.full_name) displayName.innerText = farmerProfile.full_name;
+    updateWhatsAppUI();
 }
 
 function openProfile() {
@@ -179,6 +180,11 @@ function openProfile() {
     document.getElementById("profile-longitude").value = farmerProfile?.longitude ?? "";
     document.getElementById("profile-location-name").value = farmerProfile?.location_name || "";
     document.getElementById("profile-alert-phone").value = farmerProfile?.alert_phone || "";
+    const waSwitch = document.getElementById("profile-whatsapp-enabled");
+    if (waSwitch) {
+        waSwitch.checked = farmerProfile?.whatsapp_alerts_enabled !== false;
+    }
+    updateWhatsAppUI();
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 }
@@ -208,12 +214,14 @@ function useProfileLocation() {
 
 async function saveProfile(event) {
     event.preventDefault();
+    const waSwitch = document.getElementById("profile-whatsapp-enabled");
     const payload = {
         full_name: document.getElementById("profile-name").value.trim(),
         latitude: document.getElementById("profile-latitude").value,
         longitude: document.getElementById("profile-longitude").value,
         location_name: document.getElementById("profile-location-name").value.trim(),
-        alert_phone: document.getElementById("profile-alert-phone").value.trim()
+        alert_phone: document.getElementById("profile-alert-phone").value.trim(),
+        whatsapp_alerts_enabled: waSwitch ? waSwitch.checked : (farmerProfile?.whatsapp_alerts_enabled !== false)
     };
 
     try {
@@ -228,10 +236,120 @@ async function saveProfile(event) {
         farmerProfile = data.profile;
         const displayName = document.getElementById("display-farmer");
         if (displayName) displayName.innerText = farmerProfile.full_name || "Signed in";
+        updateWhatsAppUI();
         closeProfile();
         showToast("Profile saved successfully.", "success");
+        if (typeof renderStoredProduce === "function") renderStoredProduce();
     } catch (error) {
         showToast(error.message, "error");
+    }
+}
+
+function getBatchWhatsAppCooldown(b) {
+    if (!b) return null;
+    let lastSent = null;
+    if (b.last_whatsapp_alert_at) {
+        try {
+            lastSent = new Date(b.last_whatsapp_alert_at).getTime();
+        } catch (e) {
+            lastSent = null;
+        }
+    }
+    const localKey = `agriflow-alert-${b.id}-whatsapp`;
+    const localVal = localStorage.getItem(localKey);
+    if (localVal) {
+        const localTs = parseInt(localVal, 10);
+        if (!isNaN(localTs) && (!lastSent || localTs > lastSent)) {
+            lastSent = localTs;
+        }
+    }
+    if (!lastSent) return null;
+    const elapsed = Date.now() - lastSent;
+    const cooldownMs = 24 * 3600 * 1000;
+    if (elapsed < cooldownMs) {
+        const remainingMs = cooldownMs - elapsed;
+        const remainingHours = (remainingMs / (3600 * 1000)).toFixed(1);
+        return { active: true, remainingHours, remainingMs };
+    }
+    return null;
+}
+
+async function toggleWhatsAppAlerts(desiredState = null) {
+    const currentState = farmerProfile?.whatsapp_alerts_enabled !== false;
+    const newState = desiredState !== null ? Boolean(desiredState) : !currentState;
+    
+    try {
+        const response = await fetch("/api/profile/whatsapp-alerts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: newState })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || "Could not update WhatsApp alert preference.");
+        }
+        if (!farmerProfile) farmerProfile = {};
+        farmerProfile.whatsapp_alerts_enabled = data.whatsapp_alerts_enabled;
+        updateWhatsAppUI();
+        
+        const msg = data.whatsapp_alerts_enabled 
+            ? (currentLang === 'hi' ? "व्हाट्सएप उच्च-जोखिम अलर्ट चालू कर दिए गए हैं (24 घंटे का अंतराल लागू)।" : "WhatsApp High-Risk alerts are now turned ON (24h cooldown enforced).")
+            : (currentLang === 'hi' ? "व्हाट्सएप अलर्ट सफलतापूर्वक बंद कर दिए गए हैं।" : "WhatsApp alerts turned OFF.");
+        showToast(msg, data.whatsapp_alerts_enabled ? "success" : "info");
+        
+        if (typeof renderStoredProduce === "function") {
+            renderStoredProduce();
+        }
+    } catch (err) {
+        console.error("Failed to toggle WhatsApp alerts:", err);
+        showToast(err.message || "Failed to toggle WhatsApp alerts", "error");
+        updateWhatsAppUI();
+    }
+}
+
+function quickToggleWhatsApp() {
+    toggleWhatsAppAlerts();
+}
+
+function toggleWhatsAppAlertsFromSwitch(checked) {
+    toggleWhatsAppAlerts(checked);
+}
+
+function updateWhatsAppUI() {
+    const isEnabled = farmerProfile?.whatsapp_alerts_enabled !== false;
+    
+    const btn = document.getElementById("btn-toggle-whatsapp");
+    const label = document.getElementById("wa-toggle-label");
+    if (btn) {
+        btn.classList.toggle("active", isEnabled);
+        btn.classList.toggle("disabled", !isEnabled);
+        btn.setAttribute("aria-pressed", isEnabled ? "true" : "false");
+    }
+    if (label) {
+        if (isEnabled) {
+            label.textContent = currentLang === 'hi' ? "व्हाट्सएप अलर्ट: चालू" : "WhatsApp Alerts: ON";
+            label.setAttribute("data-en", "WhatsApp Alerts: ON");
+            label.setAttribute("data-hi", "व्हाट्सएप अलर्ट: चालू");
+        } else {
+            label.textContent = currentLang === 'hi' ? "व्हाट्सएप अलर्ट: बंद" : "WhatsApp Alerts: OFF";
+            label.setAttribute("data-en", "WhatsApp Alerts: OFF");
+            label.setAttribute("data-hi", "व्हाट्सएप अलर्ट: बंद");
+        }
+    }
+    
+    const toggleSwitch = document.getElementById("profile-whatsapp-enabled");
+    if (toggleSwitch) {
+        toggleSwitch.checked = isEnabled;
+    }
+    const statusText = document.getElementById("wa-setting-status");
+    if (statusText) {
+        if (isEnabled) {
+            statusText.className = "wa-setting-status text-green";
+            statusText.innerHTML = `<span class="wa-indicator-dot"></span> <span>${currentLang === 'hi' ? 'सक्रिय: 24 घंटे के अंतराल पर उच्च-जोखिम अपडेट चालू हैं' : 'Active: 24-hour interval for high-risk crop updates'}</span>`;
+        } else {
+            statusText.className = "wa-setting-status text-muted";
+            statusText.innerHTML = `<span class="wa-indicator-dot off"></span> <span>${currentLang === 'hi' ? 'निष्क्रिय: व्हाट्सएप संदेश बंद हैं' : 'Muted: WhatsApp notifications are turned off'}</span>`;
+        }
     }
 }
 
@@ -870,7 +988,36 @@ function renderStoredProduce() {
                 <strong>💡 ${t('storage')}:</strong> ${b.recommendation}<br>
                 <strong>⚙️ ${t('processing')}:</strong> ${b.processing_idea}
             </div>
-            ${b.spoilage_risk === 'High' || b.spoilage_risk === 'Medium' ? `<div class="alert-actions"><strong>⚠️ ${currentLang === 'hi' ? 'स्वचालित खराबी चेतावनी' : 'Spoilage alert'}</strong><button type="button" class="btn-small-neutral" onclick="sendSpoilageAlert('${b.id}', 'sms')">SMS</button><button type="button" class="btn-small-neutral" onclick="sendSpoilageAlert('${b.id}', 'whatsapp')">WhatsApp</button></div>` : ''}
+            ${b.spoilage_risk === 'High' ? (() => {
+                const waCooldown = getBatchWhatsAppCooldown(b);
+                const waEnabled = farmerProfile?.whatsapp_alerts_enabled !== false;
+                return `
+                <div class="alert-actions high-risk-alert-bar">
+                    <div class="alert-info-title">
+                        <span class="pulse-warning">⚠️</span>
+                        <strong>${currentLang === 'hi' ? 'उच्च सड़न जोखिम (व्हाट्सएप अपडेट)' : 'High Spoilage Risk (WhatsApp Updates)'}</strong>
+                    </div>
+                    <div class="alert-btn-group">
+                        ${!waEnabled ? `
+                            <span class="wa-status-badge disabled" title="${currentLang === 'hi' ? 'व्हाट्सएप संदेश बंद हैं' : 'WhatsApp alerts are turned OFF'}">🔕 ${currentLang === 'hi' ? 'अलर्ट बंद' : 'WA Off'}</span>
+                            <button type="button" class="btn-small-wa-enable" onclick="toggleWhatsAppAlerts(true)">${currentLang === 'hi' ? 'चालू करें' : 'Turn On WA'}</button>
+                        ` : waCooldown ? `
+                            <span class="wa-status-badge cooldown" title="${currentLang === 'hi' ? '24 घंटे का अंतराल सक्रिय है' : '24h rate limit active'}">🕒 ${currentLang === 'hi' ? `भेजा गया • अगला ${waCooldown.remainingHours}h में` : `WA Sent • Next in ${waCooldown.remainingHours}h`}</span>
+                            <button type="button" class="btn-small-wa-mute" onclick="toggleWhatsAppAlerts(false)" title="${currentLang === 'hi' ? 'व्हाट्सएप अलर्ट बंद करें' : 'Turn off WhatsApp alerts'}">🔕 ${currentLang === 'hi' ? 'अलर्ट बंद करें' : 'Turn Off WA'}</button>
+                        ` : `
+                            <button type="button" class="btn-small-wa" onclick="sendSpoilageAlert('${b.id}', 'whatsapp')">💬 ${currentLang === 'hi' ? 'व्हाट्सएप भेजें (24h)' : 'Send WhatsApp (24h)'}</button>
+                            <button type="button" class="btn-small-wa-mute" onclick="toggleWhatsAppAlerts(false)" title="${currentLang === 'hi' ? 'व्हाट्सएप अलर्ट बंद करें' : 'Turn off WhatsApp alerts'}">🔕 ${currentLang === 'hi' ? 'अलर्ट बंद करें' : 'Turn Off WA'}</button>
+                        `}
+                        <button type="button" class="btn-small-neutral" onclick="sendSpoilageAlert('${b.id}', 'sms')">SMS</button>
+                    </div>
+                </div>`;
+            })() : b.spoilage_risk === 'Medium' ? `
+                <div class="alert-actions">
+                    <strong>⚠️ ${currentLang === 'hi' ? 'मध्यम जोखिम चेतावनी' : 'Medium Risk Alert'}</strong>
+                    <button type="button" class="btn-small-neutral" onclick="sendSpoilageAlert('${b.id}', 'sms')">SMS</button>
+                    <small class="wa-risk-note" title="WhatsApp updates are only for high risk crops">${currentLang === 'hi' ? '(व्हाट्सएप केवल उच्च जोखिम के लिए)' : '(WhatsApp: High Risk Only)'}</small>
+                </div>
+            ` : ''}
             ${nextCropHtml}
             <div>
                 <button type="button" class="btn-secondary" onclick="openSettlementForBatch('${b.id}')">
@@ -1170,7 +1317,7 @@ async function handleProduceSubmit(e) {
             document.getElementById("produce-form").reset();
             removeImage();
             showToast(translations[currentLang].toastSaved, "success");
-            if (result.batch.spoilage_risk === "High" || result.batch.spoilage_risk === "Medium") {
+            if (result.batch.spoilage_risk === "High") {
                 sendSpoilageAlert(result.batch.id, "whatsapp", true);
             }
             switchTab('ledger-stored');
@@ -1757,18 +1904,70 @@ function toggleSellDecisionMode() {
 }
 
 async function sendSpoilageAlert(batchId, channel = 'sms', automatic = false) {
+    if (channel === 'whatsapp' && farmerProfile?.whatsapp_alerts_enabled === false) {
+        if (!automatic) {
+            showToast(currentLang === 'hi' ? 'व्हाट्सएप अलर्ट बंद हैं। कृपया हेडर या प्रोफाइल से चालू करें।' : 'WhatsApp alerts are currently turned OFF. Turn them on to send.', 'info');
+        }
+        return;
+    }
+
     const key = `agriflow-alert-${batchId}-${channel}`;
-    if (automatic && localStorage.getItem(key)) return;
+    if (automatic && channel === 'whatsapp' && localStorage.getItem(key)) {
+        const lastSent = parseInt(localStorage.getItem(key), 10);
+        if (Date.now() - lastSent < 24 * 3600 * 1000) {
+            return;
+        }
+    }
+
     try {
-        const response = await fetch('/api/alerts/spoilage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_id: batchId, channel }) });
+        const response = await fetch('/api/alerts/spoilage', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ batch_id: batchId, channel }) 
+        });
         const data = await response.json();
+
         if (response.status === 403 && data.requires_verification && !automatic) {
             openAlertVerification(batchId, channel);
             return;
         }
-        if (!response.ok || !data.success) throw new Error(data.error || 'Alert could not be sent.');
-        localStorage.setItem(key, '1');
-        if (!automatic) showToast(data.message, 'success');
+
+        if (response.status === 403 && data.whatsapp_disabled) {
+            if (!automatic) {
+                showToast(currentLang === 'hi' ? 'व्हाट्सएप अलर्ट बंद हैं।' : data.error, 'warning');
+            }
+            return;
+        }
+
+        if (response.status === 429 && data.cooldown) {
+            const elapsedApprox = 24 * 3600 - data.remaining_seconds;
+            localStorage.setItem(key, String(Date.now() - elapsedApprox * 1000));
+            const msg = currentLang === 'hi' 
+                ? `इस फसल के लिए व्हाट्सएप संदेश 24 घंटे में केवल एक बार भेजा जा सकता है। अगला अलर्ट ${data.remaining_hours} घंटे बाद संभव है।`
+                : (data.error || `WhatsApp alert cooldown active. Next update available in ${data.remaining_hours} hours.`);
+            if (!automatic) {
+                showToast(msg, 'warning');
+            } else {
+                console.info('WhatsApp 24h cooldown active:', data);
+            }
+            if (typeof renderStoredProduce === 'function') renderStoredProduce();
+            return;
+        }
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Alert could not be sent.');
+        }
+
+        localStorage.setItem(key, String(Date.now()));
+        const b = (produceBatches || []).find(item => String(item.id) === String(batchId));
+        if (b && channel === 'whatsapp') {
+            b.last_whatsapp_alert_at = data.last_whatsapp_alert_at || new Date().toISOString();
+        }
+
+        if (!automatic) {
+            showToast(data.message || (currentLang === 'hi' ? 'व्हाट्सएप संदेश सफलतापूर्वक भेजा गया।' : 'WhatsApp alert sent successfully.'), 'success');
+        }
+        if (typeof renderStoredProduce === 'function') renderStoredProduce();
     } catch (error) {
         if (!automatic) showToast(error.message, 'error');
         else console.warn('Automatic spoilage alert skipped:', error.message);
