@@ -59,7 +59,16 @@
     </main>
     <script>
         let authMode = 'login';
-        let authLang = localStorage.getItem('hackbhoomi-language') || 'en';
+        function detectPreferredLanguage() {
+            const stored = localStorage.getItem('hackbhoomi-language');
+            if (stored === 'en' || stored === 'hi') return stored;
+            const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
+            return browserLang.startsWith('hi') ? 'hi' : 'en';
+        }
+        let authLang = detectPreferredLanguage();
+        if (!localStorage.getItem('hackbhoomi-language')) {
+            localStorage.setItem('hackbhoomi-language', authLang);
+        }
         let phoneEmailVerificationUrl = '';
         let loginMethod = 'email';
         const authCopy = {

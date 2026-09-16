@@ -1,4 +1,14 @@
-let currentLang = localStorage.getItem('hackbhoomi-language') || 'en';
+function detectPreferredLanguage() {
+    const stored = localStorage.getItem('hackbhoomi-language');
+    if (stored === 'en' || stored === 'hi') return stored;
+    const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
+    return browserLang.startsWith('hi') ? 'hi' : 'en';
+}
+
+let currentLang = detectPreferredLanguage();
+if (!localStorage.getItem('hackbhoomi-language')) {
+    localStorage.setItem('hackbhoomi-language', currentLang);
+}
 let produceBatches = [];
 let mandiRecordsCache = [];
 let selectedImageBase64 = null;

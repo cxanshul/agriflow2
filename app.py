@@ -706,7 +706,17 @@ def send_wappfly_message(phone, message):
         timeout=12
     )
     if not response.ok:
-        raise RuntimeError(f"Wappfly rejected the message ({response.status_code}).")
+        try:
+            details = response.json()
+            detail_message = details.get("message") or details.get("error") or details.get("detail") or "Unknown Wappfly error."
+        except ValueError:
+            detail_message = response.text.strip() or "Unknown Wappfly error."
+        if response.status_code == 402:
+            raise RuntimeError(
+                "Wappfly rejected the message (402): payment required, credits exhausted, or the WhatsApp account is not active. "
+                "Top up the Wappfly account or switch to SMS for alerts."
+            )
+        raise RuntimeError(f"Wappfly rejected the message ({response.status_code}): {detail_message}")
     return True, None
 
 @app.route("/api/alerts/request-otp", methods=["POST"])
