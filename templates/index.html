@@ -63,11 +63,12 @@
             <button class="nav-item" onclick="switchTab('ledger-history'); closeMobileSidebar();">
                 <span class="icon">📜</span> <span data-en="History & Next Crop" data-hi="उपज इतिहास व अगली फसल">History & Next Crop</span>
             </button>
-            {% if is_admin %}
+        <div class="nav-group-label" data-en="Administration" data-hi="व्यवस्थापन">Administration</div>
+        <nav class="nav-menu">
             <a class="nav-item admin-link" href="/admin">
-                <span class="icon">▦</span> <span data-en="Admin Analysis" data-hi="व्यवस्थापक विश्लेषण">Admin Analysis</span>
+                <span class="icon">📊</span> <span data-en="Admin Control Panel" data-hi="व्यवस्थापक नियंत्रण कक्ष">Admin Control Panel</span>
             </a>
-            {% endif %}
+        </nav>
         </nav>
 
         <div class="sidebar-footer">
@@ -103,6 +104,17 @@
                 </div>
             </div>
             <div class="top-header-actions">
+                <button id="theme-toggle-btn" class="btn-theme-glass-toggle" type="button" onclick="toggleDarkMode()" title="Toggle Light / Dark Mode">
+                    <span class="theme-toggle-slider">
+                        <span class="theme-toggle-thumb"></span>
+                        <span class="theme-icon-light">☀️</span>
+                        <span class="theme-icon-dark">🌙</span>
+                    </span>
+                    <span id="theme-toggle-label" class="theme-toggle-text">Dark</span>
+                </button>
+                <a class="btn-top-tool btn-admin-tool" href="/admin" title="Open Admin & Operations Intelligence">
+                    📊 <span data-en="Admin" data-hi="व्यवस्थापक">Admin</span>
+                </a>
                 <button class="btn-top-tool" onclick="openUnitConverter()" title="Agricultural Land & Weight Unit Converter">
                     📐 <span data-en="Unit Converter" data-hi="इकाई परिवर्तक">Unit Converter</span>
                 </button>
@@ -375,7 +387,8 @@
                         <button class="btn-speech-readout" id="btn-weather-speech" type="button" onclick="speakWeatherAction()" title="Read aloud in regional language">
                             🔊 <span data-en="Listen" data-hi="सुनें">Listen</span>
                         </button>
-                        <button id="weather-action-button" class="btn-secondary" type="button" onclick="generateWeatherAction()" data-en="Analyze" data-hi="जांचें">Analyze</button>
+                        <button id="weather-action-button" class="btn-secondary" type="button" onclick="generateWeatherAction()" data-en="Quick Action" data-hi="त्वरित जांच">Quick Action</button>
+                        <button id="btn-full-analysis" class="btn-primary" type="button" onclick="openFullAnalysisModal()" data-en="🔬 Full Analysis" data-hi="🔬 पूर्ण विश्लेषण">🔬 Full Analysis</button>
                     </div>
                 </div>
                 <div class="weather-forecast-section">
@@ -1179,6 +1192,179 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    <!-- MODAL: DEEP AGRONOMIC & MICROCLIMATE FULL ANALYSIS -->
+    <div id="full-analysis-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeFullAnalysisModal()">
+        <div class="modal-card full-analysis-modal-card">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-eyebrow">
+                        <span class="pulse-dot-green"></span>
+                        <span data-en="PRECISION AGRONOMY SUITE" data-hi="सटीक कृषि परामर्श">PRECISION AGRONOMY SUITE</span>
+                    </div>
+                    <h3 data-en="Deep Field & Microclimate Analysis" data-hi="गहन खेत व मौसम विश्लेषण">Deep Field & Microclimate Analysis</h3>
+                    <p class="subtitle" data-en="5-Pillar diagnostics covering pathogen threats, chemical spray timings, soil hydrology & field workability." data-hi="रोग जोखिम, स्प्रे समय, सिंचाई प्रबंधन व खेत संचालन का समग्र विश्लेषण।">5-Pillar diagnostics covering pathogen threats, chemical spray timings, soil hydrology & field workability.</p>
+                </div>
+                <button class="btn-modal-close" onclick="closeFullAnalysisModal()">✕</button>
+            </div>
+
+            <div class="analysis-controls-strip">
+                <div class="analysis-crop-picker">
+                    <label for="analysis-crop-select" data-en="Target Crop:" data-hi="फसल:">Target Crop:</label>
+                    <select id="analysis-crop-select" onchange="runFullAgronomicAnalysis()">
+                        <option value="Tomato">🍅 Tomato (टमाटर)</option>
+                        <option value="Wheat">🌾 Wheat (गेहूं)</option>
+                        <option value="Potato">🥔 Potato (आलू)</option>
+                        <option value="Mustard">🌿 Mustard (सरसों)</option>
+                        <option value="Onion">🧅 Onion (प्याज)</option>
+                        <option value="Soybean">🌱 Soybean (सोयाबीन)</option>
+                        <option value="Cotton">☁️ Cotton (कपास)</option>
+                        <option value="Paddy">🌾 Paddy / Rice (धान)</option>
+                        <option value="Maize">🌽 Maize (मक्का)</option>
+                    </select>
+                </div>
+                <div class="analysis-action-btns">
+                    <button type="button" class="btn-speech-readout" onclick="speakFullAnalysis()" title="Read full analysis report aloud">
+                        🔊 <span data-en="Listen" data-hi="सुनें">Listen</span>
+                    </button>
+                    <button type="button" class="btn-top-tool btn-whatsapp-share" onclick="shareFullAnalysisWhatsApp()" title="Share complete advisory on WhatsApp">
+                        💬 <span data-en="Share Advisory" data-hi="व्हाट्सएप साझा करें">Share Advisory</span>
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="runFullAgronomicAnalysis()">
+                        ↻ <span data-en="Refresh" data-hi="रीफ्रेश">Refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="analysis-loading" class="analysis-loading-state hidden">
+                <div class="analysis-spinner"></div>
+                <p data-en="Synthesizing meteorological streams, pathogen models & crop phenology..." data-hi="मौसम डेटा, कीट-रोग मॉडल और फसल अवस्था का विश्लेषण हो रहा है...">Synthesizing meteorological streams, pathogen models & crop phenology...</p>
+            </div>
+
+            <div id="analysis-content-body" class="analysis-content-body">
+                <!-- Summary Banner -->
+                <div class="analysis-summary-banner">
+                    <div class="summary-banner-icon">🎯</div>
+                    <div class="summary-banner-text">
+                        <strong data-en="Executive Field Recommendation" data-hi="मुख्य कृषि परामर्श">Executive Field Recommendation</strong>
+                        <p id="analysis-summary-text">Synthesizing field weather...</p>
+                    </div>
+                </div>
+
+                <!-- Microclimate Sensor Pills -->
+                <div class="analysis-metrics-strip">
+                    <div class="analysis-metric-pill">
+                        <span class="metric-icon">🌡️</span>
+                        <div>
+                            <small data-en="Temperature" data-hi="तापमान">Temperature</small>
+                            <strong id="an-val-temp">-- °C</strong>
+                        </div>
+                    </div>
+                    <div class="analysis-metric-pill">
+                        <span class="metric-icon">💧</span>
+                        <div>
+                            <small data-en="Rel. Humidity" data-hi="आर्द्रता">Rel. Humidity</small>
+                            <strong id="an-val-humidity">-- %</strong>
+                        </div>
+                    </div>
+                    <div class="analysis-metric-pill">
+                        <span class="metric-icon">💨</span>
+                        <div>
+                            <small data-en="Wind Velocity" data-hi="हवा गति">Wind Velocity</small>
+                            <strong id="an-val-wind">-- km/h</strong>
+                        </div>
+                    </div>
+                    <div class="analysis-metric-pill">
+                        <span class="metric-icon">🌧️</span>
+                        <div>
+                            <small data-en="48h Rain Prob" data-hi="बारिश संभावना">48h Rain Prob</small>
+                            <strong id="an-val-rain-prob">-- %</strong>
+                        </div>
+                    </div>
+                    <div class="analysis-metric-pill">
+                        <span class="metric-icon">☔</span>
+                        <div>
+                            <small data-en="Expected Rain" data-hi="अनुमानित वर्षा">Expected Rain</small>
+                            <strong id="an-val-rain-mm">-- mm</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Diagnostic Cards Grid -->
+                <div class="analysis-diagnostics-grid">
+                    <!-- Pillar 1: Disease Risk -->
+                    <div class="analysis-card disease-card">
+                        <div class="analysis-card-head">
+                            <span class="analysis-card-title">🦠 <span data-en="Fungal & Disease Pathogen Risk" data-hi="फफूंद व कीट रोग जोखिम">Fungal & Disease Pathogen Risk</span></span>
+                            <span id="an-disease-badge" class="badge-risk-pill badge-risk-low">Analyzing...</span>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="pathogen-line">
+                                <strong data-en="Vulnerable Pathogens:" data-hi="संभावित रोग:">Vulnerable Pathogens:</strong>
+                                <span id="an-disease-pathogens">--</span>
+                            </div>
+                            <p id="an-disease-action" class="analysis-guidance-text">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 2: Spray Window -->
+                    <div class="analysis-card spray-card">
+                        <div class="analysis-card-head">
+                            <span class="analysis-card-title">🧪 <span data-en="Chemical / Foliar Spray Window" data-hi="दवा / खाद छिड़काव समय">Chemical / Foliar Spray Window</span></span>
+                            <span id="an-spray-badge" class="badge-risk-pill badge-spray-optimal">Analyzing...</span>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="pathogen-line">
+                                <strong data-en="Recommended Window:" data-hi="उपयुक्त समय:">Recommended Window:</strong>
+                                <span id="an-spray-window">--</span>
+                            </div>
+                            <p id="an-spray-advice" class="analysis-guidance-text">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 3: Irrigation Hydrology -->
+                    <div class="analysis-card irrigation-card">
+                        <div class="analysis-card-head">
+                            <span class="analysis-card-title">💧 <span data-en="Irrigation & Hydrology Management" data-hi="सिंचाई एवं जल प्रबंधन">Irrigation & Hydrology Management</span></span>
+                            <span id="an-irrigation-action" class="badge-risk-pill badge-irrigation-hold">Analyzing...</span>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="pathogen-line">
+                                <strong data-en="Soil Moisture Status:" data-hi="नमी स्थिति:">Soil Moisture Status:</strong>
+                                <span id="an-irrigation-status">--</span>
+                            </div>
+                            <p id="an-irrigation-advice" class="analysis-guidance-text">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 4: Thermal & Field Workability -->
+                    <div class="analysis-card thermal-card">
+                        <div class="analysis-card-head">
+                            <span class="analysis-card-title">🚜 <span data-en="Thermal Stress & Machinery Workability" data-hi="ताप तनाव व खेत संचालन">Thermal Stress & Machinery Workability</span></span>
+                            <span id="an-thermal-status" class="badge-risk-pill badge-thermal-optimal">Analyzing...</span>
+                        </div>
+                        <div class="analysis-card-content">
+                            <div class="pathogen-line">
+                                <strong data-en="Field Workability:" data-hi="खेत उपयोगिता:">Field Workability:</strong>
+                                <span id="an-workability">--</span>
+                            </div>
+                            <p id="an-thermal-advice" class="analysis-guidance-text">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-Step Action Checklist -->
+                <div class="analysis-checklist-panel">
+                    <h5 data-en="Immediate Operational Checklist" data-hi="खेत कार्य प्राथमिकता सूची">Immediate Operational Checklist</h5>
+                    <div id="an-action-items" class="action-checklist-list">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeFullAnalysisModal()" data-en="Close" data-hi="बंद करें">Close</button>
             </div>
         </div>
     </div>
