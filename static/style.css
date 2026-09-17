@@ -3461,7 +3461,91 @@ select option:checked {
 .weather-action-btns {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#btn-full-analysis,
+.weather-action-btns .btn-primary {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    padding: 9px 18px !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#btn-full-analysis:hover,
+.weather-action-btns .btn-primary:hover {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+#btn-full-analysis:active,
+.weather-action-btns .btn-primary:active {
+    transform: translateY(1px) !important;
+}
+
+#weather-action-button {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+#weather-action-button:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+body.dark-theme #weather-action-button {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme #weather-action-button:hover {
+    background: rgba(51, 65, 85, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme #btn-full-analysis,
+body.dark-theme .weather-action-btns .btn-primary {
+    background: linear-gradient(135deg, #22c55e 0%, #15803d 100%) !important;
+    box-shadow: 0 4px 18px rgba(34, 197, 94, 0.45) !important;
+    color: #ffffff !important;
+}
+
+.weather-action-updated {
+    animation: weatherActionPulse 1.5s ease-out;
+}
+
+@keyframes weatherActionPulse {
+    0% {
+        background-color: rgba(34, 197, 94, 0.35);
+        border-radius: 8px;
+        padding: 4px 8px;
+    }
+    100% {
+        background-color: transparent;
+        padding: 0;
+    }
 }
 
 /* ============================================================

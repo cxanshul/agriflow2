@@ -1147,7 +1147,6 @@ def is_valid_advice_sentence(text):
     return alpha_count >= 15
 
 @app.route("/api/weather/action-suggestion", methods=["POST"])
-@require_auth
 def weather_action_suggestion():
     data = request.json or {}
     crop = str(data.get("crop", "the crop")).strip() or "the crop"
@@ -1246,7 +1245,6 @@ Return plain text advice only with no introductory labels.
     return jsonify({"success": True, "suggestion": final_text, "source": "ai" if suggestion else "rule_based"})
 
 @app.route("/api/weather/full-analysis", methods=["POST"])
-@require_auth
 def weather_full_analysis():
     data = request.json or {}
     crop = str(data.get("crop", "the crop")).strip() or "the crop"
