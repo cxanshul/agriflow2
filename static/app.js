@@ -536,6 +536,9 @@ function switchTab(tabId) {
             setTimeout(loadCropHorizonAnalysis, 100);
         }
     }
+    if (tabId === 'sell-decision' && typeof renderSellDecisionCharts === 'function') {
+        setTimeout(renderSellDecisionCharts, 80);
+    }
 }
 
 function showToast(msg, type = "info") {
@@ -960,6 +963,7 @@ function prefillSellDecision() {
     const matchingBatch = produceBatches.find(batch => batch.status === 'active' && String(batch.crop_name).toLowerCase().includes(String(crop).toLowerCase()));
     const quantity = document.getElementById('sell-decision-quantity');
     if (matchingBatch && quantity) quantity.value = matchingBatch.quantity_kg || 1000;
+    if (typeof renderSellDecisionCharts === 'function') setTimeout(renderSellDecisionCharts, 20);
 }
 
 function populateSellDecisionBatches() {
@@ -1002,6 +1006,7 @@ function selectSellDecisionBatch() {
         const costEl = document.getElementById('sell-decision-storage-cost');
         if (costEl) costEl.value = 250;
         showToast(currentLang === 'hi' ? '✅ डेमो भंडारित बैच लोड हुआ: गेहूं (4,200 किलो)' : '✅ Loaded demo batch: Wheat (4,200 kg)', 'success');
+        if (typeof renderSellDecisionCharts === 'function') setTimeout(renderSellDecisionCharts, 20);
         return;
     }
 
@@ -1022,6 +1027,7 @@ function selectSellDecisionBatch() {
         updateSellStorageCost();
     }
     showToast(currentLang === 'hi' ? `✅ भंडारित बैच लोड हुआ: ${cropName} (${Number(batch.quantity_kg || 0).toLocaleString()} किलो)` : `✅ Loaded stored batch: ${cropName} (${Number(batch.quantity_kg || 0).toLocaleString()} kg)`, 'success');
+    if (typeof renderSellDecisionCharts === 'function') setTimeout(renderSellDecisionCharts, 20);
 }
 
 function openSelectedSellBatch() {
@@ -1037,8 +1043,12 @@ function openSelectedSellBatch() {
 function updateSellStorageCost() {
     const storage = document.getElementById('sell-decision-storage')?.value;
     const cost = document.getElementById('sell-decision-storage-cost');
-    if (!cost || Number(cost.value) > 0) return;
+    if (!cost || Number(cost.value) > 0) {
+        if (typeof renderSellDecisionCharts === 'function') setTimeout(renderSellDecisionCharts, 20);
+        return;
+    }
     cost.value = { none: 0, farm: 100, godown: 250, cold: 600 }[storage] ?? 0;
+    if (typeof renderSellDecisionCharts === 'function') setTimeout(renderSellDecisionCharts, 20);
 }
 
 async function runSellDecision() {
@@ -1072,6 +1082,9 @@ async function runSellDecision() {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || t('sellError'));
         renderSellDecision(data.result);
+        if (typeof renderSellDecisionCharts === 'function') {
+            renderSellDecisionCharts({ result: data.result, crop, waitDays, storageCost, storageType });
+        }
     } catch (error) {
         resultEl.className = 'sell-decision-result wait';
         resultEl.innerHTML = `<p>${error.message || t('sellError')}</p>`;
@@ -1105,6 +1118,131 @@ function renderSellDecision(result) {
 function escapeSellText(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 }
+
+// ============================================================
+// 14-DAY MANDI PRICE TREND VS STORAGE ECONOMICS (SELL DECISION)
+// ============================================================
+
+function renderSellDecisionCharts(opts = {}) {
+    const container = document.getElementById("sell-svg-chart-container");
+    const riskContainer = document.getElementById("sell-risk-bars-container");
+    if (!container && !riskContainer) return;
+
+    const crop = opts.crop || document.getElementById('sell-decision-crop')?.value || 'Wheat';
+    const waitDays = opts.waitDays || parseInt(document.getElementById('sell-decision-days')?.value, 10) || 7;
+    const storageCost = opts.storageCost ?? (parseFloat(document.getElementById('sell-decision-storage-cost')?.value) || 0);
+    const storageType = opts.storageType || document.getElementById('sell-decision-storage')?.value || 'none';
+    const res = opts.result || {};
+
+    // Base mandi price per quintal
+    let basePriceQtl = 2400;
+    if (res.current_price_per_kg && res.current_price_per_kg > 0) {
+        basePriceQtl = Math.round(res.current_price_per_kg * 100);
+    } else if (Array.isArray(mandiRecordsCache) && mandiRecordsCache.length > 0) {
+        const matching = mandiRecordsCache.filter(r => (r.commodity || '').toLowerCase().includes(crop.toLowerCase()));
+        const pool = matching.length > 0 ? matching : mandiRecordsCache;
+        const prices = pool.map(r => parseFloat(r.modal_price) || 0).filter(p => p > 0);
+        if (prices.length > 0) basePriceQtl = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+    } else {
+        const defaults = { 'Wheat': 2450, 'Potato': 1420, 'Tomato': 1850, 'Mustard': 5350, 'Onion': 2150, 'Soybean': 4650, 'Cotton': 7200, 'Maize': 2250 };
+        basePriceQtl = defaults[crop] || 2400;
+    }
+
+    // 14-day projection trajectory
+    const timeline = ["Day 1", "Day 3", "Day 5", "Day 7 (Peak)", "Day 10", "Day 14"];
+    const multipliers = [1.0, 1.035, 1.072, 1.11, 1.055, 1.008];
+    const prices = multipliers.map(m => Math.round(basePriceQtl * m));
+
+    // Daily storage cost per quintal
+    const dailyCostPerQtl = storageType === 'none' ? 0 : (storageCost > 0 ? Math.max(4, Math.min(60, storageCost / 10)) : (storageType === 'cold' ? 35 : (storageType === 'godown' ? 18 : 8)));
+    const dayOffsets = [1, 3, 5, 7, 10, 14];
+    const costs = dayOffsets.map(d => Math.round(dailyCostPerQtl * (d - 1)));
+    const margins = prices.map((p, i) => Math.max(0, p - costs[i]));
+
+    const peakTag = document.getElementById("sell-chart-peak-tag");
+    if (peakTag) {
+        peakTag.textContent = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "चरम मुनाफा: दिन 6 - दिन 8" : "Peak Profit: Day 6 - Day 8";
+    }
+
+    if (container) {
+        const maxVal = Math.max(...prices, ...margins) * 1.06;
+        const minVal = Math.min(...costs, ...margins, basePriceQtl * 0.85);
+        const width = 520;
+        const height = 180;
+        const padX = 42;
+        const padY = 28;
+        const stepX = (width - 2 * padX) / (timeline.length - 1);
+        const getY = val => Math.round(height - padY - ((val - minVal) / Math.max(1, (maxVal - minVal))) * (height - 2 * padY));
+
+        const pathPrices = prices.map((p, i) => `${i === 0 ? 'M' : 'L'} ${padX + i * stepX} ${getY(p)}`).join(' ');
+        const pathMargins = margins.map((m, i) => `${i === 0 ? 'M' : 'L'} ${padX + i * stepX} ${getY(m)}`).join(' ');
+        const pathCosts = costs.map((c, i) => `${i === 0 ? 'M' : 'L'} ${padX + i * stepX} ${getY(c + minVal)}`).join(' ');
+
+        const pointsHtml = prices.map((p, i) => `
+            <circle cx="${padX + i * stepX}" cy="${getY(p)}" r="4.5" fill="#22c55e" stroke="#ffffff" stroke-width="1.5" />
+            <circle cx="${padX + i * stepX}" cy="${getY(margins[i])}" r="4" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
+            <text x="${padX + i * stepX}" y="${height - 8}" class="chart-axis-label" font-size="10" font-weight="600" text-anchor="middle">${timeline[i]}</text>
+        `).join('');
+
+        container.innerHTML = `
+            <svg viewBox="0 0 ${width} ${height}" class="analysis-svg-element" style="width:100%;height:auto;overflow:visible;">
+                <defs>
+                    <linearGradient id="gradGreenSell" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                <line class="chart-grid-line" x1="${padX}" y1="${padY}" x2="${width - padX}" y2="${padY}" stroke-dasharray="3,3" />
+                <line class="chart-grid-line" x1="${padX}" y1="${height/2}" x2="${width - padX}" y2="${height/2}" stroke-dasharray="3,3" />
+                <line class="chart-axis-base" x1="${padX}" y1="${height - padY}" x2="${width - padX}" y2="${height - padY}" />
+                <path d="${pathPrices}" fill="none" stroke="#22c55e" stroke-width="3" />
+                <path d="${pathMargins}" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4,2" />
+                <path d="${pathCosts}" fill="none" stroke="#f59e0b" stroke-width="2" />
+                ${pointsHtml}
+            </svg>
+        `;
+    }
+
+    if (riskContainer) {
+        const hum = weatherCache?.data?.current?.relative_humidity_percent || 68;
+        const wind = weatherCache?.data?.current?.wind_speed_kmh || 9;
+        const rainProb = weatherCache?.data?.forecast?.[0]?.rain_probability_percent || 25;
+
+        const risks = [
+            { label: (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "फफूंद / रोग दबाव" : "Disease Pressure", val: hum > 80 ? 70 : 42, color: "#f87171" },
+            { label: (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "मिट्टी नमी तनाव" : "Moisture Stress", val: rainProb > 50 ? 25 : 55, color: "#38bdf8" },
+            { label: (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "हवा / छिड़काव बहाव" : "Spray Drift Hazard", val: wind > 15 ? 65 : 20, color: "#fbbf24" },
+            { label: (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "भंडारण सड़न जोखिम" : "Storage Spoilage Risk", val: storageType === 'cold' ? 15 : (storageType === 'none' ? 75 : 40), color: "#a855f7" }
+        ];
+
+        riskContainer.innerHTML = risks.map(r => `
+            <div class="risk-bar-row">
+                <div class="risk-bar-meta">
+                    <span>${r.label}</span>
+                    <strong>${r.val}%</strong>
+                </div>
+                <div class="risk-bar-track">
+                    <div class="risk-bar-fill" style="width: ${r.val}%; background: ${r.color};"></div>
+                </div>
+            </div>
+        `).join('');
+
+        const riskTag = document.getElementById("sell-risk-summary-tag");
+        if (riskTag) {
+            const maxR = Math.max(...risks.map(r => r.val));
+            if (maxR > 65) {
+                riskTag.textContent = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "चेतावनी क्षेत्र" : "Caution Zone";
+                riskTag.style.background = "rgba(239, 68, 68, 0.15)";
+                riskTag.style.color = "#dc2626";
+            } else {
+                riskTag.textContent = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "सुरक्षित क्षेत्र" : "Safe Zone";
+                riskTag.style.background = "rgba(34, 197, 94, 0.15)";
+                riskTag.style.color = "#166534";
+            }
+        }
+    }
+}
+window.renderSellDecisionCharts = renderSellDecisionCharts;
 
 // ============================================================
 // BATCHES & STORED PRODUCE
@@ -3426,11 +3564,20 @@ function renderFullAnalysisReport(data) {
         `).join("");
     }
 
-    // Render 14-Day SVG Market vs Storage Chart
-    renderFullAnalysisSvgChart(data.chart_data);
+    // Render 14-Day SVG Market vs Storage Chart (if container exists)
+    if (document.getElementById("an-svg-chart-container")) {
+        renderFullAnalysisSvgChart(data.chart_data);
+    }
 
-    // Render Microclimate Risk Breakdown Bars
-    renderFullAnalysisRiskBars(data.chart_data?.risk_breakdown);
+    // Render Microclimate Risk Breakdown Bars (if container exists)
+    if (document.getElementById("an-risk-bars-container")) {
+        renderFullAnalysisRiskBars(data.chart_data?.risk_breakdown);
+    }
+
+    // Synchronize to Sell Decision panel charts
+    if (typeof renderSellDecisionCharts === 'function') {
+        renderSellDecisionCharts({ result: data });
+    }
 
     // Populate Gemini Profit & Next Crop Optimization Engine
     if (data.profit_analysis) {
@@ -3729,9 +3876,13 @@ function checkAdminRoute() {
 window.addEventListener('hashchange', checkAdminRoute);
 checkAdminRoute();
 
-// Initialize Theme on startup
+// Initialize Theme & Sell Decision charts on startup
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTheme);
+    document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        setTimeout(renderSellDecisionCharts, 300);
+    });
 } else {
     initTheme();
+    setTimeout(renderSellDecisionCharts, 300);
 }

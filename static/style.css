@@ -4775,9 +4775,32 @@ body.dark-theme .msg-bot {
     border-radius: 50%;
     display: inline-block;
 }
-.dot-price { background: #22c55e; }
-.dot-cost { background: #f59e0b; }
-.dot-margin { background: #38bdf8; }
+.dot-price, .dot-green { background: #22c55e; }
+.dot-cost, .dot-amber { background: #f59e0b; }
+.dot-margin, .dot-blue { background: #38bdf8; }
+
+/* Analysis Section Titles */
+.analysis-section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.analysis-section-badge {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.analysis-section-title-wrap h5 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.analysis-section-title-wrap .subtitle {
+    margin: 3px 0 0 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
 
 /* Microclimate Risk Bars */
 .risk-bars-wrap {
@@ -4824,13 +4847,38 @@ body.dark-theme .msg-bot {
     padding: 22px;
     box-shadow: 0 12px 36px rgba(34, 197, 94, 0.12);
 }
+.gemini-profit-head,
 .gemini-profit-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-bottom: 16px;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(34, 197, 94, 0.25);
+}
+.gemini-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 260px;
+}
+.gemini-sparkle-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+.gemini-title-group h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #14532d;
+}
+.gemini-title-group .subtitle {
+    margin: 2px 0 0 0;
+    font-size: 0.82rem;
+    color: #334155;
 }
 .gemini-profit-badge {
     font-size: 0.98rem;
@@ -4843,53 +4891,92 @@ body.dark-theme .msg-bot {
 .gemini-profit-gain-chip {
     background: rgba(34, 197, 94, 0.2);
     border: 1px solid rgba(34, 197, 94, 0.45);
-    padding: 4px 14px;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.84rem;
     color: #14532d;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .gemini-profit-gain-chip strong {
     font-size: 1.02rem;
     color: #15803d;
-    margin-left: 4px;
 }
 .gemini-advisory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+    align-items: stretch;
+}
+@media (max-width: 900px) {
+    .gemini-advisory-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .gemini-advisory-card {
     display: flex;
-    gap: 12px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 14px;
-    padding: 14px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(34, 197, 94, 0.28);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.gemini-card-icon {
-    font-size: 1.6rem;
-    line-height: 1;
+.gemini-advisory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.12);
 }
-.gemini-card-content {
-    flex: 1;
-}
-.gemini-card-content h6 {
-    margin: 0 0 6px 0;
-    font-size: 0.84rem;
+.advisory-card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #166534;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.28);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    width: fit-content;
 }
-.gemini-card-content p {
-    margin: 0;
-    font-size: 0.8rem;
-    line-height: 1.45;
-    color: #334155;
+.loss-strategy-card .advisory-card-badge {
+    color: #1e40af;
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.28);
+}
+.profit-boost-card .advisory-card-badge {
+    color: #b45309;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.28);
 }
 .rec-crop-headline {
-    font-size: 0.92rem !important;
-    font-weight: 700;
+    margin: 2px 0 0 0;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
     color: #15803d !important;
+    line-height: 1.35;
+    word-break: break-word;
+    width: 100%;
+}
+.advisory-card-sub,
+.gemini-advisory-card .advisory-text {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: #334155;
+    word-break: break-word;
+    width: 100%;
 }
 
 /* ==========================================================================
@@ -4960,8 +5047,15 @@ body.dark-theme .analysis-gemini-profit-box {
     border-color: rgba(34, 197, 94, 0.4);
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
 }
+body.dark-theme .gemini-profit-head,
 body.dark-theme .gemini-profit-banner {
     border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .gemini-title-group h4 {
+    color: #86efac;
+}
+body.dark-theme .gemini-title-group .subtitle {
+    color: #94a3b8;
 }
 body.dark-theme .gemini-profit-badge {
     color: #86efac;
@@ -4975,17 +5069,31 @@ body.dark-theme .gemini-profit-gain-chip strong {
     color: #4ade80;
 }
 body.dark-theme .gemini-advisory-card {
-    background: rgba(15, 23, 42, 0.7);
+    background: rgba(15, 23, 42, 0.85);
     border-color: rgba(255, 255, 255, 0.12);
-}
-body.dark-theme .gemini-card-content h6 {
-    color: #f1f5f9;
-}
-body.dark-theme .gemini-card-content p {
-    color: #cbd5e1;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 body.dark-theme .rec-crop-headline {
     color: #4ade80 !important;
+}
+body.dark-theme .advisory-card-sub,
+body.dark-theme .gemini-advisory-card .advisory-text {
+    color: #cbd5e1;
+}
+body.dark-theme .advisory-card-badge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+body.dark-theme .loss-strategy-card .advisory-card-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.35);
+}
+body.dark-theme .profit-boost-card .advisory-card-badge {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.35);
 }
 
 /* ==========================================================================
