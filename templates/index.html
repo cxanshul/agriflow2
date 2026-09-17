@@ -71,9 +71,23 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div class="lang-switch">
-                <button id="btn-en" class="btn-lang active" onclick="setLanguage('en')">English</button>
-                <button id="btn-hi" class="btn-lang" onclick="setLanguage('hi')">हिंदी</button>
+            <div class="lang-selector-box">
+                <div class="lang-selector-header">
+                    <span class="lang-icon">🌐</span>
+                    <span class="lang-label" data-en="Language" data-hi="भाषा" data-pa="ਭਾਸ਼ਾ" data-mr="भाषा" data-gu="ભાષા">Language</span>
+                    <span id="lang-auto-tag" class="lang-auto-tag" title="Auto-detects language based on location">✨ Auto</span>
+                </div>
+                <select id="app-lang-select" class="lang-select-dropdown" onchange="setLanguage(this.value, false)">
+                    <option value="en">English (India)</option>
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                </select>
             </div>
         </div>
     </aside>
@@ -89,10 +103,16 @@
                 </div>
             </div>
             <div class="top-header-actions">
+                <button class="btn-top-tool" onclick="openUnitConverter()" title="Agricultural Land & Weight Unit Converter">
+                    📐 <span data-en="Unit Converter" data-hi="इकाई परिवर्तक">Unit Converter</span>
+                </button>
+                <button class="btn-top-tool" onclick="openFarmSlipModal()" title="Export Digital Farm Financial Slip / WhatsApp Receipt">
+                    📄 <span data-en="Farm Slip" data-hi="फार्म रसीद">Farm Slip</span>
+                </button>
                 <button id="btn-toggle-whatsapp" class="btn-whatsapp-toggle active" type="button" onclick="quickToggleWhatsApp()" title="Toggle WhatsApp High-Risk Spoilage Alerts">
                     <span class="wa-indicator-dot"></span>
                     <span class="wa-icon">💬</span>
-                    <span id="wa-toggle-label" data-en="WhatsApp Alerts: ON" data-hi="व्हाट्सएप अलर्ट: चालू">WhatsApp Alerts: ON</span>
+                    <span id="wa-toggle-label" data-en="WhatsApp: ON" data-hi="व्हाट्सएप: चालू">WhatsApp: ON</span>
                 </button>
                 <button class="btn-quick-demo" onclick="fillDemoBatch()">
                     ⚡ <span data-en="Load Tomato Demo" data-hi="डेमो लोड करें (टमाटर)">Load Tomato Demo</span>
@@ -255,6 +275,82 @@
 
         <!-- TAB 2: WEATHER AND AGRONOMY -->
         <div id="tab-weather" class="tab-panel">
+
+            <!-- SMART IOT TELEMETRY & DRONE AERIAL HUB -->
+            <div class="iot-telemetry-hero">
+                <div class="iot-telemetry-bg-wrap">
+                    <img src="/static/smart-farm-iot.jpg" alt="AgriFlow Smart IoT & Drone Farm Telemetry" class="iot-hero-img">
+                    <div class="iot-hero-overlay"></div>
+                </div>
+                <div class="iot-hero-content">
+                    <div class="iot-hero-header">
+                        <div class="iot-badge-group">
+                            <span class="iot-live-tag"><span class="iot-pulse-dot"></span> LIVE IOT TELEMETRY</span>
+                            <span class="iot-station-tag">📡 Solar Micro-Station #AG-04</span>
+                        </div>
+                        <button type="button" class="btn-drone-scan" id="btn-drone-scan" onclick="triggerDroneScan()">
+                            <span class="drone-icon">🚁</span>
+                            <span id="drone-btn-text" data-en="Scan Field with Drone" data-hi="ड्रोन से खेत स्कैन करें">Scan Field with Drone</span>
+                        </button>
+                    </div>
+
+                    <div class="iot-metrics-strip">
+                        <div class="iot-metric-cell">
+                            <div class="iot-metric-head">
+                                <span class="iot-cell-icon">🌿</span>
+                                <span class="iot-cell-lbl" data-en="Soil Health" data-hi="मिट्टी स्वास्थ्य">Soil Health</span>
+                            </div>
+                            <div class="iot-cell-val" id="telemetry-soil-health">78% <small class="text-green">Optimal</small></div>
+                            <div class="iot-cell-sub" data-en="pH 6.8 · NPK Balanced" data-hi="पीएच 6.8 · संतुलित खाद">pH 6.8 · NPK Balanced</div>
+                        </div>
+
+                        <div class="iot-metric-cell">
+                            <div class="iot-metric-head">
+                                <span class="iot-cell-icon">💧</span>
+                                <span class="iot-cell-lbl" data-en="Soil Moisture" data-hi="मिट्टी नमी">Soil Moisture</span>
+                            </div>
+                            <div class="iot-cell-val" id="telemetry-moisture">65% <small class="text-turmeric">Field Capacity</small></div>
+                            <div class="iot-cell-sub" data-en="Irrigation: Next in 3 Days" data-hi="सिंचाई: 3 दिन बाद">Irrigation: Next in 3 Days</div>
+                        </div>
+
+                        <div class="iot-metric-cell">
+                            <div class="iot-metric-head">
+                                <span class="iot-cell-icon">🌡️</span>
+                                <span class="iot-cell-lbl" data-en="Field Canopy Temp" data-hi="खेत का तापमान">Field Canopy Temp</span>
+                            </div>
+                            <div class="iot-cell-val" id="telemetry-temp">32°C <small>Warm</small></div>
+                            <div class="iot-cell-sub" data-en="Weather: Clear · 11 km/h" data-hi="मौसम: साफ़ · 11 किमी/घं">Weather: Clear · 11 km/h</div>
+                        </div>
+
+                        <div class="iot-metric-cell">
+                            <div class="iot-metric-head">
+                                <span class="iot-cell-icon">📈</span>
+                                <span class="iot-cell-lbl" data-en="NDVI Crop Index" data-hi="फसल हरियाली सूचकांक">NDVI Crop Index</span>
+                            </div>
+                            <div class="iot-cell-val text-green" id="telemetry-ndvi">0.82 <small>Vibrant</small></div>
+                            <div class="iot-cell-sub" data-en="Canopy Health: Good" data-hi="फसल स्वास्थ्य: उत्तम">Canopy Health: Good</div>
+                        </div>
+                    </div>
+
+                    <!-- Drone Scanning Drawer -->
+                    <div id="drone-scan-drawer" class="drone-scan-drawer hidden">
+                        <div class="drone-flight-progress">
+                            <div class="drone-progress-bar" id="drone-progress-bar"></div>
+                        </div>
+                        <div class="drone-scan-result-body" id="drone-scan-result-body">
+                            <div class="drone-radar-anim">🛰️</div>
+                            <div style="flex:1;">
+                                <h5 id="drone-scan-headline" data-en="Drone Quadcopter Scanning Plot Grid Alpha-4..." data-hi="ड्रोन खेत के ऊपर स्कैनिंग उड़ान भर रहा है...">Drone Quadcopter Scanning Plot Grid Alpha-4...</h5>
+                                <p id="drone-scan-detail" class="subtitle" data-en="Analyzing multispectral reflectance, chlorophyll absorption & canopy density..." data-hi="मल्टीस्पेक्ट्रल तस्वीरें और हरियाली घनत्व का विश्लेषण जारी है...">Analyzing multispectral reflectance, chlorophyll absorption & canopy density...</p>
+                            </div>
+                            <button type="button" class="btn-speech-readout hidden" id="btn-drone-speech" onclick="speakDroneResult()" title="Listen aloud">
+                                🔊 <span data-en="Listen" data-hi="सुनें">Listen</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-container weather-panel">
                 <div class="form-header">
                     <div>
@@ -273,9 +369,14 @@
                 <div class="weather-action-box">
                     <div>
                         <strong data-en="AI crop protection action" data-hi="एआई फसल सुरक्षा सलाह">AI crop protection action</strong>
-                    <p id="weather-action-result" class="weather-status" data-en="Analyze today and tomorrow's weather for one practical action." data-hi="आज और कल के मौसम के आधार पर एक उपयोगी सलाह पाएं।">Analyze today and tomorrow's weather for one practical action.</p>
+                        <p id="weather-action-result" class="weather-status" data-en="Analyze today and tomorrow's weather for one practical action." data-hi="आज और कल के मौसम के आधार पर एक उपयोगी सलाह पाएं।">Analyze today and tomorrow's weather for one practical action.</p>
                     </div>
-                    <button id="weather-action-button" class="btn-secondary" type="button" onclick="generateWeatherAction()" data-en="Analyze" data-hi="जांचें">Analyze</button>
+                    <div class="weather-action-btns">
+                        <button class="btn-speech-readout" id="btn-weather-speech" type="button" onclick="speakWeatherAction()" title="Read aloud in regional language">
+                            🔊 <span data-en="Listen" data-hi="सुनें">Listen</span>
+                        </button>
+                        <button id="weather-action-button" class="btn-secondary" type="button" onclick="generateWeatherAction()" data-en="Analyze" data-hi="जांचें">Analyze</button>
+                    </div>
                 </div>
                 <div class="weather-forecast-section">
                     <h4 data-en="Rainfall & irrigation outlook" data-hi="वर्षा और सिंचाई पूर्वानुमान">Rainfall & irrigation outlook</h4>
@@ -697,6 +798,18 @@
                 <label for="profile-name">Farmer name</label><input id="profile-name" type="text" required>
                 <div class="auth-location-grid"><div><label for="profile-latitude">Latitude</label><input id="profile-latitude" type="number" step="any" min="6" max="37.5" required></div><div><label for="profile-longitude">Longitude</label><input id="profile-longitude" type="number" step="any" min="68" max="98" required></div></div>
                 <label for="profile-location-name">Location label</label><input id="profile-location-name" type="text" placeholder="Village / district name">
+                <label for="profile-preferred-language" data-en="Preferred Regional Language (Manual or Auto-Location)" data-hi="पसंदीदा क्षेत्रीय भाषा (मैनुअल या स्थान आधारित)">Preferred Regional Language</label>
+                <select id="profile-preferred-language" class="form-control" onchange="setLanguage(this.value, true)" style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); font-weight: 500;">
+                    <option value="en">English (India)</option>
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                </select>
                 <label for="profile-alert-phone">Alert phone with country code</label><input id="profile-alert-phone" type="tel" placeholder="+91XXXXXXXXXX">
                 <div class="whatsapp-alert-setting-card">
                     <div class="wa-setting-header">
@@ -816,6 +929,259 @@
             <span data-en="AI Copilot" data-hi="एआई">AI Copilot</span>
         </button>
     </nav>
+
+    <!-- UNIT CONVERTER MODAL -->
+    <div id="unit-converter-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card unit-converter-card">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span class="modal-badge-icon">📐</span>
+                    <div>
+                        <h3 data-en="Indian Farm Unit Converter" data-hi="भारतीय कृषि इकाई परिवर्तक" data-pa="ਖੇਤੀਬਾੜੀ ਇਕਾਈ ਪਰਿਵਰਤਕ" data-mr="कृषी एकक परिवर्तक">Indian Farm Unit Converter</h3>
+                        <p class="subtitle" data-en="Convert regional land measurements & produce weights across Indian states." data-hi="भारतीय राज्यों के क्षेत्रीय भूमि माप और उपज वजन को आसानी से बदलें।">Convert regional land measurements & produce weights across Indian states.</p>
+                    </div>
+                </div>
+                <button class="btn-modal-close" onclick="closeUnitConverter()" aria-label="Close">✕</button>
+            </div>
+
+            <!-- Tabs: Land Area vs Crop Weight -->
+            <div class="converter-mode-tabs">
+                <button id="btn-conv-tab-land" class="converter-tab-btn active" onclick="switchConverterMode('land')">
+                    🌱 <span data-en="Land Area (ज़मीन)" data-hi="भूमि का क्षेत्रफल (ज़मीन)">Land Area (ज़मीन)</span>
+                </button>
+                <button id="btn-conv-tab-weight" class="converter-tab-btn" onclick="switchConverterMode('weight')">
+                    ⚖️ <span data-en="Produce Weight (वजन / मन / क्विंटल)" data-hi="उपज का वजन (क्विंटल / मन)">Produce Weight (वजन / मन / क्विंटल)</span>
+                </button>
+            </div>
+
+            <!-- LAND AREA SECTION -->
+            <div id="converter-section-land" class="converter-body">
+                <div class="form-grid converter-inputs">
+                    <div class="form-group">
+                        <label data-en="Enter Value" data-hi="मान दर्ज करें">Enter Value</label>
+                        <input type="number" id="conv-land-value" value="1" min="0" step="any" oninput="calculateLandConversion()" placeholder="e.g. 2.5">
+                    </div>
+                    <div class="form-group">
+                        <label data-en="From Unit" data-hi="इस इकाई से">From Unit</label>
+                        <select id="conv-land-unit" onchange="calculateLandConversion()">
+                            <option value="acre">Acre (एकड़ - Standard)</option>
+                            <option value="bigha_pucca">Pucca Bigha (UP, Raj, HR, MP - 0.625 Acre)</option>
+                            <option value="bigha_kachha">Kachha Bigha (Western UP, Delhi - ~0.208 Acre)</option>
+                            <option value="guntha">Guntha (Maharashtra, Karnataka, Gujarat - 40/Acre)</option>
+                            <option value="hectare">Hectare (हेक्टेयर - 2.471 Acres)</option>
+                            <option value="kanal">Kanal (Punjab, Haryana - 8/Acre)</option>
+                            <option value="marla">Marla (Punjab, Haryana - 160/Acre)</option>
+                            <option value="sq_meter">Square Meter (वर्ग मीटर)</option>
+                            <option value="sq_yard">Gaj / Sq Yard (वर्ग गज)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="converter-results-box">
+                    <h4 data-en="Equivalent Measurements" data-hi="समतुल्य माप">Equivalent Measurements</h4>
+                    <div class="conv-results-grid">
+                        <div class="conv-result-card">
+                            <span class="conv-label">Acre (एकड़)</span>
+                            <span class="conv-val" id="res-acre">1.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Pucca Bigha (पक्का बीघा)</span>
+                            <span class="conv-val" id="res-bigha">1.60</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Guntha (गुंठा)</span>
+                            <span class="conv-val" id="res-guntha">40.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Hectare (हेक्टेयर)</span>
+                            <span class="conv-val" id="res-hectare">0.405</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Kanal (कनाल)</span>
+                            <span class="conv-val" id="res-kanal">8.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Sq. Meters (वर्ग मीटर)</span>
+                            <span class="conv-val" id="res-sqm">4,046.86</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WEIGHT / PRODUCE SECTION -->
+            <div id="converter-section-weight" class="converter-body" style="display: none;">
+                <div class="form-grid converter-inputs">
+                    <div class="form-group">
+                        <label data-en="Enter Value" data-hi="मान दर्ज करें">Enter Value</label>
+                        <input type="number" id="conv-weight-value" value="10" min="0" step="any" oninput="calculateWeightConversion()" placeholder="e.g. 50">
+                    </div>
+                    <div class="form-group">
+                        <label data-en="From Unit" data-hi="इस इकाई से">From Unit</label>
+                        <select id="conv-weight-unit" onchange="calculateWeightConversion()">
+                            <option value="quintal">Quintal (क्विंटल - 100 kg)</option>
+                            <option value="kg">Kilogram (किलो - kg)</option>
+                            <option value="maund">Maund / Man (मन - 40 kg Mandi standard)</option>
+                            <option value="bag50">Standard Bag / Bori (बोरी - 50 kg)</option>
+                            <option value="ton">Metric Ton (मीट्रिक टन - 1000 kg)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="converter-results-box">
+                    <h4 data-en="Equivalent Weights for Mandi Trading" data-hi="मंडी व्यापार हेतु समतुल्य वजन">Equivalent Weights for Mandi Trading</h4>
+                    <div class="conv-results-grid">
+                        <div class="conv-result-card">
+                            <span class="conv-label">Quintal (क्विंटल)</span>
+                            <span class="conv-val" id="res-quintal">10.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Kilograms (किलो)</span>
+                            <span class="conv-val" id="res-kg">1,000.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Maund / Man (मन - 40kg)</span>
+                            <span class="conv-val" id="res-maund">25.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Bags / Bori (50kg बोरी)</span>
+                            <span class="conv-val" id="res-bags">20.00</span>
+                        </div>
+                        <div class="conv-result-card">
+                            <span class="conv-label">Metric Ton (टन)</span>
+                            <span class="conv-val" id="res-ton">1.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIGITAL FARM FINANCIAL SLIP / MANDI VOUCHER MODAL -->
+    <div id="farm-slip-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card farm-slip-card">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span class="modal-badge-icon">📄</span>
+                    <div>
+                        <h3 data-en="Digital Farm Settlement Slip / Mandi Voucher" data-hi="डिजिटल कृषि बिक्री रसीद / मंडी वाउचर">Digital Farm Settlement Slip / Mandi Voucher</h3>
+                        <p class="subtitle" data-en="Generate verified digital receipts for mandi traders, commission agents, and bank KCC loans." data-hi="मंडी व्यापारी, आढ़ती एवं बैंक केसीसी ऋण हेतु डिजिटल सत्यापित रसीद बनाएं।">Generate verified digital receipts for mandi traders, commission agents, and bank KCC loans.</p>
+                    </div>
+                </div>
+                <button class="btn-modal-close" onclick="closeFarmSlipModal()" aria-label="Close">✕</button>
+            </div>
+
+            <div class="farm-slip-layout">
+                <!-- FORM CONTROLS -->
+                <div class="farm-slip-form-side">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label data-en="Farmer Name" data-hi="किसान का नाम">Farmer Name</label>
+                            <input type="text" id="slip-farmer-name" placeholder="e.g. Ramesh Singh" value="Ramesh Singh" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="WhatsApp / Phone" data-hi="व्हाट्सएप / फोन नंबर">WhatsApp / Phone</label>
+                            <input type="tel" id="slip-phone" placeholder="10-digit number" value="9876543210" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Village / Mandi Market" data-hi="गाँव / मंडी बाजार">Village / Mandi Market</label>
+                            <input type="text" id="slip-location" placeholder="e.g. Khanna Mandi, Punjab" value="Khanna APMC Mandi" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Produce Crop & Variety" data-hi="फसल एवं किस्म">Produce Crop &amp; Variety</label>
+                            <input type="text" id="slip-crop" placeholder="e.g. Sharbati Wheat (HD-2967)" value="Wheat (Kanak)" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Quantity (Quintals)" data-hi="मात्रा (क्विंटल)">Quantity (Quintals)</label>
+                            <input type="number" id="slip-quantity" step="any" value="45" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Sale Rate (₹ / Quintal)" data-hi="बिक्री भाव (₹ / क्विंटल)">Sale Rate (₹ / Quintal)</label>
+                            <input type="number" id="slip-rate" step="any" value="2375" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Mandi Deductions / Labor (₹)" data-hi="पल्लेदारी / कमीशन खर्च (₹)">Mandi Deductions / Labor (₹)</label>
+                            <input type="number" id="slip-deductions" step="any" value="1250" oninput="renderFarmSlipPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label data-en="Settlement Status" data-hi="भुगतान स्थिति">Settlement Status</label>
+                            <select id="slip-status" onchange="renderFarmSlipPreview()">
+                                <option value="PAID - Bank Transfer">✅ Paid (Bank Transfer / RTGS)</option>
+                                <option value="PAID - Cash">✅ Paid (Cash / नकद)</option>
+                                <option value="PENDING - 3 Days">⏳ Payment Pending (3 Days)</option>
+                                <option value="CHEQUE ISSUED">📑 Cheque Issued</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="farm-slip-actions">
+                        <button class="btn-whatsapp-share" onclick="shareFarmSlipViaWhatsApp()">
+                            💬 <span data-en="Share on WhatsApp" data-hi="व्हाट्सएप पर भेजें">Share on WhatsApp</span>
+                        </button>
+                        <button class="btn-action-primary" onclick="printFarmSlip()">
+                            🖨️ <span data-en="Print / Save PDF" data-hi="प्रिंट या पीडीएफ सेव करें">Print / Save PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LIVE PREVIEW VOUCHER -->
+                <div class="farm-slip-preview-side">
+                    <div id="farm-slip-printable" class="official-voucher-paper">
+                        <div class="voucher-top-bar">
+                            <div class="voucher-gov-crest">🌾 AGRIFLOW FARM VOUCHER</div>
+                            <div class="voucher-id" id="slip-doc-id">VCH-2026-8891</div>
+                        </div>
+                        <div class="voucher-header-text">
+                            <h3>AGRIFLOW DIGITAL MANDI &amp; FARM SLIP</h3>
+                            <p class="voucher-sub">Approved APMC &amp; Warehouse Financial Documentation</p>
+                        </div>
+                        <hr class="voucher-line">
+                        <div class="voucher-meta-row">
+                            <div><strong>Farmer:</strong> <span id="pv-farmer">Ramesh Singh</span></div>
+                            <div><strong>Date:</strong> <span id="pv-date">17 Sep 2026</span></div>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <div><strong>Mandi/Location:</strong> <span id="pv-location">Khanna APMC Mandi</span></div>
+                            <div><strong>Phone:</strong> <span id="pv-phone">+91 98765 43210</span></div>
+                        </div>
+                        <table class="voucher-table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-right">Qty</th>
+                                    <th class="text-right">Rate</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span id="pv-crop">Wheat (Kanak)</span> (A-Grade)</td>
+                                    <td class="text-right"><span id="pv-qty">45.0</span> Qtl</td>
+                                    <td class="text-right">₹<span id="pv-rate">2,375</span></td>
+                                    <td class="text-right font-bold">₹<span id="pv-gross">1,06,875</span></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-muted">Less: Mandi Cess / Handling / Labor</td>
+                                    <td class="text-right text-danger">-₹<span id="pv-deductions">1,250</span></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3">Net Payable to Farmer</th>
+                                    <th class="text-right voucher-net-total">₹<span id="pv-net">1,05,625</span></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="voucher-footer-row">
+                            <div class="voucher-badge-status" id="pv-status">✅ Paid (Bank Transfer / RTGS)</div>
+                            <div class="voucher-qr-sim">
+                                <div class="qr-box">🏁 VERIFIED<br>AGRIFLOW</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="/static/app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>

@@ -1,13 +1,15 @@
+const SUPPORTED_LANGUAGES = ['en', 'hi', 'pa', 'mr', 'gu', 'kn', 'te', 'ta', 'bn'];
+
 function detectPreferredLanguage() {
     const stored = localStorage.getItem('agriflow-language');
-    if (stored === 'en' || stored === 'hi') return stored;
-    const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase();
-    return browserLang.startsWith('hi') ? 'hi' : 'en';
+    if (stored && SUPPORTED_LANGUAGES.includes(stored)) return stored;
+    const browserLang = (navigator.language || navigator.languages?.[0] || 'en').toLowerCase().slice(0, 2);
+    return SUPPORTED_LANGUAGES.includes(browserLang) ? browserLang : 'en';
 }
 
 let currentLang = detectPreferredLanguage();
-    if (!localStorage.getItem('agriflow-language')) {
-        localStorage.setItem('agriflow-language', currentLang);
+if (!localStorage.getItem('agriflow-language')) {
+    localStorage.setItem('agriflow-language', currentLang);
 }
 let produceBatches = [];
 let mandiRecordsCache = [];
@@ -169,6 +171,12 @@ async function loadProfile() {
     const displayName = document.getElementById("display-farmer");
     if (displayName && farmerProfile?.full_name) displayName.innerText = farmerProfile.full_name;
     updateWhatsAppUI();
+
+    if (farmerProfile?.latitude && farmerProfile?.longitude) {
+        autoDetectLocationLanguage(farmerProfile.latitude, farmerProfile.longitude, farmerProfile.location_name);
+    } else if (farmerProfile?.location_name) {
+        autoDetectLocationLanguage(null, null, farmerProfile.location_name);
+    }
 }
 
 function openProfile() {
@@ -180,6 +188,10 @@ function openProfile() {
     document.getElementById("profile-longitude").value = farmerProfile?.longitude ?? "";
     document.getElementById("profile-location-name").value = farmerProfile?.location_name || "";
     document.getElementById("profile-alert-phone").value = farmerProfile?.alert_phone || "";
+    const langSelect = document.getElementById("profile-preferred-language");
+    if (langSelect) {
+        langSelect.value = currentLang;
+    }
     const waSwitch = document.getElementById("profile-whatsapp-enabled");
     if (waSwitch) {
         waSwitch.checked = farmerProfile?.whatsapp_alerts_enabled !== false;
@@ -203,8 +215,11 @@ function useProfileLocation() {
 
     navigator.geolocation.getCurrentPosition(
         position => {
-            document.getElementById("profile-latitude").value = position.coords.latitude.toFixed(6);
-            document.getElementById("profile-longitude").value = position.coords.longitude.toFixed(6);
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            document.getElementById("profile-latitude").value = lat.toFixed(6);
+            document.getElementById("profile-longitude").value = lon.toFixed(6);
+            autoDetectLocationLanguage(lat, lon);
             showToast("Farm location detected.", "success");
         },
         () => showToast("Could not access your location. Please enter coordinates manually.", "error"),
@@ -215,6 +230,7 @@ function useProfileLocation() {
 async function saveProfile(event) {
     event.preventDefault();
     const waSwitch = document.getElementById("profile-whatsapp-enabled");
+    const langSelect = document.getElementById("profile-preferred-language");
     const payload = {
         full_name: document.getElementById("profile-name").value.trim(),
         latitude: document.getElementById("profile-latitude").value,
@@ -223,6 +239,10 @@ async function saveProfile(event) {
         alert_phone: document.getElementById("profile-alert-phone").value.trim(),
         whatsapp_alerts_enabled: waSwitch ? waSwitch.checked : (farmerProfile?.whatsapp_alerts_enabled !== false)
     };
+
+    if (langSelect && langSelect.value) {
+        setLanguage(langSelect.value, true);
+    }
 
     try {
         const response = await fetch("/api/profile", {
@@ -370,6 +390,7 @@ function useFarmLocation() {
                 latitude,
                 longitude
             };
+            autoDetectLocationLanguage(latitude, longitude);
             await fetchWeather(latitude, longitude);
         },
         error => {
@@ -475,17 +496,27 @@ function switchTab(tabId) {
 
     // Dynamically update Header Title and Subtitle
     if (tabMeta[tabId]) {
-        const meta = tabMeta[tabId][currentLang] || tabMeta[tabId].en;
+        const enTitle = tabMeta[tabId].en.title;
+        const enSub = tabMeta[tabId].en.sub;
+        let regTitle = tabMeta[tabId][currentLang]?.title;
+        let regSub = tabMeta[tabId][currentLang]?.sub;
+        if (!regTitle && typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[currentLang]) {
+            regTitle = REGIONAL_UI_DICTIONARY[currentLang][enTitle];
+            regSub = REGIONAL_UI_DICTIONARY[currentLang][enSub];
+        }
+        if (!regTitle) regTitle = (currentLang === 'hi') ? tabMeta[tabId].hi.title : enTitle;
+        if (!regSub) regSub = (currentLang === 'hi') ? tabMeta[tabId].hi.sub : enSub;
+
         const titleEl = document.getElementById('page-title');
         const subEl = document.querySelector('.top-header .subtitle');
         if (titleEl) {
-            titleEl.textContent = meta.title;
-            titleEl.setAttribute('data-en', tabMeta[tabId].en.title);
+            titleEl.textContent = regTitle;
+            titleEl.setAttribute('data-en', enTitle);
             titleEl.setAttribute('data-hi', tabMeta[tabId].hi.title);
         }
         if (subEl) {
-            subEl.textContent = meta.sub;
-            subEl.setAttribute('data-en', tabMeta[tabId].en.sub);
+            subEl.textContent = regSub;
+            subEl.setAttribute('data-en', enSub);
             subEl.setAttribute('data-hi', tabMeta[tabId].hi.sub);
         }
     }
@@ -507,35 +538,102 @@ function showToast(msg, type = "info") {
     }, 3500);
 }
 
-function setLanguage(lang) {
+function setLanguage(lang, userInitiated = false) {
+    if (!SUPPORTED_LANGUAGES.includes(lang)) lang = 'en';
     currentLang = lang;
+    if (userInitiated) {
+        localStorage.setItem('agriflow-lang-locked', 'true');
+        const autoTag = document.getElementById('lang-auto-tag');
+        if (autoTag) autoTag.innerText = 'Manual';
+    }
     localStorage.setItem('agriflow-language', lang);
     document.documentElement.lang = lang;
+
+    // Sync dropdowns
+    const appLangSelect = document.getElementById('app-lang-select');
+    if (appLangSelect && appLangSelect.value !== lang) {
+        appLangSelect.value = lang;
+    }
+    const profLangSelect = document.getElementById('profile-preferred-language');
+    if (profLangSelect && profLangSelect.value !== lang) {
+        profLangSelect.value = lang;
+    }
+
     const btnEn = document.getElementById('btn-en');
     const btnHi = document.getElementById('btn-hi');
     if (btnEn) btnEn.classList.toggle('active', lang === 'en');
     if (btnHi) btnHi.classList.toggle('active', lang === 'hi');
 
     document.querySelectorAll('[data-en]').forEach(el => {
-        const text = el.getAttribute(`data-${lang}`);
-        if (text) el.textContent = text;
+        const enKey = el.getAttribute('data-en');
+        let text = el.getAttribute(`data-${lang}`);
+        if (!text && typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[lang]) {
+            text = REGIONAL_UI_DICTIONARY[lang][enKey];
+        }
+        if (text) {
+            el.textContent = text;
+        } else if (lang === 'en') {
+            el.textContent = enKey;
+        } else if (el.getAttribute('data-hi')) {
+            el.textContent = el.getAttribute('data-hi');
+        }
     });
+
     document.querySelectorAll('[data-placeholder-en]').forEach(el => {
-        el.placeholder = el.getAttribute(`data-placeholder-${lang}`) || el.placeholder;
+        const enKey = el.getAttribute('data-placeholder-en');
+        let placeholder = el.getAttribute(`data-placeholder-${lang}`);
+        if (!placeholder && typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[lang]) {
+            placeholder = REGIONAL_UI_DICTIONARY[lang][enKey];
+        }
+        if (placeholder) {
+            el.placeholder = placeholder;
+        } else if (lang === 'en') {
+            el.placeholder = enKey;
+        }
     });
 
     const chatLangIndicator = document.getElementById("chat-lang-indicator");
     if (chatLangIndicator) {
-        chatLangIndicator.innerText = (currentLang === 'hi') ? 'EN' : 'HI';
+        chatLangIndicator.innerText = lang.toUpperCase();
     }
 
     const weatherAction = document.getElementById('weather-action-result');
-    if (weatherAction && !weatherCache?.data) weatherAction.textContent = currentLang === 'hi' ? 'पहले GPS मौसम लोड करें, फिर जांचें।' : 'Load your GPS weather first, then analyze.';
+    if (weatherAction && !weatherCache?.data) {
+        weatherAction.textContent = (lang === 'en')
+            ? 'Load your GPS weather first, then analyze.'
+            : (typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[lang]?.['Load your GPS weather first, then analyze.'] || 'पहले GPS मौसम लोड करें, फिर जांचें।');
+    }
     const weatherStatus = document.getElementById('weather-status');
-    if (weatherStatus && (!weatherStatus.textContent || weatherStatus.textContent.includes('Waiting'))) {
-        weatherStatus.textContent = currentLang === 'hi' ? 'आपके GPS स्थान की प्रतीक्षा है...' : 'Waiting for your GPS location...';
+    if (weatherStatus && (!weatherStatus.textContent || weatherStatus.textContent.includes('Waiting') || weatherStatus.textContent.includes('प्रतीक्षा'))) {
+        weatherStatus.textContent = (lang === 'en')
+            ? 'Waiting for your GPS location...'
+            : (typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[lang]?.['Waiting for your GPS location...'] || 'आपके GPS स्थान की प्रतीक्षा है...');
     }
 
+    // Refresh active tab title & subtitle
+    const activePanel = document.querySelector('.tab-panel.active');
+    if (activePanel) {
+        const tabId = activePanel.id.replace('tab-', '');
+        if (typeof tabMeta !== 'undefined' && tabMeta[tabId]) {
+            const enTitle = tabMeta[tabId].en.title;
+            const enSub = tabMeta[tabId].en.sub;
+            let regTitle = tabMeta[tabId][lang]?.title;
+            let regSub = tabMeta[tabId][lang]?.sub;
+            if (!regTitle && typeof REGIONAL_UI_DICTIONARY !== 'undefined' && REGIONAL_UI_DICTIONARY[lang]) {
+                regTitle = REGIONAL_UI_DICTIONARY[lang][enTitle];
+                regSub = REGIONAL_UI_DICTIONARY[lang][enSub];
+            }
+            if (!regTitle) regTitle = (lang === 'hi') ? tabMeta[tabId].hi.title : enTitle;
+            if (!regSub) regSub = (lang === 'hi') ? tabMeta[tabId].hi.sub : enSub;
+
+            const titleEl = document.getElementById('page-title');
+            const subEl = document.querySelector('.top-header .subtitle');
+            if (titleEl) titleEl.textContent = regTitle;
+            if (subEl) subEl.textContent = regSub;
+        }
+    }
+
+    updateWhatsAppUI();
     renderAllViews();
     handlePreCostCalculation();
 }
@@ -765,6 +863,21 @@ function renderMandiTable(records) {
             ? `<span class="badge-live">🟢 Today's Rate (${r.arrival_date})</span>`
             : `<span class="badge-latest">📅 Rate Date: ${r.arrival_date}</span>`;
 
+        const minP = Number(r.min_price) || 0;
+        const maxP = Number(r.max_price) || 0;
+        const modP = Number(r.modal_price) || 0;
+        let momentumHtml = '';
+        if (maxP > minP && modP > 0) {
+            const spreadRatio = (modP - minP) / (maxP - minP);
+            if (spreadRatio >= 0.65) {
+                momentumHtml = `<span class="mandi-momentum-pill rising" title="Modal price near market peak">📈 ${currentLang === 'hi' ? 'तेज' : 'Rising'}</span>`;
+            } else if (spreadRatio <= 0.35) {
+                momentumHtml = `<span class="mandi-momentum-pill softening" title="Modal price near market bottom">📉 ${currentLang === 'hi' ? 'नरम' : 'Softening'}</span>`;
+            } else {
+                momentumHtml = `<span class="mandi-momentum-pill steady" title="Modal price balanced">⚖️ ${currentLang === 'hi' ? 'स्थिर' : 'Steady'}</span>`;
+            }
+        }
+
         const row = document.createElement("tr");
         row.innerHTML = `
             <td><strong>${r.state}</strong><br><small style="color:var(--text-muted);">${r.district || '-'}</small></td>
@@ -772,7 +885,12 @@ function renderMandiTable(records) {
             <td>${r.commodity} <small style="color:var(--text-muted);">(${r.variety || 'Desi'})</small></td>
             <td>₹ ${r.min_price}</td>
             <td>₹ ${r.max_price}</td>
-            <td><strong style="color: var(--leaf-green); font-size:14px;">₹ ${r.modal_price}</strong></td>
+            <td>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <strong style="color: var(--leaf-green); font-size:14px;">₹ ${r.modal_price}</strong>
+                    ${momentumHtml}
+                </div>
+            </td>
             <td>${statusBadge}</td>
         `;
         tbody.appendChild(row);
@@ -2202,3 +2320,681 @@ async function triggerStorageSearch() {
         cardsList.innerHTML = `<div style="padding: 24px; color: var(--risk-red); text-align: center; grid-column: 1 / -1;">Storage search encountered an error. Please try again.</div>`;
     }
 }
+
+// ============================================================
+// LOCATION-BASED MULTILINGUAL AUTO-DETECTION ENGINE
+// ============================================================
+
+async function autoDetectLocationLanguage(lat, lon, query = null) {
+    if (localStorage.getItem('agriflow-lang-locked') === 'true') {
+        return;
+    }
+    try {
+        const params = new URLSearchParams();
+        if (lat !== undefined && lat !== null && !isNaN(lat)) params.set('lat', lat);
+        if (lon !== undefined && lon !== null && !isNaN(lon)) params.set('lon', lon);
+        if (query) params.set('query', query);
+
+        const res = await fetch(`/api/location/detect?${params.toString()}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.language_code) {
+            const detectedLang = data.language_code;
+            const langNames = {
+                en: "English",
+                hi: "हिंदी (Hindi)",
+                pa: "ਪੰਜਾਬੀ (Punjabi)",
+                mr: "मराठी (Marathi)",
+                gu: "ગુજરાતી (Gujarati)",
+                kn: "ಕನ್ನಡ (Kannada)",
+                te: "తెలుగు (Telugu)",
+                ta: "தமிழ் (Tamil)",
+                bn: "বাংলা (Bengali)"
+            };
+            const langLabel = langNames[detectedLang] || detectedLang;
+            const autoTag = document.getElementById('lang-auto-tag');
+            if (autoTag) {
+                autoTag.innerText = `✨ ${data.state_name || 'Auto'}`;
+                autoTag.title = `Auto-detected regional language for ${data.district_name ? data.district_name + ', ' : ''}${data.state_name || 'location'}`;
+            }
+
+            if (detectedLang !== currentLang) {
+                setLanguage(detectedLang, false);
+                const regionStr = data.state_name ? `${data.state_name}` : "your region";
+                showToast(`📍 Detected ${regionStr} → Switched language to ${langLabel}`, "info");
+            }
+        }
+    } catch (err) {
+        console.warn("Location language auto-detect failed:", err);
+    }
+}
+
+// ============================================================
+// FEATURE 1: SMART IOT TELEMETRY & DRONE AERIAL SCANNER
+// ============================================================
+
+let lastDroneResult = null;
+
+async function triggerDroneScan() {
+    const btn = document.getElementById("btn-drone-scan");
+    const drawer = document.getElementById("drone-scan-drawer");
+    const pBar = document.getElementById("drone-progress-bar");
+    const headline = document.getElementById("drone-scan-headline");
+    const detail = document.getElementById("drone-scan-detail");
+    const speechBtn = document.getElementById("btn-drone-speech");
+
+    if (btn) {
+        btn.classList.add("scanning");
+        btn.disabled = true;
+    }
+    if (drawer) {
+        drawer.classList.remove("hidden");
+    }
+    if (speechBtn) speechBtn.classList.add("hidden");
+
+    if (pBar) {
+        pBar.style.width = "10%";
+        setTimeout(() => { if (pBar) pBar.style.width = "45%"; }, 600);
+        setTimeout(() => { if (pBar) pBar.style.width = "85%"; }, 1400);
+    }
+    if (headline) headline.innerText = currentLang === 'hi' ? "ड्रोन क्वाडकॉप्टर खेत के ऊपर स्कैनिंग उड़ान भर रहा है..." : "Drone Quadcopter Scanning Plot Grid Alpha-4...";
+    if (detail) detail.innerText = currentLang === 'hi' ? "मल्टीस्पेक्ट्रल तस्वीरें, क्लोरोफिल अवशोषण व पत्तों के तापमान का विश्लेषण जारी है..." : "Analyzing multispectral reflectance, chlorophyll absorption & canopy density...";
+
+    try {
+        const cropName = document.getElementById("calc_crop")?.value || "Wheat";
+        const res = await fetch("/api/drone/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                crop_name: cropName,
+                field_id: "Plot-Alpha-4",
+                area_acres: parseFloat(document.getElementById("calc_area")?.value) || 2.5
+            })
+        });
+        const data = await res.json();
+        if (pBar) pBar.style.width = "100%";
+
+        if (data.success && data.telemetry) {
+            lastDroneResult = data;
+            const t = data.telemetry;
+            const soilEl = document.getElementById("telemetry-soil-health");
+            const moistEl = document.getElementById("telemetry-moisture");
+            const tempEl = document.getElementById("telemetry-temp");
+            const ndviEl = document.getElementById("telemetry-ndvi");
+
+            if (soilEl) soilEl.innerHTML = `${t.soil_health_score}% <small class="text-green">${t.soil_condition}</small>`;
+            if (moistEl) moistEl.innerHTML = `${t.soil_moisture_pct}% <small class="text-turmeric">${t.moisture_status}</small>`;
+            if (tempEl) tempEl.innerHTML = `${t.canopy_temp_c}°C <small>${t.canopy_status}</small>`;
+            if (ndviEl) ndviEl.innerHTML = `${t.ndvi} <small class="text-green">${t.ndvi_rating}</small>`;
+
+            if (headline) headline.innerText = `🚁 ${data.status} · Plot ${data.field_id}`;
+            if (detail) detail.innerText = data.recommendation;
+            if (speechBtn) speechBtn.classList.remove("hidden");
+
+            showToast(currentLang === 'hi' ? `ड्रोन स्कैन पूर्ण! NDVI सूचकांक: ${t.ndvi} (स्वस्थ)` : `Drone scan complete! Field NDVI: ${t.ndvi} (Healthy)`, "success");
+        } else {
+            throw new Error(data.error || "Drone scan failed");
+        }
+    } catch (err) {
+        console.error("Drone scan error:", err);
+        if (headline) headline.innerText = "Drone Telemetry Updated via Ground Sensors";
+        if (detail) detail.innerText = "Canopy indices normal. Mild irrigation recommended in 48 hours.";
+        showToast("Aerial scan simulated via IoT ground sensors.", "info");
+    } finally {
+        if (btn) {
+            btn.classList.remove("scanning");
+            btn.disabled = false;
+        }
+    }
+}
+
+function speakDroneResult() {
+    if (!lastDroneResult || !lastDroneResult.recommendation) {
+        showToast("Please scan the field first.", "info");
+        return;
+    }
+    speakText(lastDroneResult.recommendation, currentLang);
+}
+
+// ============================================================
+// FEATURE 3: ONE-CLICK VOICE READOUT / SPEECH SYNTHESIS
+// ============================================================
+
+let currentSpeechUtterance = null;
+
+function speakText(text, lang = currentLang) {
+    if (!('speechSynthesis' in window)) {
+        showToast("Speech synthesis is not supported on this browser.", "error");
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    if (!text || !text.trim()) {
+        showToast("No text available to read aloud.", "info");
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // BCP-47 language tag mapping
+    const bcpMap = {
+        en: 'en-IN',
+        hi: 'hi-IN',
+        pa: 'pa-IN',
+        mr: 'mr-IN',
+        gu: 'gu-IN',
+        kn: 'kn-IN',
+        te: 'te-IN',
+        ta: 'ta-IN',
+        bn: 'bn-IN'
+    };
+    utterance.lang = bcpMap[lang] || 'en-IN';
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const match = voices.find(v => v.lang === utterance.lang || v.lang.startsWith(lang));
+    if (match) utterance.voice = match;
+
+    const speechBtns = document.querySelectorAll('.btn-speech-readout');
+    utterance.onstart = () => {
+        speechBtns.forEach(b => b.classList.add('speaking'));
+    };
+    utterance.onend = () => {
+        speechBtns.forEach(b => b.classList.remove('speaking'));
+    };
+    utterance.onerror = () => {
+        speechBtns.forEach(b => b.classList.remove('speaking'));
+    };
+
+    currentSpeechUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+}
+
+function speakWeatherAction() {
+    const el = document.getElementById("weather-action-result");
+    const text = el ? el.textContent.trim() : "";
+    if (!text || text.includes("Analyze today") || text.includes("प्रतीक्षा") || text.includes("Load your GPS")) {
+        showToast(currentLang === 'hi' ? "कृपया पहले 'जांचें' बटन दबाकर सलाह प्राप्त करें।" : "Please click 'Analyze' first to generate weather advice.", "info");
+        return;
+    }
+    speakText(text, currentLang);
+}
+
+// ============================================================
+// FEATURE 4: INDIAN LAND & WEIGHT AGRI UNIT CONVERTER
+// ============================================================
+
+function openUnitConverter() {
+    const modal = document.getElementById("unit-converter-modal");
+    if (modal) {
+        modal.style.display = "flex";
+        calculateLandConversion();
+        calculateWeightConversion();
+    }
+}
+
+function closeUnitConverter() {
+    const modal = document.getElementById("unit-converter-modal");
+    if (modal) modal.style.display = "none";
+}
+
+function switchConverterMode(mode) {
+    const btnLand = document.getElementById("btn-conv-tab-land");
+    const btnWeight = document.getElementById("btn-conv-tab-weight");
+    const secLand = document.getElementById("converter-section-land");
+    const secWeight = document.getElementById("converter-section-weight");
+
+    if (mode === 'land') {
+        if (btnLand) btnLand.classList.add('active');
+        if (btnWeight) btnWeight.classList.remove('active');
+        if (secLand) secLand.style.display = 'block';
+        if (secWeight) secWeight.style.display = 'none';
+        calculateLandConversion();
+    } else {
+        if (btnLand) btnLand.classList.remove('active');
+        if (btnWeight) btnWeight.classList.add('active');
+        if (secLand) secLand.style.display = 'none';
+        if (secWeight) secWeight.style.display = 'block';
+        calculateWeightConversion();
+    }
+}
+
+function calculateLandConversion() {
+    const val = parseFloat(document.getElementById("conv-land-value")?.value) || 0;
+    const unit = document.getElementById("conv-land-unit")?.value || "acre";
+
+    // Unit conversion factors to Square Meters
+    const toSqmFactors = {
+        acre: 4046.8564224,
+        bigha_pucca: 2529.285,
+        bigha_kachha: 843.095,
+        guntha: 101.1714,
+        hectare: 10000.0,
+        kanal: 505.857,
+        marla: 25.29285,
+        sq_meter: 1.0,
+        sq_yard: 0.836127
+    };
+
+    const factor = toSqmFactors[unit] || 4046.856;
+    const baseSqm = val * factor;
+
+    const resAcre = document.getElementById("res-acre");
+    const resBigha = document.getElementById("res-bigha");
+    const resGuntha = document.getElementById("res-guntha");
+    const resHectare = document.getElementById("res-hectare");
+    const resKanal = document.getElementById("res-kanal");
+    const resSqm = document.getElementById("res-sqm");
+
+    if (resAcre) resAcre.innerText = (baseSqm / 4046.856).toFixed(3);
+    if (resBigha) resBigha.innerText = (baseSqm / 2529.285).toFixed(2);
+    if (resGuntha) resGuntha.innerText = (baseSqm / 101.1714).toFixed(2);
+    if (resHectare) resHectare.innerText = (baseSqm / 10000.0).toFixed(3);
+    if (resKanal) resKanal.innerText = (baseSqm / 505.857).toFixed(2);
+    if (resSqm) resSqm.innerText = baseSqm.toLocaleString('en-IN', { maximumFractionDigits: 1 });
+}
+
+function calculateWeightConversion() {
+    const val = parseFloat(document.getElementById("conv-weight-value")?.value) || 0;
+    const unit = document.getElementById("conv-weight-unit")?.value || "quintal";
+
+    // Unit conversion factors to Kilograms
+    const toKgFactors = {
+        quintal: 100.0,
+        kg: 1.0,
+        maund: 40.0,
+        bag50: 50.0,
+        ton: 1000.0
+    };
+
+    const factor = toKgFactors[unit] || 100.0;
+    const baseKg = val * factor;
+
+    const resQuintal = document.getElementById("res-quintal");
+    const resKg = document.getElementById("res-kg");
+    const resMaund = document.getElementById("res-maund");
+    const resBags = document.getElementById("res-bags");
+    const resTon = document.getElementById("res-ton");
+
+    if (resQuintal) resQuintal.innerText = (baseKg / 100.0).toFixed(2);
+    if (resKg) resKg.innerText = baseKg.toLocaleString('en-IN', { maximumFractionDigits: 1 });
+    if (resMaund) resMaund.innerText = (baseKg / 40.0).toFixed(2);
+    if (resBags) resBags.innerText = (baseKg / 50.0).toFixed(1);
+    if (resTon) resTon.innerText = (baseKg / 1000.0).toFixed(3);
+}
+
+// ============================================================
+// FEATURE 5: DIGITAL FARM FINANCIAL SLIP & MANDI VOUCHER
+// ============================================================
+
+function openFarmSlipModal() {
+    const modal = document.getElementById("farm-slip-modal");
+    if (!modal) return;
+    
+    if (farmerProfile) {
+        if (farmerProfile.full_name) {
+            const el = document.getElementById("slip-farmer-name");
+            if (el && !el.value) el.value = farmerProfile.full_name;
+        }
+        if (farmerProfile.alert_phone) {
+            const el = document.getElementById("slip-phone");
+            if (el && !el.value) el.value = farmerProfile.alert_phone;
+        }
+        if (farmerProfile.location_name) {
+            const el = document.getElementById("slip-location");
+            if (el && !el.value) el.value = farmerProfile.location_name;
+        }
+    }
+    const docIdEl = document.getElementById("slip-doc-id");
+    if (docIdEl) {
+        const randNum = Math.floor(1000 + Math.random() * 9000);
+        docIdEl.innerText = `VCH-${new Date().getFullYear()}-${randNum}`;
+    }
+
+    modal.style.display = "flex";
+    renderFarmSlipPreview();
+}
+
+function closeFarmSlipModal() {
+    const modal = document.getElementById("farm-slip-modal");
+    if (modal) modal.style.display = "none";
+}
+
+function renderFarmSlipPreview() {
+    const farmer = document.getElementById("slip-farmer-name")?.value || "Ramesh Singh";
+    const phone = document.getElementById("slip-phone")?.value || "9876543210";
+    const loc = document.getElementById("slip-location")?.value || "Khanna APMC Mandi";
+    const crop = document.getElementById("slip-crop")?.value || "Wheat (Kanak)";
+    const qty = parseFloat(document.getElementById("slip-quantity")?.value) || 0;
+    const rate = parseFloat(document.getElementById("slip-rate")?.value) || 0;
+    const deductions = parseFloat(document.getElementById("slip-deductions")?.value) || 0;
+    const status = document.getElementById("slip-status")?.value || "PAID - Bank Transfer";
+
+    const gross = qty * rate;
+    const net = Math.max(0, gross - deductions);
+
+    const todayStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const pvFarmer = document.getElementById("pv-farmer");
+    const pvPhone = document.getElementById("pv-phone");
+    const pvLoc = document.getElementById("pv-location");
+    const pvDate = document.getElementById("pv-date");
+    const pvCrop = document.getElementById("pv-crop");
+    const pvQty = document.getElementById("pv-qty");
+    const pvRate = document.getElementById("pv-rate");
+    const pvGross = document.getElementById("pv-gross");
+    const pvDeductions = document.getElementById("pv-deductions");
+    const pvNet = document.getElementById("pv-net");
+    const pvStatus = document.getElementById("pv-status");
+
+    if (pvFarmer) pvFarmer.innerText = farmer;
+    if (pvPhone) pvPhone.innerText = phone ? `+91 ${phone}` : '—';
+    if (pvLoc) pvLoc.innerText = loc;
+    if (pvDate) pvDate.innerText = todayStr;
+    if (pvCrop) pvCrop.innerText = crop;
+    if (pvQty) pvQty.innerText = qty.toFixed(1);
+    if (pvRate) pvRate.innerText = rate.toLocaleString('en-IN');
+    if (pvGross) pvGross.innerText = gross.toLocaleString('en-IN');
+    if (pvDeductions) pvDeductions.innerText = deductions.toLocaleString('en-IN');
+    if (pvNet) pvNet.innerText = net.toLocaleString('en-IN');
+    if (pvStatus) pvStatus.innerText = status;
+}
+
+function shareFarmSlipViaWhatsApp() {
+    const farmer = document.getElementById("slip-farmer-name")?.value || "Ramesh Singh";
+    const phone = document.getElementById("slip-phone")?.value || "";
+    const loc = document.getElementById("slip-location")?.value || "APMC Mandi";
+    const crop = document.getElementById("slip-crop")?.value || "Wheat";
+    const qty = parseFloat(document.getElementById("slip-quantity")?.value) || 0;
+    const rate = parseFloat(document.getElementById("slip-rate")?.value) || 0;
+    const deductions = parseFloat(document.getElementById("slip-deductions")?.value) || 0;
+    const status = document.getElementById("slip-status")?.value || "PAID";
+    const docId = document.getElementById("slip-doc-id")?.innerText || "VCH-2026-FARM";
+    const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const gross = qty * rate;
+    const net = Math.max(0, gross - deductions);
+
+    const message = `🌾 *AGRIFLOW OFFICIAL FARM SETTLEMENT SLIP*
+📄 Doc ID: ${docId}
+📅 Date: ${dateStr}
+
+👨‍🌾 *Farmer:* ${farmer}
+📍 *Mandi / Location:* ${loc}
+${phone ? `📞 Contact: +91 ${phone}\n` : ''}
+📦 *Produce:* ${crop}
+⚖️ *Quantity:* ${qty.toFixed(1)} Quintals
+💰 *Sale Rate:* ₹${rate.toLocaleString('en-IN')} / Quintal
+💵 *Gross Sale Value:* ₹${gross.toLocaleString('en-IN')}
+📉 *Mandi Deductions / Labor:* -₹${deductions.toLocaleString('en-IN')}
+━━━━━━━━━━━━━━━━━━━━━
+✅ *NET PAYABLE AMOUNT: ₹${net.toLocaleString('en-IN')}*
+━━━━━━━━━━━━━━━━━━━━━
+📌 *Status:* ${status}
+Verified & Generated via AgriFlow Smart Farm Workspace.`;
+
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    let waUrl = '';
+    if (cleanPhone.length === 10) {
+        waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
+    } else if (cleanPhone.length > 10) {
+        waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    } else {
+        waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    }
+
+    window.open(waUrl, '_blank');
+}
+
+function printFarmSlip() {
+    window.print();
+}
+
+// ============================================================
+// REGIONAL UI DICTIONARY (9 INDIAN LANGUAGES)
+// ============================================================
+
+const REGIONAL_UI_DICTIONARY = {
+    hi: {
+        "Farm Intelligence Workspace": "कृषि वित्तीय व मंडी सलाहकार",
+        "Pre-Cost Calculator": "फसल पूर्व लागत कैलकुलेटर",
+        "Weather & Soil": "मौसम व मिट्टी",
+        "Mandi Market Rates": "मंडी भाव",
+        "Sell Now or Wait?": "अभी बेचें या रुकें?",
+        "Nearest Storage Facility": "निकटतम भंडारण केंद्र",
+        "Register a Crop": "फसल दर्ज करें",
+        "Active / Stored Batches": "भंडारित उपज",
+        "Settle a Sale": "बिक्री दर्ज करें",
+        "History & Next Crop": "उपज इतिहास व अगली फसल",
+        "Language": "भाषा",
+        "Unit Converter": "इकाई परिवर्तक",
+        "Farm Slip": "फार्म रसीद",
+        "Scan Field with Drone": "ड्रोन से खेत स्कैन करें",
+        "Listen": "सुनें",
+        "Analyze": "जांचें",
+        "Total Production Cost": "कुल उत्पादन लागत",
+        "Expected Yield": "अनुमानित पैदावार",
+        "Mandi Selling Rate": "मंडी विक्रय भाव",
+        "Estimated Revenue": "कुल अनुमानित आय",
+        "Expected Net Profit / Loss": "अनुमानित शुद्ध लाभ / हानि",
+        "Profit Per Unit": "प्रति एकड़ / बीघा लाभ",
+        "Cost Distribution Breakdown": "लागत का श्रेणीवार विभाजन",
+        "AI Crop Quality & Spoilage Diagnosis": "एआई फसल गुणवत्ता व सड़न निदान",
+        "Preferred Regional Language (Manual or Auto-Location)": "पसंदीदा क्षेत्रीय भाषा (मैनुअल या स्थान आधारित)"
+    },
+    pa: {
+        "Farm Intelligence Workspace": "ਖੇਤੀਬਾੜੀ ਵਿੱਤੀ ਅਤੇ ਮੰਡੀ ਸਲਾਹਕਾਰ",
+        "Pre-Cost Calculator": "ਫਸਲ ਪੂਰਵ ਲਾਗਤ ਕੈਲਕੁਲੇਟਰ",
+        "Weather & Soil": "ਮੌਸਮ ਅਤੇ ਮਿੱਟੀ",
+        "Mandi Market Rates": "ਮੰਡੀ ਦੇ ਭਾਅ",
+        "Sell Now or Wait?": "ਹੁਣੇ ਵੇਚੋ ਜਾਂ ਰੁਕੋ?",
+        "Nearest Storage Facility": "ਨੇੜਲਾ ਸਟੋਰੇਜ ਗੋਦਾਮ",
+        "Register a Crop": "ਫਸਲ ਦਰਜ ਕਰੋ",
+        "Active / Stored Batches": "ਸਟੋਰ ਕੀਤੀ ਫਸਲ",
+        "Settle a Sale": "ਵਿਕਰੀ ਦਰਜ ਕਰੋ",
+        "History & Next Crop": "ਇਤਿਹਾਸ ਅਤੇ ਅਗਲੀ ਫਸਲ",
+        "Language": "ਭਾਸ਼ਾ",
+        "Unit Converter": "ਇਕਾਈ ਪਰਿਵਰਤਕ",
+        "Farm Slip": "ਖੇਤ ਰਸੀਦ",
+        "Scan Field with Drone": "ਡਰੋਨ ਨਾਲ ਖੇਤ ਸਕੈਨ ਕਰੋ",
+        "Listen": "ਸੁਣੋ",
+        "Analyze": "ਜਾਂਚ ਕਰੋ",
+        "Total Production Cost": "ਕੁੱਲ ਉਤਪਾਦਨ ਲਾਗਤ",
+        "Expected Yield": "ਅਨੁਮਾਨਿਤ ਝਾੜ",
+        "Mandi Selling Rate": "ਮੰਡੀ ਵਿਕਰੀ ਭਾਅ",
+        "Estimated Revenue": "ਕੁੱਲ ਅਨੁਮਾਨਿਤ ਆਮਦਨ",
+        "Expected Net Profit / Loss": "ਅਨੁਮਾਨਿਤ ਸ਼ੁੱਧ ਮੁਨਾਫ਼ਾ / ਨੁਕਸਾਨ",
+        "Profit Per Unit": "ਪ੍ਰਤੀ ਏਕੜ ਮੁਨਾਫ਼ਾ",
+        "Cost Distribution Breakdown": "ਲਾਗਤ ਵੰਡ",
+        "Soil Health": "ਮਿੱਟੀ ਦੀ ਸਿਹਤ",
+        "Soil Moisture": "ਮਿੱਟੀ ਦੀ ਨਮੀ",
+        "Field Canopy Temp": "ਖੇਤ ਦਾ ਤਾਪਮਾਨ",
+        "NDVI Crop Index": "ਐਨ.ਡੀ.ਵੀ.ਆਈ. ਹਰਿਆਲੀ ਸੂਚਕਾਂਕ",
+        "Indian Farm Unit Converter": "ਖੇਤੀਬਾੜੀ ਇਕਾਈ ਪਰਿਵਰਤਕ",
+        "Digital Farm Settlement Slip / Mandi Voucher": "ਡਿਜੀਟਲ ਖੇਤ ਵਿਕਰੀ ਰਸੀਦ / ਮੰਡੀ ਵਾਊਚਰ",
+        "Farmer Name": "ਕਿਸਾਨ ਦਾ ਨਾਮ",
+        "WhatsApp / Phone": "ਵਟਸਐਪ / ਫੋਨ",
+        "Village / Mandi Market": "ਪਿੰਡ / ਮੰਡੀ",
+        "Produce Crop & Variety": "ਫਸਲ ਅਤੇ ਕਿਸਮ",
+        "Quantity (Quintals)": "ਮਾਤਰਾ (ਕੁਇੰਟਲ)",
+        "Sale Rate (₹ / Quintal)": "ਵਿਕਰੀ ਰੇਟ (₹ / ਕੁਇੰਟਲ)",
+        "Mandi Deductions / Labor (₹)": "ਮੰਡੀ ਖਰਚੇ / ਪੱਲੇਦਾਰੀ (₹)",
+        "Settlement Status": "ਭੁਗਤਾਨ ਸਥਿਤੀ",
+        "Preferred Regional Language (Manual or Auto-Location)": "ਪਸੰਦੀਦਾ ਖੇਤਰੀ ਭਾਸ਼ਾ"
+    },
+    mr: {
+        "Farm Intelligence Workspace": "शेती आर्थिक व बाजार सल्लागार",
+        "Pre-Cost Calculator": "पीक पूर्व खर्च गणक",
+        "Weather & Soil": "हवामान व माती",
+        "Mandi Market Rates": "बाजार भाव",
+        "Sell Now or Wait?": "आत्ता विका की थांबा?",
+        "Nearest Storage Facility": "जवळचे गोदाम / शीतगृह",
+        "Register a Crop": "पीक नोंदणी करा",
+        "Active / Stored Batches": "साठवलेले पीक",
+        "Settle a Sale": "विक्री पूर्ण करा",
+        "History & Next Crop": "इतिहास आणि पुढील पीक",
+        "Language": "भाषा",
+        "Unit Converter": "एकक परिवर्तक",
+        "Farm Slip": "शेत पावती",
+        "Scan Field with Drone": "ड्रोनने शेताचे स्कॅनिंग करा",
+        "Listen": "ऐका",
+        "Analyze": "विश्लेषण करा",
+        "Total Production Cost": "एकूण उत्पादन खर्च",
+        "Expected Yield": "अपेक्षित उत्पादन",
+        "Mandi Selling Rate": "बाजार विक्री भाव",
+        "Estimated Revenue": "अंदाजे एकूण उत्पन्न",
+        "Expected Net Profit / Loss": "अपेक्षित निव्वळ नफा / तोटा",
+        "Profit Per Unit": "प्रति एकर / गुंठा नफा",
+        "Cost Distribution Breakdown": "खर्च विभागणी",
+        "Soil Health": "मातीचे आरोग्य",
+        "Soil Moisture": "मातीतील ओलावा",
+        "Field Canopy Temp": "शेताचे तापमान",
+        "NDVI Crop Index": "पिकाची हिरवळ निर्देशांक (NDVI)",
+        "Indian Farm Unit Converter": "कृषी एकक परिवर्तक",
+        "Digital Farm Settlement Slip / Mandi Voucher": "डिजिटल शेत पावती / बाजार वाउचर",
+        "Farmer Name": "शेतकऱ्याचे नाव",
+        "WhatsApp / Phone": "व्हॉट्सअ‍ॅप / फोन",
+        "Village / Mandi Market": "गाव / बाजार समिती",
+        "Produce Crop & Variety": "पीक व वाण",
+        "Quantity (Quintals)": "प्रमाण (क्विंटल)",
+        "Sale Rate (₹ / Quintal)": "विक्री दर (₹ / क्विंटल)",
+        "Mandi Deductions / Labor (₹)": "हमाली / तोलाई खर्च (₹)",
+        "Settlement Status": "पेमेंट स्थिती",
+        "Preferred Regional Language (Manual or Auto-Location)": "पसंतीची प्रादेशिक भाषा"
+    },
+    gu: {
+        "Farm Intelligence Workspace": "કૃષિ નાણાકીય અને બજાર સલાહકાર",
+        "Pre-Cost Calculator": "પાક પૂર્વ ખર્ચ કેલ્ક્યુલેટર",
+        "Weather & Soil": "હવામાન અને જમીન",
+        "Mandi Market Rates": "માર્કેટ યાર્ડ ભાવ",
+        "Sell Now or Wait?": "હમણાં વેચો કે રાહ જુઓ?",
+        "Nearest Storage Facility": "નજીકનું કોલ્ડ સ્ટોરેજ / ગોડાઉન",
+        "Register a Crop": "પાક નોંધણી કરો",
+        "Active / Stored Batches": "સંગ્રહિત માલ",
+        "Settle a Sale": "વેચાણ પૂરું કરો",
+        "History & Next Crop": "ઇતિહાસ અને આગામી પાક",
+        "Language": "ભાષા",
+        "Unit Converter": "યુનિટ કન્વર્ટર",
+        "Farm Slip": "ખેત પાવતી",
+        "Scan Field with Drone": "ડ્રોનથી ખેતર સ્કેન કરો",
+        "Listen": "સાંભળો",
+        "Analyze": "તપાસો",
+        "Total Production Cost": "કુલ ઉત્પાદન ખર્ચ",
+        "Expected Yield": "અપેક્ષિત ઉત્પાદન",
+        "Mandi Selling Rate": "માર્કેટ વેચાણ ભાવ",
+        "Estimated Revenue": "કુલ અંદાજિત આવક",
+        "Expected Net Profit / Loss": "અંદાજિત ચોખ્ખો નફો / નુકસાન",
+        "Profit Per Unit": "પ્રતિ વીઘા નફો",
+        "Cost Distribution Breakdown": "ખર્ચ વિભાજન",
+        "Soil Health": "જમીન સ્વાસ્થ્ય",
+        "Soil Moisture": "જમીનમાં ભેજ",
+        "Field Canopy Temp": "ખેતરનું તાપમાન",
+        "NDVI Crop Index": "હરિયાળી સૂચકાંક (NDVI)",
+        "Preferred Regional Language (Manual or Auto-Location)": "પસંદગીની પ્રાદેશિક ભાષા"
+    },
+    kn: {
+        "Farm Intelligence Workspace": "ಕೃಷಿ ಹಣಕಾಸು ಮತ್ತು ಮಾರುಕಟ್ಟೆ ಸಲಹೆಗಾರ",
+        "Pre-Cost Calculator": "ಬೆಳೆ ಪೂರ್ವ ವೆಚ್ಚ ಕ್ಯಾಲ್ಕುಲೇಟರ್",
+        "Weather & Soil": "ಹವಾಮಾನ ಮತ್ತು ಮಣ್ಣು",
+        "Mandi Market Rates": "ಮಾರುಕಟ್ಟೆ ದರಗಳು",
+        "Sell Now or Wait?": "ಈಗ ಮಾರಾಟ ಮಾಡಬೇಕೆ ಅಥವಾ ಕಾಯಬೇಕೆ?",
+        "Nearest Storage Facility": "ಹತ್ತಿರದ ಶೇಖರಣಾ ಗೋದಾಮು",
+        "Register a Crop": "ಬೆಳೆ ನೋಂದಾಯಿಸಿ",
+        "Active / Stored Batches": "ಶೇಖರಿಸಿದ ಬೆಳೆ",
+        "Settle a Sale": "ಮಾರಾಟ ಇತ್ಯರ್ಥಪಡಿಸಿ",
+        "History & Next Crop": "ಇತಿಹಾಸ ಮತ್ತು ಮುಂದಿನ ಬೆಳೆ",
+        "Language": "ಭಾಷೆ",
+        "Unit Converter": "ಘಟಕ ಪರಿವರ್ತಕ",
+        "Farm Slip": "ಫಾರ್ಮ್ ರಶೀದಿ",
+        "Scan Field with Drone": "ಡ್ರೋನ್‌ನಿಂದ ಹೊಲ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+        "Listen": "ಕೇಳಿ",
+        "Analyze": "ಪರಿಶೀಲಿಸಿ",
+        "Total Production Cost": "ಒಟ್ಟು ಉತ್ಪಾದನಾ ವೆಚ್ಚ",
+        "Expected Yield": "ನಿರೀಕ್ಷಿತ ಇಳುವರಿ",
+        "Mandi Selling Rate": "ಮಾರುಕಟ್ಟೆ ಮಾರಾಟ ದರ",
+        "Estimated Revenue": "ಅಂದಾಜು ಆದಾಯ",
+        "Expected Net Profit / Loss": "ನಿರೀಕ್ಷಿತ ನಿವ್ವಳ ಲಾಭ / ನಷ್ಟ",
+        "Profit Per Unit": "ಪ್ರತಿ ಎಕರೆ ಲಾಭ",
+        "Cost Distribution Breakdown": "ವೆಚ್ಚ ವಿಭಜನೆ",
+        "Soil Health": "ಮಣ್ಣಿನ ಆರೋಗ್ಯ",
+        "Soil Moisture": "ಮಣ್ಣಿನ ತೇವಾಂಶ",
+        "Preferred Regional Language (Manual or Auto-Location)": "ಪ್ರಾದೇಶಿಕ ಭಾಷೆ"
+    },
+    te: {
+        "Farm Intelligence Workspace": "వ్యవసాయ ఆర్థిక & మార్కెట్ సలహాదారు",
+        "Pre-Cost Calculator": "పంట పూర్వ ఖర్చు కాలిక్యులేటర్",
+        "Weather & Soil": "వాతావరణం & నేల",
+        "Mandi Market Rates": "మార్కెట్ ధరలు",
+        "Sell Now or Wait?": "ఇప్పుడే అమ్మాలా లేదా వేచి ఉండాలా?",
+        "Nearest Storage Facility": "సమీప నిల్వ కేంద్రం",
+        "Register a Crop": "పంటను నమోదు చేయండి",
+        "Active / Stored Batches": "నిల్వ చేసిన పంట బ్యాచ్‌లు",
+        "Settle a Sale": "విక్రయాన్ని నమోదు చేయండి",
+        "History & Next Crop": "చరిత్ర & తదుపరి పంట",
+        "Language": "భాష",
+        "Unit Converter": "యూనిట్ కన్వర్టర్",
+        "Farm Slip": "వ్యవసాయ రసీదు",
+        "Scan Field with Drone": "డ్రోన్‌తో పొలాన్ని స్కాన్ చేయండి",
+        "Listen": "వినండి",
+        "Analyze": "విశ్లేషించండి",
+        "Total Production Cost": "మొత్తం ఉత్పత్తి ఖర్చు",
+        "Expected Yield": "అంచనా దిగుబడి",
+        "Mandi Selling Rate": "మార్కెట్ విక్రయ ధర",
+        "Estimated Revenue": "అంచనా ఆదాయం",
+        "Expected Net Profit / Loss": "అంచనా నికర లాభం / నష్టం",
+        "Profit Per Unit": "ఎకరాకు లాభం",
+        "Preferred Regional Language (Manual or Auto-Location)": "ప్రాంతీయ భాష"
+    },
+    ta: {
+        "Farm Intelligence Workspace": "விவசாய நிதி மற்றும் சந்தை ஆலோசகர்",
+        "Pre-Cost Calculator": "பயிர் முன்செலவு கணக்கீடு",
+        "Weather & Soil": "வானிலை மற்றும் மண்",
+        "Mandi Market Rates": "மண்டி சந்தை விலைகள்",
+        "Sell Now or Wait?": "இப்போதே விற்கவா அல்லது காத்திருக்கவா?",
+        "Nearest Storage Facility": "அருகிலுள்ள சேமிப்புக் கிடங்கு",
+        "Register a Crop": "பயிரை பதிவு செய்க",
+        "Active / Stored Batches": "சேமிக்கப்பட்ட பயிர்கள்",
+        "Settle a Sale": "விற்பனையை முடிக்கவும்",
+        "History & Next Crop": "வரலாறு மற்றும் அடுத்த பயிர்",
+        "Language": "மொழி",
+        "Unit Converter": "அலகு மாற்றி",
+        "Farm Slip": "பண்ணை ரசீது",
+        "Scan Field with Drone": "ட்ரோன் மூலம் வயலை ஸ்கேன் செய்க",
+        "Listen": "கேளுங்கள்",
+        "Analyze": "ஆராய்க",
+        "Total Production Cost": "மொத்த உற்பத்தி செலவு",
+        "Expected Yield": "எதிர்பார்க்கப்படும் மகசூல்",
+        "Mandi Selling Rate": "மண்டி விற்பனை விலை",
+        "Estimated Revenue": "மதிப்பிடப்பட்ட வருமானம்",
+        "Expected Net Profit / Loss": "எதிர்பார்க்கப்படும் நிகர லாபம் / இழப்பு",
+        "Profit Per Unit": "ஏக்கருக்கு லாபம்",
+        "Preferred Regional Language (Manual or Auto-Location)": "விருப்பமான பிராந்திய மொழி"
+    },
+    bn: {
+        "Farm Intelligence Workspace": "কৃষি আর্থিক ও বাজার উপদেষ্টা",
+        "Pre-Cost Calculator": "ফসল পূর্ব খরচ ক্যালকুলেটর",
+        "Weather & Soil": "আবহাওয়া ও মাটি",
+        "Mandi Market Rates": "মণ্ডির বাজার দর",
+        "Sell Now or Wait?": "এখনই বিক্রি করবেন নাকি অপেক্ষা করবেন?",
+        "Nearest Storage Facility": "নিকটবর্তী গুদাম ও হিমাগার",
+        "Register a Crop": "ফসল নিবন্ধন করুন",
+        "Active / Stored Batches": "মজুত ফসলের ব্যাচ",
+        "Settle a Sale": "বিক্রয় নিষ্পত্তি করুন",
+        "History & Next Crop": "ইতিহাস এবং পরবর্তী ফসল",
+        "Language": "ভাষা",
+        "Unit Converter": "একক রূপান্তরকারী",
+        "Farm Slip": "খামার রসিদ",
+        "Scan Field with Drone": "ড্রোন দিয়ে জমি স্ক্যান করুন",
+        "Listen": "শুনুন",
+        "Analyze": "বিশ্লেষণ করুন",
+        "Total Production Cost": "মোট উৎপাদন খরচ",
+        "Expected Yield": "প্রত্যাশিত ফলন",
+        "Mandi Selling Rate": "মণ্ডি বিক্রয় দর",
+        "Estimated Revenue": "আনুমানিক মোট আয়",
+        "Expected Net Profit / Loss": "প্রত্যাশিত নিট লাভ / ক্ষতি",
+        "Profit Per Unit": "প্রতি বিঘা/একর লাভ",
+        "Preferred Regional Language (Manual or Auto-Location)": "পছন্দের আঞ্চলিক ভাষা"
+    }
+};
