@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=20260917-v5">
+    <link rel="stylesheet" href="/static/style.css?v=20260917-v6">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
     <style>
         #btn-full-analysis,
@@ -75,7 +75,7 @@
             <button class="btn-sidebar-close" onclick="closeMobileSidebar()" aria-label="Close menu">✕</button>
         </div>
 
-        <div class="nav-group-label">Plan &amp; Market</div>
+        <div class="nav-group-label" data-en="Plan &amp; Market" data-hi="योजना व मंडी">Plan &amp; Market</div>
         <nav class="nav-menu">
             <button class="nav-item active" onclick="switchTab('pre-cost'); closeMobileSidebar();">
                 <span class="icon">🧮</span> <span data-en="Pre-Cost Calculator" data-hi="फसल पूर्व लागत कैलकुलेटर">Pre-Cost Calculator</span>
@@ -97,7 +97,7 @@
             </button>
         </nav>
 
-        <div class="nav-group-label">My Crops</div>
+        <div class="nav-group-label" data-en="My Crops" data-hi="मेरी फसलें">My Crops</div>
         <nav class="nav-menu">
             <button class="nav-item" onclick="switchTab('add-batch'); closeMobileSidebar();">
                 <span class="icon">➕</span> <span data-en="Register a Crop" data-hi="फसल दर्ज करें">Register a Crop</span>
@@ -118,7 +118,7 @@
                 <div class="lang-selector-header">
                     <span class="lang-icon">🌐</span>
                     <span class="lang-label" data-en="Language" data-hi="भाषा" data-pa="ਭਾਸ਼ਾ" data-mr="भाषा" data-gu="ભાષા">Language</span>
-                    <span id="lang-auto-tag" class="lang-auto-tag" title="Auto-detects language based on location">✨ Auto</span>
+                    <span id="lang-auto-tag" class="lang-auto-tag" title="Auto-detects language based on location" data-en="✨ Auto" data-hi="✨ ऑटो">✨ Auto</span>
                 </div>
                 <select id="app-lang-select" class="lang-select-dropdown" onchange="setLanguage(this.value, true)">
                     <option value="en">English (India)</option>
@@ -152,7 +152,7 @@
                         <span class="theme-icon-light">☀️</span>
                         <span class="theme-icon-dark">🌙</span>
                     </span>
-                    <span id="theme-toggle-label" class="theme-toggle-text">Dark</span>
+                    <span id="theme-toggle-label" class="theme-toggle-text" data-en="Dark" data-hi="डार्क">Dark</span>
                 </button>
                 <button class="btn-top-tool" onclick="openUnitConverter()" title="Agricultural Land & Weight Unit Converter">
                     📐 <span data-en="Unit Converter" data-hi="इकाई परिवर्तक">Unit Converter</span>
@@ -170,7 +170,7 @@
                 </button>
                 <div class="farmer-profile-chip" onclick="openProfile()" title="Open profile">
                     <span class="status-indicator"></span>
-                    <span id="display-farmer">Signed in</span>
+                    <span id="display-farmer" data-en="Signed in" data-hi="लॉग इन">Signed in</span>
                 </div>
             </div>
         </header>
@@ -178,11 +178,11 @@
         <section class="ledger-stat-strip">
             <div class="stat-cell">
                 <span class="stat-label" data-en="ACTIVE STORED PRODUCE" data-hi="वर्तमान भंडारित उपज">ACTIVE STORED PRODUCE</span>
-                <span class="stat-value" id="stat-active-qty">2,800 <small>KG</small></span>
+                <span class="stat-value" id="stat-active-qty">2,800 <small data-en="KG" data-hi="किलो">KG</small></span>
             </div>
             <div class="stat-cell border-mid">
                 <span class="stat-label" data-en="HIGH SPOILAGE RISK" data-hi="उच्च सड़न जोखिम">HIGH SPOILAGE RISK</span>
-                <span class="stat-value text-risk" id="stat-high-risk">1 <small>BATCH</small></span>
+                <span class="stat-value text-risk" id="stat-high-risk">1 <small data-en="BATCH" data-hi="बैच">BATCH</small></span>
             </div>
             <div class="stat-cell border-mid">
                 <span class="stat-label" data-en="TOTAL HISTORICAL REVENUE" data-hi="कुल ऐतिहासिक आय">TOTAL HISTORICAL REVENUE</span>
@@ -337,7 +337,7 @@
                     <div class="iot-hero-header">
                         <div class="iot-badge-group">
                             <span class="iot-live-tag"><span class="iot-pulse-dot"></span> LIVE IOT TELEMETRY</span>
-                            <span class="iot-station-tag">📡 Solar Micro-Station #AG-04</span>
+                            <span class="iot-station-tag" data-en="📡 Solar Micro-Station #AG-04" data-hi="📡 सोलर माइक्रो-स्टेशन #AG-04">📡 Solar Micro-Station #AG-04</span>
                         </div>
                         <button type="button" class="btn-drone-scan" id="btn-drone-scan" onclick="triggerDroneScan()">
                             <span class="drone-icon">🚁</span>
@@ -351,7 +351,7 @@
                                 <span class="iot-cell-icon">🌿</span>
                                 <span class="iot-cell-lbl" data-en="Soil Health" data-hi="मिट्टी स्वास्थ्य">Soil Health</span>
                             </div>
-                            <div class="iot-cell-val" id="telemetry-soil-health">78% <small class="text-green">Optimal</small></div>
+                            <div class="iot-cell-val" id="telemetry-soil-health">78% <small class="text-green" data-en="Optimal" data-hi="उत्कृष्ट">Optimal</small></div>
                             <div class="iot-cell-sub" id="telemetry-sub-soil" data-en="pH 6.8 · NPK Balanced" data-hi="पीएच 6.8 · संतुलित खाद">pH 6.8 · NPK Balanced</div>
                         </div>
 
@@ -360,7 +360,7 @@
                                 <span class="iot-cell-icon">💧</span>
                                 <span class="iot-cell-lbl" data-en="Soil Moisture" data-hi="मिट्टी नमी">Soil Moisture</span>
                             </div>
-                            <div class="iot-cell-val" id="telemetry-moisture">65% <small class="text-turmeric">Field Capacity</small></div>
+                            <div class="iot-cell-val" id="telemetry-moisture">65% <small class="text-turmeric" data-en="Field Capacity" data-hi="संतुलित नमी">Field Capacity</small></div>
                             <div class="iot-cell-sub" id="telemetry-sub-moisture" data-en="Irrigation: Next in 3 Days" data-hi="सिंचाई: 3 दिन बाद">Irrigation: Next in 3 Days</div>
                         </div>
 
@@ -369,7 +369,7 @@
                                 <span class="iot-cell-icon">🌡️</span>
                                 <span class="iot-cell-lbl" data-en="Field Canopy Temp" data-hi="खेत का तापमान">Field Canopy Temp</span>
                             </div>
-                            <div class="iot-cell-val" id="telemetry-temp">32°C <small>Warm</small></div>
+                            <div class="iot-cell-val" id="telemetry-temp">32°C <small data-en="Warm" data-hi="अनुकूल">Warm</small></div>
                             <div class="iot-cell-sub" id="telemetry-sub-temp" data-en="Weather: Clear · 11 km/h" data-hi="मौसम: साफ़ · 11 किमी/घं">Weather: Clear · 11 km/h</div>
                         </div>
 
@@ -378,7 +378,7 @@
                                 <span class="iot-cell-icon">📈</span>
                                 <span class="iot-cell-lbl" data-en="NDVI Crop Index" data-hi="फसल हरियाली सूचकांक">NDVI Crop Index</span>
                             </div>
-                            <div class="iot-cell-val text-green" id="telemetry-ndvi">0.82 <small>Vibrant</small></div>
+                            <div class="iot-cell-val text-green" id="telemetry-ndvi">0.82 <small data-en="Vibrant" data-hi="सघन हरियाली">Vibrant</small></div>
                             <div class="iot-cell-sub" id="telemetry-sub-ndvi" data-en="Canopy Health: Good" data-hi="फसल स्वास्थ्य: उत्तम">Canopy Health: Good</div>
                         </div>
                     </div>
@@ -408,13 +408,13 @@
                         <h3 data-en="Weather, Soil & Irrigation Signals" data-hi="मौसम, मिट्टी और सिंचाई संकेत">Weather, Soil & Irrigation Signals</h3>
                         <p class="subtitle" data-en="Real weather for your current GPS location." data-hi="आपके वर्तमान GPS स्थान का वास्तविक मौसम।">Real weather for your current GPS location.</p>
                     </div>
-                    <a class="weather-source" href="https://www.accuweather.com/" target="_blank" rel="noopener">Weather data: AccuWeather</a>
+                    <a class="weather-source" href="https://www.accuweather.com/" target="_blank" rel="noopener" data-en="Weather data: AccuWeather" data-hi="मौसम डेटा: एक्यूवेदर">Weather data: AccuWeather</a>
                 </div>
                 <div class="weather-location-form">
                     <button class="btn-secondary" type="button" onclick="useFarmLocation()" data-en="📍 Use my location" data-hi="📍 मेरा स्थान उपयोग करें">📍 Use my location</button>
                     <button class="btn-secondary" type="button" onclick="requestWeatherFromGps()" data-en="↻ Refresh weather" data-hi="↻ मौसम रीफ्रेश करें">↻ Refresh weather</button>
                 </div>
-                <p id="weather-status" class="weather-status">Waiting for your GPS location...</p>
+                <p id="weather-status" class="weather-status" data-en="Waiting for your GPS location..." data-hi="आपके GPS स्थान की प्रतीक्षा है...">Waiting for your GPS location...</p>
                 <div id="weather-alerts" class="weather-alerts"></div>
                 <div id="weather-metrics" class="weather-metrics-grid"></div>
                 <div class="weather-action-box">
@@ -434,7 +434,7 @@
                     <h4 data-en="Rainfall & irrigation outlook" data-hi="वर्षा और सिंचाई पूर्वानुमान">Rainfall & irrigation outlook</h4>
                     <div class="ledger-table-container">
                         <table class="mandi-table weather-table">
-                            <thead><tr><th>Date</th><th>Condition</th><th>Temperature</th><th>Rain</th><th>Probability</th><th>Sunrise</th><th>Sunset</th></tr></thead>
+                            <thead><tr><th data-en="Date" data-hi="दिनांक">Date</th><th data-en="Condition" data-hi="स्थिति">Condition</th><th data-en="Temperature" data-hi="तापमान">Temperature</th><th data-en="Rain" data-hi="वर्षा">Rain</th><th data-en="Probability" data-hi="संभावना">Probability</th><th data-en="Sunrise" data-hi="सूर्योदय">Sunrise</th><th data-en="Sunset" data-hi="सूर्यास्त">Sunset</th></tr></thead>
                             <tbody id="weather-forecast"></tbody>
                         </table>
                     </div>
@@ -455,7 +455,7 @@
                         <p class="subtitle" data-en="12-Month cyclical seasonality, harvest glut patterns, and 3-6 month forward predictive price trajectories." data-hi="12 महीने का मौसमी चक्र, आवक का दबाव और 3-6 महीने का भविष्य भाव पूर्वानुमान।">12-Month cyclical seasonality, harvest glut patterns, and 3-6 month forward predictive price trajectories.</p>
                     </div>
                     <div class="horizon-badge-pill">
-                        <span>🔮 AI Powered</span>
+                        <span data-en="🔮 AI Powered" data-hi="🔮 एआई आधारित">🔮 AI Powered</span>
                     </div>
                 </div>
 
@@ -475,14 +475,14 @@
                     <div class="horizon-filter-group">
                         <label for="horizon-state-select" data-en="Region / State:" data-hi="राज्य / क्षेत्र:">Region / State:</label>
                         <select id="horizon-state-select" onchange="loadCropHorizonAnalysis()">
-                            <option value="Punjab">Punjab</option>
-                            <option value="Haryana">Haryana</option>
-                            <option value="Uttar Pradesh">Uttar Pradesh</option>
-                            <option value="Rajasthan">Rajasthan</option>
-                            <option value="Madhya Pradesh">Madhya Pradesh</option>
-                            <option value="Maharashtra">Maharashtra</option>
-                            <option value="Gujarat">Gujarat</option>
-                            <option value="Bihar">Bihar</option>
+                            <option value="Punjab" data-en="Punjab" data-hi="पंजाब">Punjab</option>
+                            <option value="Haryana" data-en="Haryana" data-hi="हरियाणा">Haryana</option>
+                            <option value="Uttar Pradesh" data-en="Uttar Pradesh" data-hi="उत्तर प्रदेश">Uttar Pradesh</option>
+                            <option value="Rajasthan" data-en="Rajasthan" data-hi="राजस्थान">Rajasthan</option>
+                            <option value="Madhya Pradesh" data-en="Madhya Pradesh" data-hi="मध्य प्रदेश">Madhya Pradesh</option>
+                            <option value="Maharashtra" data-en="Maharashtra" data-hi="महाराष्ट्र">Maharashtra</option>
+                            <option value="Gujarat" data-en="Gujarat" data-hi="गुजरात">Gujarat</option>
+                            <option value="Bihar" data-en="Bihar" data-hi="बिहार">Bihar</option>
                         </select>
                     </div>
                     <button class="btn btn-secondary btn-horizon-refresh" type="button" onclick="loadCropHorizonAnalysis()">
@@ -511,8 +511,8 @@
                             <div class="horizon-chart-header">
                                 <span class="chart-title">📈 <span id="hz-crop-chart-title">Wheat</span> Annual Price & Arrival Curve</span>
                                 <div class="chart-badges-wrap">
-                                    <span class="badge-glut" id="hz-glut-tag">Glut: Mar - May</span>
-                                    <span class="badge-peak" id="hz-peak-tag">Peak Window: Nov - Jan</span>
+                                    <span class="badge-glut" id="hz-glut-tag" data-en="Glut: Mar - May" data-hi="आवक दबाव: मार्च - मई">Glut: Mar - May</span>
+                                    <span class="badge-peak" id="hz-peak-tag" data-en="Peak Window: Nov - Jan" data-hi="उच्चतम भाव: नवं - जन">Peak Window: Nov - Jan</span>
                                 </div>
                             </div>
                             <div id="hz-svg-chart-container" class="svg-chart-wrap">
@@ -565,16 +565,16 @@
                             <div class="horizon-future-card">
                                 <span class="future-card-label" data-en="Projected Mandi Range" data-hi="अनुमानित मंडी भाव">Projected Mandi Range</span>
                                 <strong class="future-card-val text-green" id="hz-fut-price">₹2,650 – ₹2,920</strong>
-                                <small id="hz-fut-trend" class="trend-badge positive">Bullish (+9.2%)</small>
+                                <small id="hz-fut-trend" class="trend-badge positive" data-en="Bullish (+9.2%)" data-hi="तेजी (+9.2%)">Bullish (+9.2%)</small>
                             </div>
                             <div class="horizon-future-card">
                                 <span class="future-card-label" data-en="Demand Outlook" data-hi="मांग का रुझान">Demand Outlook</span>
-                                <strong class="future-card-val" id="hz-fut-demand">High Processing Demand</strong>
+                                <strong class="future-card-val" id="hz-fut-demand" data-en="High Processing Demand" data-hi="प्रसंस्करण उद्योग से भारी मांग">High Processing Demand</strong>
                                 <small data-en="Firm institutional procurement" data-hi="मजबूत संस्थागत खरीद">Firm institutional procurement</small>
                             </div>
                             <div class="horizon-future-card">
                                 <span class="future-card-label" data-en="Recommended Next Rotation" data-hi="अगली अनुशंसित फसल">Recommended Next Rotation</span>
-                                <strong class="future-card-val text-primary" id="hz-fut-rotation">Moong (Green Gram)</strong>
+                                <strong class="future-card-val text-primary" id="hz-fut-rotation" data-en="Moong (Green Gram)" data-hi="मूंग (दाल)">Moong (Green Gram)</strong>
                                 <small data-en="60-day short duration break" data-hi="60 दिन की अल्पावधि फसल">60-day short duration break</small>
                             </div>
                             <div class="horizon-future-card">
@@ -593,7 +593,7 @@
                                     <p data-en="Tailored guidance to protect margins and capitalize on near-future market movements." data-hi="आगामी बाजार उतार-चढ़ाव से लाभ कमाने और नुकसान से बचने के व्यावहारिक सुझाव।">Tailored guidance to protect margins and capitalize on near-future market movements.</p>
                                 </div>
                             </div>
-                            <p id="hz-gemini-strategy-text" class="gemini-strategy-body">
+                            <p id="hz-gemini-strategy-text" class="gemini-strategy-body" data-en="Loading predictive recommendations..." data-hi="पूर्वानुमान रणनीतियाँ लोड हो रही हैं...">
                                 Loading predictive recommendations...
                             </p>
                         </div>
@@ -605,19 +605,19 @@
         <!-- TAB 2: COMPREHENSIVE MANDI RATES -->
         <div id="tab-mandi" class="tab-panel">
             <div class="mandi-filter-bar">
-                <input type="text" id="mandi-search-crop" placeholder="Search Crop (e.g. Potato, Mustard, Wheat)" oninput="filterMandi()">
+                <input type="text" id="mandi-search-crop" placeholder="Search Crop (e.g. Potato, Mustard, Wheat)" data-placeholder-en="Search Crop (e.g. Potato, Mustard, Wheat)" data-placeholder-hi="फसल खोजें (जैसे आलू, सरसों, गेहूं)" oninput="filterMandi()">
                 <select id="mandi-filter-state" onchange="filterMandi()">
-                    <option value="">All States (सभी राज्य)</option>
-                    <option value="Uttar Pradesh">Uttar Pradesh</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Punjab">Punjab</option>
-                    <option value="Madhya Pradesh">Madhya Pradesh</option>
-                    <option value="Rajasthan">Rajasthan</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="Haryana">Haryana</option>
-                    <option value="Bihar">Bihar</option>
+                    <option value="" data-en="All States (सभी राज्य)" data-hi="सभी राज्य (All States)">All States (सभी राज्य)</option>
+                    <option value="Uttar Pradesh" data-en="Uttar Pradesh" data-hi="उत्तर प्रदेश">Uttar Pradesh</option>
+                    <option value="Maharashtra" data-en="Maharashtra" data-hi="महाराष्ट्र">Maharashtra</option>
+                    <option value="Punjab" data-en="Punjab" data-hi="पंजाब">Punjab</option>
+                    <option value="Madhya Pradesh" data-en="Madhya Pradesh" data-hi="मध्य प्रदेश">Madhya Pradesh</option>
+                    <option value="Rajasthan" data-en="Rajasthan" data-hi="राजस्थान">Rajasthan</option>
+                    <option value="Gujarat" data-en="Gujarat" data-hi="गुजरात">Gujarat</option>
+                    <option value="Haryana" data-en="Haryana" data-hi="हरियाणा">Haryana</option>
+                    <option value="Bihar" data-en="Bihar" data-hi="बिहार">Bihar</option>
                 </select>
-                <input type="text" id="mandi-search-market" placeholder="Filter Market / District" oninput="filterMandi()">
+                <input type="text" id="mandi-search-market" placeholder="Filter Market / District" data-placeholder-en="Filter Market / District" data-placeholder-hi="मंडी / जिला फ़िल्टर करें" oninput="filterMandi()">
                 <button class="btn-secondary" onclick="fetchMandiRates()">🔄 <span data-en="Refresh Rates" data-hi="भाव रीफ्रेश करें">Refresh Rates</span></button>
             </div>
 
@@ -709,7 +709,7 @@
                         <div class="analysis-chart-card">
                             <div class="analysis-chart-header">
                                 <span class="chart-title" data-en="📈 Market Price vs Storage Cost Curve" data-hi="📈 मंडी भाव बनाम भंडारण लागत वक्र">📈 Market Price vs Storage Cost Curve</span>
-                                <span class="chart-badge" id="sell-chart-peak-tag">Peak: Day 6 - Day 8</span>
+                                <span class="chart-badge" id="sell-chart-peak-tag" data-en="Peak: Day 6 - Day 8" data-hi="चरम भाव: दिन 6 - दिन 8">Peak: Day 6 - Day 8</span>
                             </div>
                             <div id="sell-svg-chart-container" class="svg-chart-wrap">
                                 <!-- Dynamic SVG Graph generated by renderSellDecisionCharts -->
@@ -723,7 +723,7 @@
                         <div class="analysis-chart-card">
                             <div class="analysis-chart-header">
                                 <span class="chart-title" data-en="🛡️ Microclimate & Crop Hazard Breakdown" data-hi="🛡️ सूक्ष्म जलवायु व फसल जोखिम स्तर">🛡️ Microclimate & Crop Hazard Breakdown</span>
-                                <span class="chart-badge" id="sell-risk-summary-tag">Safe Zone</span>
+                                <span class="chart-badge" id="sell-risk-summary-tag" data-en="Safe Zone" data-hi="सुरक्षित क्षेत्र">Safe Zone</span>
                             </div>
                             <div class="risk-bars-wrap" id="sell-risk-bars-container">
                                 <!-- Dynamic Risk Bars -->
@@ -845,7 +845,7 @@
                 <!-- Facilities Results Cards Header -->
                 <div class="section-bar" style="margin-top: 24px;">
                     <h3 id="storage-results-heading" data-en="Nearby Storage Facilities" data-hi="निकटतम भंडारण केंद्र सूची">Nearby Storage Facilities</h3>
-                    <span class="badge-count" id="storage-results-count">0 Centers</span>
+                    <span class="badge-count" id="storage-results-count" data-en="0 Centers" data-hi="0 केंद्र">0 Centers</span>
                 </div>
 
                 <!-- Facilities Grid -->
@@ -859,7 +859,7 @@
         <div id="tab-ledger-stored" class="tab-panel">
             <div class="section-bar">
                 <h3 data-en="Active Inventory Batches in Storage" data-hi="सक्रिय भंडारित उपज बैच">Active Inventory Batches in Storage</h3>
-                <span class="badge-count" id="stored-count">2 Batches</span>
+                <span class="badge-count" id="stored-count" data-en="2 Batches" data-hi="2 बैच">2 Batches</span>
             </div>
             <div id="stored-batches-list" class="batch-cards-grid"></div>
         </div>
@@ -938,7 +938,7 @@
         <div id="tab-ledger-history" class="tab-panel">
             <div class="section-bar">
                 <h3 data-en="Historical Crop Records & AI Rotation Plans" data-hi="ऐतिहासिक फसल रिकॉर्ड एवं अगली फसल योजनाएं">Historical Crop Records & AI Rotation Plans</h3>
-                <span class="badge-count" id="history-count">1 Record</span>
+                <span class="badge-count" id="history-count" data-en="1 Record" data-hi="1 रिकॉर्ड">1 Record</span>
             </div>
             <div id="history-batches-list" class="history-cards-grid"></div>
         </div>
@@ -972,9 +972,9 @@
                             <div class="label-with-unit">
                                 <label data-en="Quantity & Weight Unit" data-hi="मात्रा एवं वजन इकाई">Quantity & Weight Unit</label>
                                 <select id="weight_unit" class="unit-selector">
-                                    <option value="kg">kg</option>
-                                    <option value="Quintal">Quintal</option>
-                                    <option value="Tons">Tons</option>
+                                    <option value="kg" data-en="kg" data-hi="किलो">kg</option>
+                                    <option value="Quintal" data-en="Quintal" data-hi="क्विंटल">Quintal</option>
+                                    <option value="Tons" data-en="Tons" data-hi="टन">Tons</option>
                                 </select>
                             </div>
                             <input type="number" step="any" id="quantity" placeholder="e.g. 2000" required>
@@ -984,16 +984,16 @@
                             <input type="date" id="harvest_date">
                         </div>
                         <div class="form-group growing-only hidden">
-                            <label>Planting Date</label>
+                            <label data-en="Planting Date" data-hi="बुवाई की तारीख">Planting Date</label>
                             <input type="date" id="planting_date">
                         </div>
                         <div class="form-group">
                             <label data-en="Storage Facility" data-hi="भंडारण स्थिति">Storage Facility</label>
                             <select id="storage_type">
-                                <option value="Ventilated Godown">Ventilated Godown</option>
-                                <option value="Open Air Jute Bags">Open Air Jute Bags</option>
-                                <option value="Cold Storage Unit">Cold Storage Unit</option>
-                                <option value="Farm Shade">Farm Shade</option>
+                                <option value="Ventilated Godown" data-en="Ventilated Godown" data-hi="हवादार गोदाम">Ventilated Godown</option>
+                                <option value="Open Air Jute Bags" data-en="Open Air Jute Bags" data-hi="खुले बोरे (तिरपाल)">Open Air Jute Bags</option>
+                                <option value="Cold Storage Unit" data-en="Cold Storage Unit" data-hi="कोल्ड स्टोरेज यूनिट">Cold Storage Unit</option>
+                                <option value="Farm Shade" data-en="Farm Shade" data-hi="खेत का शेड">Farm Shade</option>
                             </select>
                         </div>
                     </div>
@@ -1047,11 +1047,11 @@
     <div id="storage-finder-modal" class="profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="storage-finder-title">
         <div class="profile-card storage-finder-card">
             <div class="form-header">
-                <div><h3 id="storage-finder-title">Nearest storage facility</h3><p class="subtitle" id="storage-finder-subtitle">Your closest mapped facility will be shown first</p></div>
+                <div><h3 id="storage-finder-title" data-en="Nearest storage facility" data-hi="निकटतम भंडारण केंद्र">Nearest storage facility</h3><p class="subtitle" id="storage-finder-subtitle" data-en="Your closest mapped facility will be shown first" data-hi="आपके सबसे निकटतम पंजीकृत गोदाम पहले दिखाए जाएंगे">Your closest mapped facility will be shown first</p></div>
                 <button class="btn-close-profile" onclick="closeStorageFinder()" type="button">×</button>
             </div>
             <div class="profile-actions" style="margin-bottom:12px;">
-                <button class="auth-submit" type="button" id="storage-finder-locate-btn" onclick="findNearestStorage()">Find nearest facility</button>
+                <button class="auth-submit" type="button" id="storage-finder-locate-btn" onclick="findNearestStorage()" data-en="Find nearest facility" data-hi="निकटतम केंद्र खोजें">Find nearest facility</button>
             </div>
             <div id="storage-finder-status" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;"></div>
             <div id="storage-finder-map" class="storage-finder-map" aria-label="Nearby storage facility map"></div>
@@ -1061,11 +1061,11 @@
 
     <div id="profile-modal" class="profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="profile-title">
         <div class="profile-card">
-            <div class="form-header"><div><h3 id="profile-title">Farmer profile</h3><p class="subtitle">Update your name and farm weather location.</p></div><button class="btn-close-profile" onclick="closeProfile()" type="button">×</button></div>
+            <div class="form-header"><div><h3 id="profile-title" data-en="Farmer profile" data-hi="किसान प्रोफाइल">Farmer profile</h3><p class="subtitle" data-en="Update your name and farm weather location." data-hi="अपना नाम और खेत का मौसम स्थान अपडेट करें।">Update your name and farm weather location.</p></div><button class="btn-close-profile" onclick="closeProfile()" type="button">×</button></div>
             <form onsubmit="saveProfile(event)">
-                <label for="profile-name">Farmer name</label><input id="profile-name" type="text" required>
-                <div class="auth-location-grid"><div><label for="profile-latitude">Latitude</label><input id="profile-latitude" type="number" step="any" min="6" max="37.5" required></div><div><label for="profile-longitude">Longitude</label><input id="profile-longitude" type="number" step="any" min="68" max="98" required></div></div>
-                <label for="profile-location-name">Location label</label><input id="profile-location-name" type="text" placeholder="Village / district name">
+                <label for="profile-name" data-en="Farmer name" data-hi="किसान का नाम">Farmer name</label><input id="profile-name" type="text" data-placeholder-en="Your name" data-placeholder-hi="आपका नाम" required>
+                <div class="auth-location-grid"><div><label for="profile-latitude" data-en="Latitude" data-hi="अक्षांश (Latitude)">Latitude</label><input id="profile-latitude" type="number" step="any" min="6" max="37.5" required></div><div><label for="profile-longitude" data-en="Longitude" data-hi="देशांतर (Longitude)">Longitude</label><input id="profile-longitude" type="number" step="any" min="68" max="98" required></div></div>
+                <label for="profile-location-name" data-en="Location label" data-hi="स्थान का नाम">Location label</label><input id="profile-location-name" type="text" placeholder="Village / district name" data-placeholder-en="Village / district name" data-placeholder-hi="गाँव / जिला का नाम">
                 <label for="profile-preferred-language" data-en="Preferred Regional Language (Manual or Auto-Location)" data-hi="पसंदीदा क्षेत्रीय भाषा (मैनुअल या स्थान आधारित)">Preferred Regional Language</label>
                 <select id="profile-preferred-language" class="form-control" onchange="setLanguage(this.value, true)" style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); font-weight: 500;">
                     <option value="en">English (India)</option>
@@ -1078,7 +1078,7 @@
                     <option value="ta">தமிழ் (Tamil)</option>
                     <option value="bn">বাংলা (Bengali)</option>
                 </select>
-                <label for="profile-alert-phone">Alert phone with country code</label><input id="profile-alert-phone" type="tel" placeholder="+91XXXXXXXXXX">
+                <label for="profile-alert-phone" data-en="Alert phone with country code" data-hi="अलर्ट फ़ोन (कंट्री कोड सहित)">Alert phone with country code</label><input id="profile-alert-phone" type="tel" placeholder="+91XXXXXXXXXX" data-placeholder-en="+91XXXXXXXXXX" data-placeholder-hi="+91XXXXXXXXXX">
                 <div class="whatsapp-alert-setting-card">
                     <div class="wa-setting-header">
                         <div class="wa-setting-info">
@@ -1098,9 +1098,9 @@
                         <span class="wa-indicator-dot"></span> <span data-en="Active: 24-hour interval for high-risk crop updates" data-hi="सक्रिय: 24 घंटे के अंतराल पर उच्च-जोखिम अपडेट चालू हैं">Active: 24-hour interval for high-risk crop updates</span>
                     </div>
                 </div>
-                <div class="profile-actions"><button class="btn-secondary" type="button" onclick="useProfileLocation()">Use my location</button><button class="auth-submit" type="submit">Save profile</button></div>
+                <div class="profile-actions"><button class="btn-secondary" type="button" onclick="useProfileLocation()" data-en="Use my location" data-hi="मेरा वर्तमान स्थान उपयोग करें">Use my location</button><button class="auth-submit" type="submit" data-en="Save profile" data-hi="प्रोफ़ाइल सहेजें">Save profile</button></div>
             </form>
-            <div class="profile-danger"><button class="btn-delete-data" onclick="deleteAllProduce()" type="button">Delete my crop data</button><button class="btn-logout" onclick="logout()" type="button">Log out</button></div>
+            <div class="profile-danger"><button class="btn-delete-data" onclick="deleteAllProduce()" type="button" data-en="Delete my crop data" data-hi="मेरा फसल डेटा हटाएं">Delete my crop data</button><button class="btn-logout" onclick="logout()" type="button" data-en="Log out" data-hi="लॉग आउट">Log out</button></div>
         </div>
     </div>
 
@@ -1123,11 +1123,11 @@
     <div id="assistant-panel" class="assistant-panel">
         <div class="assistant-header">
             <div>
-                <h4>🤖 AgriFlow AI</h4>
+                <h4 data-en="🤖 AgriFlow AI" data-hi="🤖 एग्रीफ्लो एआई">🤖 AgriFlow AI</h4>
                 <p class="assistant-sub" data-en="Multimodal & Voice Farm Copilot" data-hi="बहुभाषी व आवाज-सक्षम कृषि सहायक">Multimodal & Voice Farm Copilot</p>
                 <div class="assistant-badge-row">
-                    <span class="assistant-badge">🧠 Smart Advisor</span>
-                    <span class="assistant-badge">📈 Farm Insights</span>
+                    <span class="assistant-badge" data-en="🧠 Smart Advisor" data-hi="🧠 स्मार्ट सलाहकार">🧠 Smart Advisor</span>
+                    <span class="assistant-badge" data-en="📈 Farm Insights" data-hi="📈 खेत अंतर्दृष्टि">📈 Farm Insights</span>
                 </div>
             </div>
             <div class="assistant-head-actions">
@@ -1135,7 +1135,7 @@
                     🌐 <span id="chat-lang-indicator">HI</span>
                 </button>
                 <button id="btn-live-voice" class="btn-head-voice" onclick="toggleLiveVoiceConversation()" title="Toggle Voice Conversation">
-                    🎙️ <span id="voice-chat-status">Voice Chat</span>
+                    🎙️ <span id="voice-chat-status" data-en="Voice Chat" data-hi="आवाज संवाद">Voice Chat</span>
                 </button>
                 <button class="btn-close-assistant" onclick="toggleAssistant()">✖</button>
             </div>
@@ -1143,22 +1143,22 @@
 
         <div class="assistant-chat-body" id="chat-messages">
             <div class="bot-msg message-bubble">
-                <div class="message-meta"><span>🤖 AI Advisor</span><span>Now</span></div>
+                <div class="message-meta"><span data-en="🤖 AI Advisor" data-hi="🤖 एआई सलाहकार">🤖 AI Advisor</span><span data-en="Now" data-hi="अभी">Now</span></div>
                 <div class="message-body" data-en="Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos." data-hi="नमस्ते! मैं आपका कृषि AI सहायक हूँ। मुझसे लागत, मंडी भाव, फसल बीमारी या मुनाफे के बारे में पूछें।">Namaste! I am your AI Agronomist. Ask about crop costs, mandi prices, yield predictions, or upload disease photos.</div>
             </div>
         </div>
 
         <div id="chat-media-preview" class="chat-media-preview hidden">
             <img id="chat-img-thumb" src="" alt="Thumb">
-            <span id="chat-media-label">Image attached</span>
+            <span id="chat-media-label" data-en="Image attached" data-hi="फोटो संलग्न है">Image attached</span>
             <button class="btn-remove-chat-media" onclick="removeChatMedia()">✖</button>
         </div>
 
         <div class="assistant-quick-prompts">
-            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What is today\'s mandi rate for potato in Uttar Pradesh?')">🥔 Potato mandi rates</button>
-            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('How to protect tomato crops from late blight?')">🍅 Tomato disease advice</button>
-            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What are best storage conditions for wheat?')">🌾 Wheat storage advice</button>
-            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('Suggest high profit crop rotation after mustard')">🌿 Mustard rotation plan</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What is today\'s mandi rate for potato in Uttar Pradesh?')" data-en="🥔 Potato mandi rates" data-hi="🥔 आलू मंडी भाव">🥔 Potato mandi rates</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('How to protect tomato crops from late blight?')" data-en="🍅 Tomato disease advice" data-hi="🍅 टमाटर रोग सलाह">🍅 Tomato disease advice</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('What are best storage conditions for wheat?')" data-en="🌾 Wheat storage advice" data-hi="🌾 गेहूं भंडारण सलाह">🌾 Wheat storage advice</button>
+            <button type="button" class="prompt-chip" onclick="sendQuickPrompt('Suggest high profit crop rotation after mustard')" data-en="🌿 Mustard rotation plan" data-hi="🌿 सरसों फसल चक्र योजना">🌿 Mustard rotation plan</button>
         </div>
 
         <div class="assistant-input-area">
@@ -1169,7 +1169,7 @@
             <button class="btn-chat-icon" id="btn-mic-input" onclick="recordAudioMessage()" title="Speak aloud">
                 🎤
             </button>
-            <input type="text" id="assistant-query" placeholder="Type or ask a farming question..." onkeypress="handleAssistantKey(event)">
+            <input type="text" id="assistant-query" placeholder="Type or ask a farming question..." data-placeholder-en="Type or ask a farming question..." data-placeholder-hi="खेती से जुड़ा कोई भी प्रश्न पूछें या लिखें..." onkeypress="handleAssistantKey(event)">
             <button class="btn-send-assistant" onclick="sendAssistantMessage()">➤</button>
         </div>
     </div>
@@ -1233,12 +1233,12 @@
                         <label data-en="From Unit" data-hi="इस इकाई से">From Unit</label>
                         <select id="conv-land-unit" onchange="calculateLandConversion()">
                             <option value="acre">Acre (एकड़ - Standard)</option>
-                            <option value="bigha_pucca">Pucca Bigha (UP, Raj, HR, MP - 0.625 Acre)</option>
-                            <option value="bigha_kachha">Kachha Bigha (Western UP, Delhi - ~0.208 Acre)</option>
-                            <option value="guntha">Guntha (Maharashtra, Karnataka, Gujarat - 40/Acre)</option>
+                            <option value="bigha_pucca" data-en="Pucca Bigha (UP, Raj, HR, MP - 0.625 Acre)" data-hi="पक्का बीघा (यूपी, राज, हरिया, एमपी - 0.625 एकड़)">Pucca Bigha (UP, Raj, HR, MP - 0.625 Acre)</option>
+                            <option value="bigha_kachha" data-en="Kachha Bigha (Western UP, Delhi - ~0.208 Acre)" data-hi="कच्चा बीघा (पश्चिमी यूपी, दिल्ली - ~0.208 एकड़)">Kachha Bigha (Western UP, Delhi - ~0.208 Acre)</option>
+                            <option value="guntha" data-en="Guntha (Maharashtra, Karnataka, Gujarat - 40/Acre)" data-hi="गुंठा (महाराष्ट्र, कर्नाटक, गुजरात - 40/एकड़)">Guntha (Maharashtra, Karnataka, Gujarat - 40/Acre)</option>
                             <option value="hectare">Hectare (हेक्टेयर - 2.471 Acres)</option>
-                            <option value="kanal">Kanal (Punjab, Haryana - 8/Acre)</option>
-                            <option value="marla">Marla (Punjab, Haryana - 160/Acre)</option>
+                            <option value="kanal" data-en="Kanal (Punjab, Haryana - 8/Acre)" data-hi="कनाल (पंजाब, हरियाणा - 8/एकड़)">Kanal (Punjab, Haryana - 8/Acre)</option>
+                            <option value="marla" data-en="Marla (Punjab, Haryana - 160/Acre)" data-hi="मरला (पंजाब, हरियाणा - 160/एकड़)">Marla (Punjab, Haryana - 160/एकड़)</option>
                             <option value="sq_meter">Square Meter (वर्ग मीटर)</option>
                             <option value="sq_yard">Gaj / Sq Yard (वर्ग गज)</option>
                         </select>
@@ -1249,27 +1249,27 @@
                     <h4 data-en="Equivalent Measurements" data-hi="समतुल्य माप">Equivalent Measurements</h4>
                     <div class="conv-results-grid">
                         <div class="conv-result-card">
-                            <span class="conv-label">Acre (एकड़)</span>
+                            <span class="conv-label" data-en="Acre" data-hi="एकड़">Acre (एकड़)</span>
                             <span class="conv-val" id="res-acre">1.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Pucca Bigha (पक्का बीघा)</span>
+                            <span class="conv-label" data-en="Pucca Bigha" data-hi="पक्का बीघा">Pucca Bigha (पक्का बीघा)</span>
                             <span class="conv-val" id="res-bigha">1.60</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Guntha (गुंठा)</span>
+                            <span class="conv-label" data-en="Guntha" data-hi="गुंठा">Guntha (गुंठा)</span>
                             <span class="conv-val" id="res-guntha">40.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Hectare (हेक्टेयर)</span>
+                            <span class="conv-label" data-en="Hectare" data-hi="हेक्टेयर">Hectare (हेक्टेयर)</span>
                             <span class="conv-val" id="res-hectare">0.405</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Kanal (कनाल)</span>
+                            <span class="conv-label" data-en="Kanal" data-hi="कनाल">Kanal (कनाल)</span>
                             <span class="conv-val" id="res-kanal">8.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Sq. Meters (वर्ग मीटर)</span>
+                            <span class="conv-label" data-en="Sq. Meters" data-hi="वर्ग मीटर">Sq. Meters (वर्ग मीटर)</span>
                             <span class="conv-val" id="res-sqm">4,046.86</span>
                         </div>
                     </div>
@@ -1299,23 +1299,23 @@
                     <h4 data-en="Equivalent Weights for Mandi Trading" data-hi="मंडी व्यापार हेतु समतुल्य वजन">Equivalent Weights for Mandi Trading</h4>
                     <div class="conv-results-grid">
                         <div class="conv-result-card">
-                            <span class="conv-label">Quintal (क्विंटल)</span>
+                            <span class="conv-label" data-en="Quintal" data-hi="क्विंटल">Quintal (क्विंटल)</span>
                             <span class="conv-val" id="res-quintal">10.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Kilograms (किलो)</span>
+                            <span class="conv-label" data-en="Kilograms" data-hi="किलोग्राम">Kilograms (किलो)</span>
                             <span class="conv-val" id="res-kg">1,000.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Maund / Man (मन - 40kg)</span>
+                            <span class="conv-label" data-en="Maund / Man (40kg)" data-hi="मन (40 किलो)">Maund / Man (मन - 40kg)</span>
                             <span class="conv-val" id="res-maund">25.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Bags / Bori (50kg बोरी)</span>
+                            <span class="conv-label" data-en="Bags / Bori (50kg)" data-hi="बोरी (50 किलो)">Bags / Bori (50kg बोरी)</span>
                             <span class="conv-val" id="res-bags">20.00</span>
                         </div>
                         <div class="conv-result-card">
-                            <span class="conv-label">Metric Ton (टन)</span>
+                            <span class="conv-label" data-en="Metric Ton" data-hi="मीट्रिक टन">Metric Ton (टन)</span>
                             <span class="conv-val" id="res-ton">1.00</span>
                         </div>
                     </div>
@@ -1373,10 +1373,10 @@
                         <div class="form-group">
                             <label data-en="Settlement Status" data-hi="भुगतान स्थिति">Settlement Status</label>
                             <select id="slip-status" onchange="renderFarmSlipPreview()">
-                                <option value="PAID - Bank Transfer">✅ Paid (Bank Transfer / RTGS)</option>
-                                <option value="PAID - Cash">✅ Paid (Cash / नकद)</option>
-                                <option value="PENDING - 3 Days">⏳ Payment Pending (3 Days)</option>
-                                <option value="CHEQUE ISSUED">📑 Cheque Issued</option>
+                                <option value="PAID - Bank Transfer" data-en="✅ Paid (Bank Transfer / RTGS)" data-hi="✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)">✅ Paid (Bank Transfer / RTGS)</option>
+                                <option value="PAID - Cash" data-en="✅ Paid (Cash)" data-hi="✅ भुगतान प्राप्त (नकद)">✅ Paid (Cash / नकद)</option>
+                                <option value="PENDING - 3 Days" data-en="⏳ Payment Pending (3 Days)" data-hi="⏳ भुगतान लंबित (3 दिन)">⏳ Payment Pending (3 Days)</option>
+                                <option value="CHEQUE ISSUED" data-en="📑 Cheque Issued" data-hi="📑 चेक जारी किया गया">📑 Cheque Issued</option>
                             </select>
                         </div>
                     </div>
@@ -1395,29 +1395,29 @@
                 <div class="farm-slip-preview-side">
                     <div id="farm-slip-printable" class="official-voucher-paper">
                         <div class="voucher-top-bar">
-                            <div class="voucher-gov-crest">🌾 AGRIFLOW FARM VOUCHER</div>
+                            <div class="voucher-gov-crest" data-en="🌾 AGRIFLOW FARM VOUCHER" data-hi="🌾 एग्रीफ्लो किसान वाउचर">🌾 AGRIFLOW FARM VOUCHER</div>
                             <div class="voucher-id" id="slip-doc-id">VCH-2026-8891</div>
                         </div>
                         <div class="voucher-header-text">
-                            <h3>AGRIFLOW DIGITAL MANDI &amp; FARM SLIP</h3>
-                            <p class="voucher-sub">Approved APMC &amp; Warehouse Financial Documentation</p>
+                            <h3 data-en="AGRIFLOW DIGITAL MANDI &amp; FARM SLIP" data-hi="एग्रीफ्लो डिजिटल मंडी एवं फार्म पर्ची">AGRIFLOW DIGITAL MANDI &amp; FARM SLIP</h3>
+                            <p class="voucher-sub" data-en="Approved APMC &amp; Warehouse Financial Documentation" data-hi="स्वीकृत एपीएमसी एवं वेयरहाउस वित्तीय दस्तावेज">Approved APMC &amp; Warehouse Financial Documentation</p>
                         </div>
                         <hr class="voucher-line">
                         <div class="voucher-meta-row">
-                            <div><strong>Farmer:</strong> <span id="pv-farmer">Ramesh Singh</span></div>
-                            <div><strong>Date:</strong> <span id="pv-date">17 Sep 2026</span></div>
+                            <div><strong data-en="Farmer:" data-hi="किसान:">Farmer:</strong> <span id="pv-farmer">Ramesh Singh</span></div>
+                            <div><strong data-en="Date:" data-hi="दिनांक:">Date:</strong> <span id="pv-date">17 Sep 2026</span></div>
                         </div>
                         <div class="voucher-meta-row">
-                            <div><strong>Mandi/Location:</strong> <span id="pv-location">Khanna APMC Mandi</span></div>
-                            <div><strong>Phone:</strong> <span id="pv-phone">+91 98765 43210</span></div>
+                            <div><strong data-en="Mandi/Location:" data-hi="मंडी / स्थान:">Mandi/Location:</strong> <span id="pv-location">Khanna APMC Mandi</span></div>
+                            <div><strong data-en="Phone:" data-hi="फ़ोन:">Phone:</strong> <span id="pv-phone">+91 98765 43210</span></div>
                         </div>
                         <table class="voucher-table">
                             <thead>
                                 <tr>
-                                    <th>Description</th>
-                                    <th class="text-right">Qty</th>
-                                    <th class="text-right">Rate</th>
-                                    <th class="text-right">Total</th>
+                                    <th data-en="Description" data-hi="विवरण">Description</th>
+                                    <th class="text-right" data-en="Qty" data-hi="मात्रा">Qty</th>
+                                    <th class="text-right" data-en="Rate" data-hi="भाव / दर">Rate</th>
+                                    <th class="text-right" data-en="Total" data-hi="कुल राशि">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1428,19 +1428,19 @@
                                     <td class="text-right font-bold">₹<span id="pv-gross">1,06,875</span></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="text-muted">Less: Mandi Cess / Handling / Labor</td>
+                                    <td colspan="3" class="text-muted" data-en="Less: Mandi Cess / Handling / Labor" data-hi="कटौती: मंडी उपकर / हम्माली / तुलाई">Less: Mandi Cess / Handling / Labor</td>
                                     <td class="text-right text-danger">-₹<span id="pv-deductions">1,250</span></td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="3">Net Payable to Farmer</th>
+                                    <th colspan="3" data-en="Net Payable to Farmer" data-hi="किसान को शुद्ध देय राशि">Net Payable to Farmer</th>
                                     <th class="text-right voucher-net-total">₹<span id="pv-net">1,05,625</span></th>
                                 </tr>
                             </tfoot>
                         </table>
                         <div class="voucher-footer-row">
-                            <div class="voucher-badge-status" id="pv-status">✅ Paid (Bank Transfer / RTGS)</div>
+                            <div class="voucher-badge-status" id="pv-status" data-en="✅ Paid (Bank Transfer / RTGS)" data-hi="✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)">✅ Paid (Bank Transfer / RTGS)</div>
                             <div class="voucher-qr-sim">
                                 <div class="qr-box">🏁 VERIFIED<br>AGRIFLOW</div>
                             </div>
@@ -1508,7 +1508,7 @@
                     <div class="summary-banner-icon">🎯</div>
                     <div class="summary-banner-text">
                         <strong data-en="Executive Field Recommendation" data-hi="मुख्य कृषि परामर्श">Executive Field Recommendation</strong>
-                        <p id="analysis-summary-text">Synthesizing field weather...</p>
+                        <p id="analysis-summary-text" data-en="Synthesizing field weather..." data-hi="खेत के मौसम का विश्लेषण जारी...">Synthesizing field weather...</p>
                     </div>
                 </div>
 
@@ -1557,7 +1557,7 @@
                     <div class="analysis-card disease-card">
                         <div class="analysis-card-head">
                             <span class="analysis-card-title">🦠 <span data-en="Fungal & Disease Pathogen Risk" data-hi="फफूंद व कीट रोग जोखिम">Fungal & Disease Pathogen Risk</span></span>
-                            <span id="an-disease-badge" class="badge-risk-pill badge-risk-low">Analyzing...</span>
+                            <span id="an-disease-badge" class="badge-risk-pill badge-risk-low" data-en="Analyzing..." data-hi="विश्लेषण जारी...">Analyzing...</span>
                         </div>
                         <div class="analysis-card-content">
                             <div class="pathogen-line">
@@ -1572,7 +1572,7 @@
                     <div class="analysis-card spray-card">
                         <div class="analysis-card-head">
                             <span class="analysis-card-title">🧪 <span data-en="Chemical / Foliar Spray Window" data-hi="दवा / खाद छिड़काव समय">Chemical / Foliar Spray Window</span></span>
-                            <span id="an-spray-badge" class="badge-risk-pill badge-spray-optimal">Analyzing...</span>
+                            <span id="an-spray-badge" class="badge-risk-pill badge-spray-optimal" data-en="Analyzing..." data-hi="विश्लेषण जारी...">Analyzing...</span>
                         </div>
                         <div class="analysis-card-content">
                             <div class="pathogen-line">
@@ -1587,7 +1587,7 @@
                     <div class="analysis-card irrigation-card">
                         <div class="analysis-card-head">
                             <span class="analysis-card-title">💧 <span data-en="Irrigation & Hydrology Management" data-hi="सिंचाई एवं जल प्रबंधन">Irrigation & Hydrology Management</span></span>
-                            <span id="an-irrigation-action" class="badge-risk-pill badge-irrigation-hold">Analyzing...</span>
+                            <span id="an-irrigation-action" class="badge-risk-pill badge-irrigation-hold" data-en="Analyzing..." data-hi="विश्लेषण जारी...">Analyzing...</span>
                         </div>
                         <div class="analysis-card-content">
                             <div class="pathogen-line">
@@ -1602,7 +1602,7 @@
                     <div class="analysis-card thermal-card">
                         <div class="analysis-card-head">
                             <span class="analysis-card-title">🚜 <span data-en="Thermal Stress & Machinery Workability" data-hi="ताप तनाव व खेत संचालन">Thermal Stress & Machinery Workability</span></span>
-                            <span id="an-thermal-status" class="badge-risk-pill badge-thermal-optimal">Analyzing...</span>
+                            <span id="an-thermal-status" class="badge-risk-pill badge-thermal-optimal" data-en="Analyzing..." data-hi="विश्लेषण जारी...">Analyzing...</span>
                         </div>
                         <div class="analysis-card-content">
                             <div class="pathogen-line">
@@ -1647,12 +1647,12 @@
 
                         <div class="gemini-advisory-card loss-strategy-card">
                             <div class="advisory-card-badge">🛡️ <span data-en="Loss Minimization & Storage Protection" data-hi="हानि निवारण व भंडारण सुरक्षा नियम">Loss Minimization & Storage Protection</span></div>
-                            <p id="an-loss-strategy-text" class="advisory-text">Loading personalized loss mitigation steps...</p>
+                            <p id="an-loss-strategy-text" class="advisory-text" data-en="Loading personalized loss mitigation steps..." data-hi="नुकसान कम करने के उपाय लोड हो रहे हैं...">Loading personalized loss mitigation steps...</p>
                         </div>
 
                         <div class="gemini-advisory-card profit-boost-card">
                             <div class="advisory-card-badge">💰 <span data-en="Profit Enhancement Action Roadmap" data-hi="शुद्ध लाभ वृद्धि कार्ययोजना">Profit Enhancement Action Roadmap</span></div>
-                            <p id="an-profit-boost-text" class="advisory-text">Loading personalized profit maximization strategy...</p>
+                            <p id="an-profit-boost-text" class="advisory-text" data-en="Loading personalized profit maximization strategy..." data-hi="मुनाफा बढ़ाने की रणनीति लोड हो रही है...">Loading personalized profit maximization strategy...</p>
                         </div>
                     </div>
                 </div>
@@ -1664,7 +1664,7 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=20260917-v5"></script>
+    <script src="/static/app.js?v=20260917-v6"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         // Mobile Sidebar Drawer Navigation

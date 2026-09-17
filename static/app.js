@@ -539,6 +539,10 @@ function switchTab(tabId) {
     if (tabId === 'sell-decision' && typeof renderSellDecisionCharts === 'function') {
         setTimeout(renderSellDecisionCharts, 80);
     }
+
+    if (typeof applyFullPageTranslation === 'function') {
+        setTimeout(() => applyFullPageTranslation(currentLang), 50);
+    }
 }
 
 function showToast(msg, type = "info") {
@@ -551,6 +555,371 @@ function showToast(msg, type = "info") {
     setTimeout(() => {
         if (toast && toast.parentNode) toast.remove();
     }, 3500);
+}
+
+
+// ============================================================
+// COMPREHENSIVE REGIONAL TRANSLATION DICTIONARY & DOM ENGINE
+// ============================================================
+
+const GLOBAL_TRANSLATIONS_HI = {
+    // Top Bar, Brand & Nav
+    "Farm Intelligence Workspace": "कृषि वित्तीय व मंडी सलाहकार",
+    "AGRIFLOW": "एग्रीफ्लो",
+    "Plan & Market": "योजना व मंडी",
+    "Plan &amp; Market": "योजना व मंडी",
+    "My Crops": "मेरी फसलें",
+    "Dark": "डार्क",
+    "Light": "लाइट",
+    "Signed in": "लॉग इन",
+    "Unit Converter": "इकाई परिवर्तक",
+    "Farm Slip": "फार्म रसीद",
+    "WhatsApp: ON": "व्हाट्सएप: चालू",
+    "WhatsApp: OFF": "व्हाट्सएप: बंद",
+    "Load Tomato Demo": "डेमो लोड करें (टमाटर)",
+    "ACTIVE STORED PRODUCE": "वर्तमान भंडारित उपज",
+    "HIGH SPOILAGE RISK": "उच्च सड़न जोखिम",
+    "TOTAL HISTORICAL REVENUE": "कुल ऐतिहासिक आय",
+    "CUMULATIVE NET PROFIT": "कुल संचित शुद्ध लाभ",
+    "KG": "किलो",
+    "BATCH": "बैच",
+    "Batch": "बैच",
+    "Batches": "बैच",
+    "Record": "रिकॉर्ड",
+    "Records": "रिकॉर्ड",
+    "Center": "केंद्र",
+    "Centers": "केंद्र",
+    "Optimal": "उत्कृष्ट",
+    "Field Capacity": "संतुलित नमी",
+    "Warm": "अनुकूल",
+    "Vibrant": "सघन हरियाली",
+    "Weather data: AccuWeather": "मौसम डेटा: एक्यूवेदर",
+    "Waiting for your GPS location...": "आपके GPS स्थान की प्रतीक्षा है...",
+    "Date": "दिनांक",
+    "Condition": "स्थिति",
+    "Temperature": "तापमान",
+    "Rain": "वर्षा",
+    "Probability": "संभावना",
+    "Sunrise": "सूर्योदय",
+    "Sunset": "सूर्यास्त",
+    "🔮 AI Powered": "🔮 एआई आधारित",
+    "Glut: Mar - May": "आवक दबाव: मार्च - मई",
+    "Peak Window: Nov - Jan": "उच्चतम भाव: नवं - जन",
+    "Bullish (+9.2%)": "तेजी (+9.2%)",
+    "High Processing Demand": "प्रसंस्करण उद्योग से भारी मांग",
+    "Moong (Green Gram)": "मूंग (दाल)",
+    "Loading predictive recommendations...": "पूर्वानुमान रणनीतियाँ लोड हो रही हैं...",
+    "Peak: Day 6 - Day 8": "चरम भाव: दिन 6 - दिन 8",
+    "Safe Zone": "सुरक्षित क्षेत्र",
+    "Caution Zone": "चेतावनी क्षेत्र",
+    "0 Centers": "0 केंद्र",
+    "2 Batches": "2 बैच",
+    "1 Record": "1 रिकॉर्ड",
+    "kg": "किलो",
+    "Quintal": "क्विंटल",
+    "Tons": "टन",
+    "Planting Date": "बुवाई की तारीख",
+    "Harvest Date": "कटाई की तारीख",
+    "Ventilated Godown": "हवादार गोदाम",
+    "Open Air Jute Bags": "खुले बोरे (तिरपाल)",
+    "Cold Storage Unit": "कोल्ड स्टोरेज यूनिट",
+    "Farm Shade": "खेत का शेड",
+    "Nearest storage facility": "निकटतम भंडारण केंद्र",
+    "Your closest mapped facility will be shown first": "आपके सबसे निकटतम पंजीकृत गोदाम पहले दिखाए जाएंगे",
+    "Find nearest facility": "निकटतम केंद्र खोजें",
+    "Farmer profile": "किसान प्रोफाइल",
+    "Update your name and farm weather location.": "अपना नाम और खेत का मौसम स्थान अपडेट करें।",
+    "Farmer name": "किसान का नाम",
+    "Latitude": "अक्षांश (Latitude)",
+    "Longitude": "देशांतर (Longitude)",
+    "Location label": "स्थान का नाम",
+    "Alert phone with country code": "अलर्ट फ़ोन (कंट्री कोड सहित)",
+    "Use my location": "मेरा वर्तमान स्थान उपयोग करें",
+    "Save profile": "प्रोफ़ाइल सहेजें",
+    "Delete my crop data": "मेरा फसल डेटा हटाएं",
+    "Log out": "लॉग आउट",
+    "🤖 AgriFlow AI": "🤖 एग्रीफ्लो एआई",
+    "🧠 Smart Advisor": "🧠 स्मार्ट सलाहकार",
+    "📈 Farm Insights": "📈 खेत अंतर्दृष्टि",
+    "Voice Chat": "आवाज संवाद",
+    "🤖 AI Advisor": "🤖 एआई सलाहकार",
+    "Now": "अभी",
+    "Image attached": "फोटो संलग्न है",
+    "🥔 Potato mandi rates": "🥔 आलू मंडी भाव",
+    "🍅 Tomato disease advice": "🍅 टमाटर रोग सलाह",
+    "🌾 Wheat storage advice": "🌾 गेहूं भंडारण सलाह",
+    "🌿 Mustard rotation plan": "🌿 सरसों फसल चक्र योजना",
+    "Pucca Bigha (UP, Raj, HR, MP - 0.625 Acre)": "पक्का बीघा (यूपी, राज, हरिया, एमपी - 0.625 एकड़)",
+    "Kachha Bigha (Western UP, Delhi - ~0.208 Acre)": "कच्चा बीघा (पश्चिमी यूपी, दिल्ली - ~0.208 एकड़)",
+    "Guntha (Maharashtra, Karnataka, Gujarat - 40/Acre)": "गुंठा (महाराष्ट्र, कर्नाटक, गुजरात - 40/एकड़)",
+    "Kanal (Punjab, Haryana - 8/Acre)": "कनाल (पंजाब, हरियाणा - 8/एकड़)",
+    "Marla (Punjab, Haryana - 160/Acre)": "मरला (पंजाब, हरियाणा - 160/एकड़)",
+    "✅ Paid (Bank Transfer / RTGS)": "✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)",
+    "✅ Paid (Cash / नकद)": "✅ भुगतान प्राप्त (नकद)",
+    "✅ Paid (Cash)": "✅ भुगतान प्राप्त (नकद)",
+    "⏳ Payment Pending (3 Days)": "⏳ भुगतान लंबित (3 दिन)",
+    "📑 Cheque Issued": "📑 चेक जारी किया गया",
+    "🌾 AGRIFLOW FARM VOUCHER": "🌾 एग्रीफ्लो किसान वाउचर",
+    "AGRIFLOW DIGITAL MANDI & FARM SLIP": "एग्रीफ्लो डिजिटल मंडी एवं फार्म पर्ची",
+    "Approved APMC & Warehouse Financial Documentation": "स्वीकृत एपीएमसी एवं वेयरहाउस वित्तीय दस्तावेज",
+    "Farmer:": "किसान:",
+    "Date:": "दिनांक:",
+    "Mandi/Location:": "मंडी / स्थान:",
+    "Phone:": "फ़ोन:",
+    "Description": "विवरण",
+    "Qty": "मात्रा",
+    "Rate": "भाव / दर",
+    "Total": "कुल राशि",
+    "Less: Mandi Cess / Handling / Labor": "कटौती: मंडी उपकर / हम्माली / तुलाई",
+    "Net Payable to Farmer": "किसान को शुद्ध देय राशि",
+    "Synthesizing field weather...": "खेत के मौसम का विश्लेषण जारी...",
+    "Analyzing...": "विश्लेषण जारी...",
+    "Loading personalized loss mitigation steps...": "नुकसान कम करने के उपाय लोड हो रहे हैं...",
+    "Loading personalized profit maximization strategy...": "मुनाफा बढ़ाने की रणनीति लोड हो रही है...",
+    "Day 1": "दिन 1",
+    "Day 3": "दिन 3",
+    "Day 5": "दिन 5",
+    "Day 7": "दिन 7",
+    "Day 7 (Peak)": "दिन 7 (चरम)",
+    "Day 10": "दिन 10",
+    "Day 14": "दिन 14",
+    "Disease Pressure": "रोग व फफूंद दबाव",
+    "Moisture Stress": "नमी तनाव",
+    "Spray Drift Hazard": "हवा / स्प्रे बहाव जोखिम",
+    "Storage Spoilage Risk": "भंडारण सड़न जोखिम",
+    "PROFIT": "शुद्ध मुनाफा",
+    "LOSS": "कुल हानि",
+    "Current Growing Crop": "वर्तमान बढ़ती फसल",
+    "Grade:": "ग्रेड:",
+    "Grade": "ग्रेड",
+    "High": "उच्च",
+    "Medium": "मध्यम",
+    "Low": "कम",
+    "High Spoilage Risk": "उच्च सड़न जोखिम",
+    "Medium Risk Alert": "मध्यम जोखिम चेतावनी",
+    "Low Risk": "कम जोखिम",
+    "Moderate Risk": "मध्यम जोखिम",
+    "High Risk": "उच्च जोखिम",
+    "Do Not Spray": "स्प्रे न करें",
+    "Rain Expected": "बारिश का अनुमान",
+    "High Wind Drift": "तेज हवा - बहाव जोखिम",
+    "Ideal Window Open": "सर्वोत्तम समय उपलब्ध",
+    "Closed (Wash-off Risk)": "बंद (धुलने का जोखिम)",
+    "Normal Irrigation": "नियमित सिंचाई",
+    "Normal Scheduled Irrigation": "नियमित निर्धारित सिंचाई",
+    "Hold Irrigation (Stop Pumps)": "सिंचाई रोकें (पंप बंद रखें)",
+    "Hold Irrigation": "सिंचाई रोकें",
+    "Soil Moisture in Equilibrium": "मिट्टी में नमी संतुलित",
+    "Heat Stress Alert": "अत्यधिक गर्मी चेतावनी",
+    "Cold Frost Alert": "पाला / ठंड चेतावनी",
+    "Optimal Growth Zone": "अनुकूल विकास तापमान",
+    "Optimal Zone": "अनुकूल क्षेत्र",
+    "Waterlogged Soil - Delay Machinery": "खेत में पानी भरा - मशीन संचालन रोकें",
+    "Ideal for Farm Machinery & Labor": "खेत संचालन व मजदूरी हेतु अनुकूल",
+    "Peak Profit:": "चरम मुनाफा:",
+    "Water:": "पानी:",
+    "Harvest:": "कटाई:",
+    "Sold:": "बिक्री:",
+    "Wheat": "गेहूं",
+    "Potato": "आलू",
+    "Tomato": "टमाटर",
+    "Mustard": "सरसों",
+    "Onion": "प्याज",
+    "Soybean": "सोयाबीन",
+    "Cotton": "कपास",
+    "Paddy": "धान",
+    "Maize": "मक्का",
+    "Gram": "चना",
+    "Moong": "मूंग दाल",
+    "Groundnut": "मूंगफली",
+    "Cumin": "जीरा",
+    "Chickpea": "चना",
+    "Pulses": "दालें",
+    "Punjab": "पंजाब",
+    "Haryana": "हरियाणा",
+    "Uttar Pradesh": "उत्तर प्रदेश",
+    "Rajasthan": "राजस्थान",
+    "Madhya Pradesh": "मध्य प्रदेश",
+    "Maharashtra": "महाराष्ट्र",
+    "Gujarat": "गुजरात",
+    "Bihar": "बिहार",
+    "Acre": "एकड़",
+    "Hectare": "हेक्टेयर",
+    "Bigha": "बीघा",
+    "Guntha": "गुंठा",
+    "Kanal": "कनाल",
+    "Marla": "मरला",
+    "Sq. Meters": "वर्ग मीटर",
+    "Square Meter": "वर्ग मीटर",
+    "Gaj / Sq Yard": "वर्ग गज",
+    "Maund": "मन (40 किलो)",
+    "Bags": "बोरी (50 किलो)",
+    "Metric Ton": "मीट्रिक टन",
+    "Kilograms": "किलोग्राम",
+    "Rising": "तेज",
+    "Softening": "नरम",
+    "Steady": "स्थिर",
+    "Bullish": "तेजी",
+    "Bearish": "मंदी",
+    "Today's Rate": "आज का भाव",
+    "Rate Date": "भाव दिनांक",
+    "Seeds": "बीज",
+    "Fertilizer": "उर्वरक",
+    "Pesticide": "कीटनाशक",
+    "Irrigation": "सिंचाई",
+    "Labor": "मजदूरी",
+    "Machinery": "मशीनरी",
+    "Fuel": "डीजल / बिजली",
+    "Misc": "अन्य खर्च",
+    "Capacity:": "क्षमता:",
+    "Get Directions": "रास्ता देखें",
+    "Your Farm": "आपका खेत",
+    "Cold Storage": "कोल्ड स्टोरेज",
+    "Warehouse": "गोदाम",
+    "Silo": "साइलो",
+    "CWC / SWC": "सरकारी CWC / SWC",
+    "WDRA e-NWR Loan": "ई-एनडब्ल्यूआर बैंक ऋण",
+    "All Crops": "सभी फसलें",
+    "All States": "सभी राज्य",
+    "All Facility Types": "सभी प्रकार",
+    "Quick Action": "त्वरित जांच",
+    "🔬 Full Analysis": "🔬 पूर्ण विश्लेषण",
+    "🔬 Full Profit & Loss Analysis": "🔬 पूर्ण लाभ व हानि विश्लेषण",
+    "Analyze Sell Timing": "बिक्री का समय जांचें",
+    "Find nearest facility": "निकटतम केंद्र खोजें",
+    "Analyze Quality and Register Crop": "गुणवत्ता जांचें एवं फसल दर्ज करें",
+    "Confirm Sale, Settle Financials & Archive to History": "बिक्री पक्की करें, मुनाफा निकालें एवं इतिहास में दर्ज करें",
+    "Verify alert phone": "अलर्ट फोन सत्यापित करें",
+    "Send verification code": "सत्यापन कोड भेजें",
+    "Enter 6-digit OTP": "6 अंकों का OTP दर्ज करें",
+    "Verify and send alert": "सत्यापित करें और अलर्ट भेजें",
+    "Ask Krishi AI": "कृषि AI से पूछें",
+    "Delete Photo": "फोटो हटाएं",
+    "Replace Photo": "फोटो बदलें",
+    "Add Expense Field": "अन्य खर्च जोड़ें",
+    "Refresh Projections": "पूर्वानुमान रीफ्रेश करें",
+    "Refresh Rates": "भाव रीफ्रेश करें",
+    "Use My Farm Location": "मेरे खेत का स्थान उपयोग करें",
+    "Reset Filters": "फ़िल्टर रीसेट करें",
+    "Share on WhatsApp": "व्हाट्सएप पर भेजें",
+    "Print / Save PDF": "प्रिंट या पीडीएफ सेव करें",
+    "Share Advisory": "व्हाट्सएप साझा करें",
+    "Refresh": "रीफ्रेश",
+    "Close": "बंद करें"
+};
+
+function applyFullPageTranslation(lang) {
+    if (lang === 'hi') {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode: function(node) {
+                if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+                const parent = node.parentElement;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                const tag = parent.tagName.toLowerCase();
+                if (['script', 'style', 'noscript', 'svg', 'path', 'line', 'circle'].includes(tag)) return NodeFilter.FILTER_REJECT;
+                if (node.nodeValue.trim().length === 0) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            const raw = currentNode.nodeValue;
+            const trimmed = raw.trim();
+            if (GLOBAL_TRANSLATIONS_HI[trimmed]) {
+                if (currentNode._origEnText === undefined) {
+                    currentNode._origEnText = raw;
+                }
+                currentNode.nodeValue = raw.replace(trimmed, GLOBAL_TRANSLATIONS_HI[trimmed]);
+            }
+        }
+
+        document.querySelectorAll('select option').forEach(opt => {
+            const raw = opt.textContent.trim();
+            if (GLOBAL_TRANSLATIONS_HI[raw]) {
+                if (opt._origEnText === undefined) opt._origEnText = opt.textContent;
+                opt.textContent = GLOBAL_TRANSLATIONS_HI[raw];
+            }
+        });
+
+        document.querySelectorAll('input, textarea').forEach(inp => {
+            if (inp.getAttribute('data-placeholder-hi')) {
+                if (inp._origEnPlaceholder === undefined) inp._origEnPlaceholder = inp.placeholder;
+                inp.placeholder = inp.getAttribute('data-placeholder-hi');
+            } else {
+                const ph = (inp.placeholder || '').trim();
+                if (GLOBAL_TRANSLATIONS_HI[ph]) {
+                    if (inp._origEnPlaceholder === undefined) inp._origEnPlaceholder = inp.placeholder;
+                    inp.placeholder = GLOBAL_TRANSLATIONS_HI[ph];
+                }
+            }
+        });
+
+        const themeLabel = document.getElementById('theme-toggle-label');
+        if (themeLabel) {
+            const isDark = document.body.classList.contains('dark-theme');
+            themeLabel.textContent = isDark ? 'डार्क' : 'लाइट';
+        }
+        const dispFarmer = document.getElementById('display-farmer');
+        if (dispFarmer && (!farmerProfile || !farmerProfile.full_name || dispFarmer.innerText === 'Signed in' || dispFarmer.innerText === 'लॉग इन')) {
+            dispFarmer.innerText = 'लॉग इन';
+        }
+        const waLabel = document.getElementById('wa-toggle-label');
+        if (waLabel) {
+            const isActive = document.getElementById('btn-toggle-whatsapp')?.classList.contains('active');
+            waLabel.innerText = isActive ? 'व्हाट्सएप: चालू' : 'व्हाट्सएप: बंद';
+        }
+        const autoTag = document.getElementById('lang-auto-tag');
+        if (autoTag && autoTag.innerText.includes('Auto')) {
+            autoTag.innerText = '✨ ऑटो';
+        }
+        const voiceStatus = document.getElementById('voice-chat-status');
+        if (voiceStatus) {
+            voiceStatus.innerText = 'आवाज संवाद';
+        }
+    } else if (lang === 'en') {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            if (currentNode._origEnText !== undefined) {
+                currentNode.nodeValue = currentNode._origEnText;
+            }
+        }
+        document.querySelectorAll('select option').forEach(opt => {
+            if (opt._origEnText !== undefined) {
+                opt.textContent = opt._origEnText;
+            }
+        });
+        document.querySelectorAll('input, textarea').forEach(inp => {
+            if (inp.getAttribute('data-placeholder-en')) {
+                inp.placeholder = inp.getAttribute('data-placeholder-en');
+            } else if (inp._origEnPlaceholder !== undefined) {
+                inp.placeholder = inp._origEnPlaceholder;
+            }
+        });
+        const themeLabel = document.getElementById('theme-toggle-label');
+        if (themeLabel) {
+            const isDark = document.body.classList.contains('dark-theme');
+            themeLabel.textContent = isDark ? 'Dark' : 'Light';
+        }
+        const dispFarmer = document.getElementById('display-farmer');
+        if (dispFarmer && (!farmerProfile || !farmerProfile.full_name || dispFarmer.innerText === 'Signed in' || dispFarmer.innerText === 'लॉग इन')) {
+            dispFarmer.innerText = 'Signed in';
+        }
+        const waLabel = document.getElementById('wa-toggle-label');
+        if (waLabel) {
+            const isActive = document.getElementById('btn-toggle-whatsapp')?.classList.contains('active');
+            waLabel.innerText = isActive ? 'WhatsApp: ON' : 'WhatsApp: OFF';
+        }
+        const autoTag = document.getElementById('lang-auto-tag');
+        if (autoTag && autoTag.innerText.includes('ऑटो')) {
+            autoTag.innerText = '✨ Auto';
+        }
+        const voiceStatus = document.getElementById('voice-chat-status');
+        if (voiceStatus) {
+            voiceStatus.innerText = 'Voice Chat';
+        }
+    }
 }
 
 function setLanguage(lang, userInitiated = false) {
@@ -653,6 +1022,19 @@ function setLanguage(lang, userInitiated = false) {
     updateWhatsAppUI();
     renderAllViews();
     handlePreCostCalculation();
+
+    // Re-render open / dynamic components in selected language
+    if (typeof renderFarmSlipPreview === 'function') renderFarmSlipPreview();
+    if (typeof renderSellDecisionCharts === 'function') renderSellDecisionCharts();
+    if (typeof renderCropHorizonAnalysis === 'function' && typeof latestHorizonData !== 'undefined' && latestHorizonData) {
+        renderCropHorizonAnalysis(latestHorizonData);
+    }
+    if (typeof renderFullAnalysisReport === 'function' && typeof latestFullAnalysisData !== 'undefined' && latestFullAnalysisData) {
+        renderFullAnalysisReport(latestFullAnalysisData);
+    }
+
+    // Apply universal DOM translation pass
+    applyFullPageTranslation(lang);
 }
 
 async function toggleChatLanguage() {
@@ -726,8 +1108,10 @@ function updateTallyStrip() {
     const statRev = document.getElementById("stat-total-revenue");
     const statProfit = document.getElementById("stat-total-profit");
 
-    if (statActive) statActive.innerHTML = `${activeQty.toLocaleString()} <small>KG</small>`;
-    if (statRisk) statRisk.innerHTML = `${highRiskCount} <small>${currentLang === 'hi' ? 'बैच' : 'BATCH'}</small>`;
+    const kgUnit = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? 'किलो' : 'KG';
+    const batchUnit = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? 'बैच' : 'BATCH';
+    if (statActive) statActive.innerHTML = `${activeQty.toLocaleString()} <small>${kgUnit}</small>`;
+    if (statRisk) statRisk.innerHTML = `${highRiskCount} <small>${batchUnit}</small>`;
     if (statRev) statRev.innerText = `₹ ${totalRevenue.toLocaleString()}`;
     if (statProfit) statProfit.innerText = `₹ ${totalProfit.toLocaleString()}`;
 }
@@ -773,8 +1157,9 @@ async function handlePreCostCalculation(e) {
             const rateEl = document.getElementById("res-rate");
             const revenueEl = document.getElementById("res-revenue");
             if (totalCostEl) totalCostEl.innerText = `₹ ${d.total_production_cost.toLocaleString()}`;
-            if (yieldEl) yieldEl.innerText = `${d.expected_yield_kg.toLocaleString()} KG (${d.expected_yield_quintals} Qt)`;
-            if (rateEl) rateEl.innerHTML = `₹ ${d.mandi_modal_price_per_quintal.toLocaleString()} / Qt <small id="res-rate-date">(${d.rate_date})</small>`;
+            const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+            if (yieldEl) yieldEl.innerText = isHi ? `${d.expected_yield_kg.toLocaleString()} किलो (${d.expected_yield_quintals} कुंतल)` : `${d.expected_yield_kg.toLocaleString()} KG (${d.expected_yield_quintals} Qt)`;
+            if (rateEl) rateEl.innerHTML = isHi ? `₹ ${d.mandi_modal_price_per_quintal.toLocaleString()} / कुंतल <small id="res-rate-date">(${d.rate_date})</small>` : `₹ ${d.mandi_modal_price_per_quintal.toLocaleString()} / Qt <small id="res-rate-date">(${d.rate_date})</small>`;
             if (revenueEl) revenueEl.innerText = `₹ ${d.estimated_revenue.toLocaleString()}`;
 
             const profitEl = document.getElementById("res-net-profit");
@@ -785,7 +1170,8 @@ async function handlePreCostCalculation(e) {
             }
 
             const unitEl = document.getElementById("res-profit-unit");
-            if (unitEl) unitEl.innerText = `${d.profit_per_selected_unit >= 0 ? '+' : '-'} ₹ ${Math.abs(d.profit_per_selected_unit).toLocaleString()} / ${unit}`;
+            const unitNameHi = { 'Acre': 'एकड़', 'Hectare': 'हेक्टेयर', 'Bigha': 'बीघा' }[unit] || unit;
+            if (unitEl) unitEl.innerText = `${d.profit_per_selected_unit >= 0 ? '+' : '-'} ₹ ${Math.abs(d.profit_per_selected_unit).toLocaleString()} / ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? unitNameHi : unit}`;
 
             // Render Visual Cost Breakdown Bar
             const breakdownItems = [
@@ -876,9 +1262,10 @@ function renderMandiTable(records) {
 
     records.forEach(r => {
         const isToday = r.is_today;
+        const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
         const statusBadge = isToday
-            ? `<span class="badge-live">🟢 Today's Rate (${r.arrival_date})</span>`
-            : `<span class="badge-latest">📅 Rate Date: ${r.arrival_date}</span>`;
+            ? `<span class="badge-live">🟢 ${isHi ? 'आज का भाव' : "Today's Rate"} (${r.arrival_date})</span>`
+            : `<span class="badge-latest">📅 ${isHi ? 'भाव दिनांक' : 'Rate Date'}: ${r.arrival_date}</span>`;
 
         const minP = Number(r.min_price) || 0;
         const maxP = Number(r.max_price) || 0;
@@ -1148,8 +1535,9 @@ function renderSellDecisionCharts(opts = {}) {
         basePriceQtl = defaults[crop] || 2400;
     }
 
+    const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
     // 14-day projection trajectory
-    const timeline = ["Day 1", "Day 3", "Day 5", "Day 7 (Peak)", "Day 10", "Day 14"];
+    const timeline = isHi ? ["दिन 1", "दिन 3", "दिन 5", "दिन 7 (चरम)", "दिन 10", "दिन 14"] : ["Day 1", "Day 3", "Day 5", "Day 7 (Peak)", "Day 10", "Day 14"];
     const multipliers = [1.0, 1.035, 1.072, 1.11, 1.055, 1.008];
     const prices = multipliers.map(m => Math.round(basePriceQtl * m));
 
@@ -1264,6 +1652,7 @@ function renderStoredProduce() {
 
     activeList.forEach(b => {
         const isGrowing = b.crop_status === "growing";
+        const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
         const riskClass = b.spoilage_risk === "High" ? "risk-high" : (b.spoilage_risk === "Medium" ? "risk-medium" : "risk-low");
         const nextCropHtml = !isGrowing && b.next_crop_recommendation?.length ? `
             <div class="next-crop-container stored-next-crop">
@@ -1284,17 +1673,17 @@ function renderStoredProduce() {
             <div>
                 <span class="crop-title">${b.crop_name}</span>
                 <small style="display: block; color: var(--text-muted);">${b.variety || ''} | ${b.field_name || ''}</small>
-                <span class="detail-lbl" style="margin-top: 4px;">${isGrowing ? 'Current Growing Crop' : b.storage_type}</span>
+                <span class="detail-lbl" style="margin-top: 4px;">${isGrowing ? (isHi ? 'वर्तमान में बढ़ती फसल' : 'Current Growing Crop') : (isHi ? ({ 'Ventilated Godown': 'हवादार गोदाम', 'Open Air Jute Bags': 'खुले बोरे (तिरपाल)', 'Cold Storage Unit': 'कोल्ड स्टोरेज यूनिट', 'Farm Shade': 'खेत का शेड' }[b.storage_type] || b.storage_type) : b.storage_type)}</span>
             </div>
             <div>
                 <span class="detail-lbl">${t('storedVolume')}</span>
-                <span class="detail-val">${parseFloat(b.quantity_kg).toLocaleString()} KG</span>
-                <small style="color: var(--text-muted);">Grade: <strong>${b.quality_grade || 'A'}</strong></small>
+                <span class="detail-val">${parseFloat(b.quantity_kg).toLocaleString()} ${isHi ? 'किलो' : 'KG'}</span>
+                <small style="color: var(--text-muted);">${isHi ? 'ग्रेड' : 'Grade'}: <strong>${b.quality_grade || 'A'}</strong></small>
             </div>
             <div>
                 <span class="detail-lbl">${t('spoilageRisk')}</span>
                 <span class="detail-val text-${b.spoilage_risk === 'High' ? 'risk' : 'green'}">
-                    ${isGrowing ? `${t('suggestedHarvest')}: ${b.suggested_harvest_date || (currentLang === 'hi' ? 'एआई जांच बाकी' : 'Pending AI analysis')}` : `${b.spoilage_risk} (${b.shelf_life_days} ${t('daysLeft')})`}
+                    ${isGrowing ? `${t('suggestedHarvest')}: ${b.suggested_harvest_date || (isHi ? 'एआई जांच बाकी' : 'Pending AI analysis')}` : `${isHi ? (b.spoilage_risk === 'High' ? 'उच्च' : (b.spoilage_risk === 'Medium' ? 'मध्यम' : 'कम')) : b.spoilage_risk} (${b.shelf_life_days} ${t('daysLeft')})`}
                 </span>
                 <small style="display:block; font-size:11px; color:var(--text-muted);">${b.defect_summary || ''}</small>
             </div>
@@ -1338,7 +1727,7 @@ function renderStoredProduce() {
                     ${t('sale')}
                 </button>
                 <button type="button" class="btn-secondary" onclick="openStorageFinder('${b.id}')">
-                    📍 Find Storage
+                    📍 ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? 'भंडारण खोजें' : 'Find Storage'}
                 </button>
             </div>
         `;
@@ -1421,11 +1810,11 @@ function renderHistoryProduce() {
             <div class="history-card-header">
                 <div>
                     <h4>${b.crop_name} <small>(${b.variety || 'Desi'})</small></h4>
-                    <span style="font-size:12px; color:var(--text-muted);">${b.field_name} | Harvest: ${b.harvest_date} ➔ Sold: ${b.selling_date}</span>
+                    <span style="font-size:12px; color:var(--text-muted);">${b.field_name} | ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? `कटाई: ${b.harvest_date} ➔ बिक्री: ${b.selling_date}` : `Harvest: ${b.harvest_date} ➔ Sold: ${b.selling_date}`}</span>
                 </div>
                 <div>
                     <span style="font-size:16px; font-weight:700; color: ${isProfit ? 'var(--leaf-green)' : 'var(--risk-red)'};">
-                        ${isProfit ? 'PROFIT' : 'LOSS'}: ₹ ${Math.abs(b.net_profit_loss).toLocaleString()}
+                        ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? (isProfit ? 'शुद्ध मुनाफा' : 'कुल हानि') : (isProfit ? 'PROFIT' : 'LOSS')}: ₹ ${Math.abs(b.net_profit_loss).toLocaleString()}
                     </span>
                 </div>
             </div>
@@ -1978,15 +2367,47 @@ async function fetchWeather(latitude, longitude) {
         if (alerts) {
             alerts.innerHTML = (data.alerts || []).map(alert => `<div class="weather-alert ${alert.level}">⚠️ ${alert.message}</div>`).join("") || `<div class="weather-alert clear">✓ ${t('noWeatherWarnings')}</div>`;
         }
+        const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+        const metricLabels = isHi ? {
+            "Temperature": "तापमान",
+            "Humidity": "आर्द्रता",
+            "Wind speed": "हवा गति",
+            "Rain now": "वर्तमान वर्षा",
+            "Weather condition": "मौसम स्थिति",
+            "Rain probability today": "आज बारिश संभावना"
+        } : {
+            "Temperature": "Temperature",
+            "Humidity": "Humidity",
+            "Wind speed": "Wind speed",
+            "Rain now": "Rain now",
+            "Weather condition": "Weather condition",
+            "Rain probability today": "Rain probability today"
+        };
+        const condMap = {
+            "Partly cloudy": "आंशिक बादल",
+            "Partly sunny": "आंशिक धूप",
+            "Sunny": "धूप",
+            "Clear": "साफ़ मौसम",
+            "Cloudy": "बादल",
+            "Rain": "बारिश",
+            "Light rain": "हल्की बारिश",
+            "Heavy rain": "भारी बारिश",
+            "Thunderstorm": "गरज-चमक बारिश",
+            "Haze": "धुंध",
+            "Fog": "कोहरा",
+            "Overcast": "घने बादल"
+        };
+        const translateCond = c => isHi ? (condMap[c] || c) : c;
+
         metrics.innerHTML = [
-            ["Temperature", `${current.temperature_c ?? "-"} °C`, "🌡️"],
-            ["Humidity", `${current.relative_humidity_percent ?? "-"} %`, "💧"],
-            ["Wind speed", `${current.wind_speed_kmh ?? "-"} km/h`, "💨"],
-            ["Rain now", `${current.rainfall_mm ?? "-"} mm`, "🌧️"],
-            ["Weather condition", current.condition, "☀️"],
-            ["Rain probability today", `${data.forecast[0]?.rain_probability_percent ?? "-"} %`, "🌧️"]
+            [metricLabels["Temperature"], `${current.temperature_c ?? "-"} °C`, "🌡️"],
+            [metricLabels["Humidity"], `${current.relative_humidity_percent ?? "-"} %`, "💧"],
+            [metricLabels["Wind speed"], `${current.wind_speed_kmh ?? "-"} km/h`, "💨"],
+            [metricLabels["Rain now"], `${current.rainfall_mm ?? "-"} mm`, "🌧️"],
+            [metricLabels["Weather condition"], translateCond(current.condition), "☀️"],
+            [metricLabels["Rain probability today"], `${data.forecast[0]?.rain_probability_percent ?? "-"} %`, "🌧️"]
         ].map(([label, value, icon]) => `<div class="weather-metric"><span class="weather-metric-icon">${icon}</span><span class="weather-metric-label">${label}</span><strong>${value}</strong></div>`).join("");
-        forecast.innerHTML = data.forecast.map(day => `<tr><td>${day.date}</td><td>${day.condition}</td><td>${day.temperature_min_c ?? "-"} / ${day.temperature_max_c ?? "-"} °C</td><td>${day.precipitation_mm ?? "-"} mm</td><td>${day.rain_probability_percent ?? "-"} %</td><td>${day.sunrise?.slice(11, 16) ?? "-"}</td><td>${day.sunset?.slice(11, 16) ?? "-"}</td></tr>`).join("");
+        forecast.innerHTML = data.forecast.map(day => `<tr><td>${day.date}</td><td>${translateCond(day.condition)}</td><td>${day.temperature_min_c ?? "-"} / ${day.temperature_max_c ?? "-"} °C</td><td>${day.precipitation_mm ?? "-"} mm</td><td>${day.rain_probability_percent ?? "-"} %</td><td>${day.sunrise?.slice(11, 16) ?? "-"}</td><td>${day.sunset?.slice(11, 16) ?? "-"}</td></tr>`).join("");
         weatherCache = { latitude, longitude, data, storedAt: Date.now() };
     } catch (error) {
         status.textContent = `Weather unavailable: ${error.message}`;
@@ -2531,7 +2952,8 @@ async function triggerStorageSearch() {
             const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             const category = f.category || f.type || 'Warehouse / Cold Storage';
             const isCold = category.toLowerCase().includes('cold');
-            const typeBadge = `<span class="facility-type-badge ${isCold ? 'cold' : 'warehouse'}">${isCold ? '❄️ Cold Storage' : '🌾 Warehouse'}</span>`;
+            const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+            const typeBadge = `<span class="facility-type-badge ${isCold ? 'cold' : 'warehouse'}">${isCold ? (isHi ? '❄️ कोल्ड स्टोरेज' : '❄️ Cold Storage') : (isHi ? '🌾 सूखा गोदाम' : '🌾 Warehouse')}</span>`;
 
             return `
                 <div class="storage-facility-card">
@@ -2542,10 +2964,10 @@ async function triggerStorageSearch() {
                         </div>
                         <div style="margin-top: 6px;">
                             ${typeBadge}
-                            ${f.is_wdra ? '<span class="facility-type-badge wdra" style="margin-left: 4px;">📜 WDRA e-NWR Loan</span>' : ''}
+                            ${f.is_wdra ? `<span class="facility-type-badge wdra" style="margin-left: 4px;">${isHi ? '📜 ई-एनडब्ल्यूआर ऋण सुविधा' : '📜 WDRA e-NWR Loan'}</span>` : ''}
                         </div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">${f.address || f.formatted_address || 'District Warehouse'}</p>
-                        ${f.capacity ? `<p style="font-size: 0.78rem; color: var(--text-body); margin-top: 4px;">Capacity: <strong>${f.capacity}</strong></p>` : ''}
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">${f.address || f.formatted_address || (isHi ? 'जिला वेयरहाउस' : 'District Warehouse')}</p>
+                        ${f.capacity ? `<p style="font-size: 0.78rem; color: var(--text-body); margin-top: 4px;">${isHi ? 'क्षमता' : 'Capacity'}: <strong>${f.capacity}</strong></p>` : ''}
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 12px;">
                         <a href="${dirUrl}" target="_blank" rel="noopener" class="btn-secondary" style="flex: 1; text-align: center; justify-content: center; text-decoration: none;">
@@ -2824,6 +3246,7 @@ function openUnitConverter() {
         modal.style.display = "flex";
         calculateLandConversion();
         calculateWeightConversion();
+        if (typeof applyFullPageTranslation === 'function') applyFullPageTranslation(currentLang);
     }
 }
 
@@ -2947,6 +3370,7 @@ function openFarmSlipModal() {
 
     modal.style.display = "flex";
     renderFarmSlipPreview();
+    if (typeof applyFullPageTranslation === 'function') applyFullPageTranslation(currentLang);
 }
 
 function closeFarmSlipModal() {
@@ -2991,7 +3415,14 @@ function renderFarmSlipPreview() {
     if (pvGross) pvGross.innerText = gross.toLocaleString('en-IN');
     if (pvDeductions) pvDeductions.innerText = deductions.toLocaleString('en-IN');
     if (pvNet) pvNet.innerText = net.toLocaleString('en-IN');
-    if (pvStatus) pvStatus.innerText = status;
+    const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+    const statusMap = {
+        "PAID - Bank Transfer": isHi ? "✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)" : "✅ Paid (Bank Transfer / RTGS)",
+        "PAID - Cash": isHi ? "✅ भुगतान प्राप्त (नकद)" : "✅ Paid (Cash / नकद)",
+        "PENDING - 3 Days": isHi ? "⏳ भुगतान लंबित (3 दिन)" : "⏳ Payment Pending (3 Days)",
+        "CHEQUE ISSUED": isHi ? "📑 चेक जारी किया गया" : "📑 Cheque Issued"
+    };
+    if (pvStatus) pvStatus.innerText = statusMap[status] || status;
 }
 
 function shareFarmSlipViaWhatsApp() {
@@ -3506,10 +3937,12 @@ function renderFullAnalysisReport(data) {
     if (rainMmEl) rainMmEl.textContent = `${data.expected_rain_mm} mm`;
 
     // Pillar 1: Disease
+    const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
     const dBadge = document.getElementById("an-disease-badge");
     if (dBadge) {
         const lvl = (data.disease?.level || "Low").toLowerCase();
-        dBadge.textContent = `${data.disease?.level || "Low"} Risk`;
+        const hiRisk = { high: "उच्च जोखिम", moderate: "मध्यम जोखिम", low: "कम जोखिम" }[lvl] || `${data.disease?.level} जोखिम`;
+        dBadge.textContent = isHi ? hiRisk : `${data.disease?.level || "Low"} Risk`;
         dBadge.className = `badge-risk-pill badge-risk-${lvl}`;
     }
     const dPath = document.getElementById("an-disease-pathogens");
@@ -3520,7 +3953,16 @@ function renderFullAnalysisReport(data) {
     // Pillar 2: Spray
     const sBadge = document.getElementById("an-spray-badge");
     if (sBadge) {
-        sBadge.textContent = data.spray?.badge || data.spray?.status || "Optimal";
+        const sprayMap = {
+            "Optimal": "सर्वोत्तम समय",
+            "Marginal": "मध्यम अनुकूल",
+            "Do Not Spray": "स्प्रे न करें",
+            "Rain Expected": "बारिश का अनुमान",
+            "High Wind Drift": "तेज हवा - बहाव जोखिम",
+            "Ideal Window Open": "सर्वोत्तम समय उपलब्ध"
+        };
+        const origSpray = data.spray?.badge || data.spray?.status || "Optimal";
+        sBadge.textContent = isHi ? (sprayMap[origSpray] || origSpray) : origSpray;
         const st = (data.spray?.status || "").toLowerCase();
         sBadge.className = `badge-risk-pill badge-spray-${st.includes("not") ? "nospray" : (st.includes("marg") ? "marginal" : "optimal")}`;
     }
@@ -3532,7 +3974,14 @@ function renderFullAnalysisReport(data) {
     // Pillar 3: Irrigation
     const iBadge = document.getElementById("an-irrigation-action");
     if (iBadge) {
-        iBadge.textContent = data.irrigation?.action || "Normal Irrigation";
+        const irrigMap = {
+            "Normal Irrigation": "नियमित सिंचाई",
+            "Normal Scheduled Irrigation": "नियमित निर्धारित सिंचाई",
+            "Hold Irrigation (Stop Pumps)": "सिंचाई रोकें (पंप बंद रखें)",
+            "Hold Irrigation": "सिंचाई रोकें"
+        };
+        const origIrrig = data.irrigation?.action || "Normal Irrigation";
+        iBadge.textContent = isHi ? (irrigMap[origIrrig] || origIrrig) : origIrrig;
         const isHold = (data.irrigation?.action || "").toLowerCase().includes("hold");
         iBadge.className = `badge-risk-pill badge-irrigation-${isHold ? "hold" : "normal"}`;
     }
@@ -3544,12 +3993,19 @@ function renderFullAnalysisReport(data) {
     // Pillar 4: Thermal
     const tBadge = document.getElementById("an-thermal-status");
     if (tBadge) {
-        tBadge.textContent = data.thermal?.status || "Optimal Zone";
+        const thermMap = {
+            "Optimal Growth Zone": "अनुकूल विकास तापमान",
+            "Optimal Zone": "अनुकूल क्षेत्र",
+            "Heat Stress Alert": "अत्यधिक गर्मी चेतावनी",
+            "Cold Frost Alert": "पाला / ठंड चेतावनी"
+        };
+        const origTherm = data.thermal?.status || "Optimal Zone";
+        tBadge.textContent = isHi ? (thermMap[origTherm] || origTherm) : origTherm;
         const isWarn = (data.thermal?.status || "").toLowerCase().includes("stress") || (data.thermal?.status || "").toLowerCase().includes("frost");
         tBadge.className = `badge-risk-pill badge-thermal-${isWarn ? "warning" : "optimal"}`;
     }
     const tWork = document.getElementById("an-workability");
-    if (tWork) tWork.textContent = data.workability || "--";
+    if (tWork) tWork.textContent = isHi ? ({ "Waterlogged Soil - Delay Machinery": "खेत में पानी भरा - मशीन संचालन रोकें", "Ideal for Farm Machinery & Labor": "खेत संचालन व मजदूरी हेतु अनुकूल" }[data.workability] || data.workability) : (data.workability || "--");
     const tAdv = document.getElementById("an-thermal-advice");
     if (tAdv) tAdv.textContent = data.thermal?.advice || "--";
 
@@ -3807,7 +4263,10 @@ function renderCropHorizonSvgChart(yearly) {
     const container = document.getElementById("hz-svg-chart-container");
     if (!container) return;
 
-    const months = yearly?.months || ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+    const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const hiMonths = ["जन", "फ़र", "मार्च", "अप्रै", "मई", "जून", "जुल", "अग", "सितं", "अक्टू", "नवं", "दिसं"];
+    const months = isHi ? hiMonths : (yearly?.months || enMonths);
     const prices = yearly?.historical_prices || [2450, 2480, 2260, 2180, 2220, 2290, 2360, 2420, 2500, 2590, 2680, 2620];
     const arrivals = yearly?.arrival_volume_pct || [6, 8, 35, 28, 8, 4, 2, 1, 1, 1, 3, 3];
 
