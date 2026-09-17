@@ -10,7 +10,8 @@ const adminTranslations = {
         systemPending: 'System check pending', highRisk: 'High-risk activity',
         csvFarmer: 'Farmer', csvLocation: 'Location', csvBatches: 'Batches', csvActiveKg: 'Active kg',
         csvRevenue: 'Revenue', csvProfit: 'Profit',
-        statusActive: 'active', statusSold: 'sold', riskHigh: 'High', riskMedium: 'Medium', riskLow: 'Low', riskNa: 'Not applicable'
+        statusActive: 'active', statusSold: 'sold', riskHigh: 'High', riskMedium: 'Medium', riskLow: 'Low', riskNa: 'Not applicable',
+        darkMode: 'Dark mode', lightMode: 'Light mode'
     },
     hi: {
         updated: 'अपडेट', unknownDate: 'अज्ञात तारीख', noRecords: 'अभी कोई रिकॉर्ड नहीं है।',
@@ -20,7 +21,8 @@ const adminTranslations = {
         systemPending: 'सिस्टम जांच लंबित', highRisk: 'उच्च जोखिम गतिविधि',
         csvFarmer: 'किसान', csvLocation: 'स्थान', csvBatches: 'बैच', csvActiveKg: 'सक्रिय किलो',
         csvRevenue: 'आय', csvProfit: 'लाभ',
-        statusActive: 'सक्रिय', statusSold: 'बिका', riskHigh: 'उच्च', riskMedium: 'मध्यम', riskLow: 'कम', riskNa: 'लागू नहीं'
+        statusActive: 'सक्रिय', statusSold: 'बिका', riskHigh: 'उच्च', riskMedium: 'मध्यम', riskLow: 'कम', riskNa: 'लागू नहीं',
+        darkMode: 'डार्क मोड', lightMode: 'लाइट मोड'
     }
 };
 
@@ -41,6 +43,11 @@ function setAdminLanguage(lang) {
     });
     document.getElementById('admin-btn-en')?.classList.toggle('active', lang === 'en');
     document.getElementById('admin-btn-hi')?.classList.toggle('active', lang === 'hi');
+    const themeLabel = document.getElementById('admin-theme-label');
+    if (themeLabel) {
+        const isDark = document.body.classList.contains('dark-theme');
+        themeLabel.textContent = isDark ? at('lightMode') : at('darkMode');
+    }
     if (adminData) renderAdminDashboard(adminData);
 }
 
@@ -148,7 +155,39 @@ async function logoutAdmin() {
     window.location.href = '/auth';
 }
 
+function initAdminTheme() {
+    try {
+        const theme = localStorage.getItem('agriflow_theme') || 'light';
+        applyAdminTheme(theme);
+    } catch (e) {
+        console.warn("Admin theme init error:", e);
+    }
+}
+
+function applyAdminTheme(theme) {
+    const isDark = (theme === 'dark');
+    document.body.classList.toggle('dark-theme', isDark);
+    document.documentElement.classList.toggle('dark-theme', isDark);
+    const label = document.getElementById('admin-theme-label');
+    const btn = document.getElementById('admin-theme-btn');
+    if (label) {
+        label.textContent = isDark ? at('lightMode') : at('darkMode');
+    }
+    if (btn) {
+        btn.childNodes[0].nodeValue = isDark ? '☀️ ' : '🌙 ';
+    }
+    try {
+        localStorage.setItem('agriflow_theme', theme);
+    } catch (e) {}
+}
+
+function toggleAdminTheme() {
+    const isDark = document.body.classList.contains('dark-theme');
+    applyAdminTheme(isDark ? 'light' : 'dark');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    initAdminTheme();
     setAdminLanguage(adminLang);
     loadAdminOverview();
 });

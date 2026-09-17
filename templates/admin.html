@@ -7,7 +7,85 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=20260917-admin2">
+    <style>
+        body.admin-page {
+            background: #f8fafc !important;
+            background-image: radial-gradient(at 15% 15%, rgba(34, 197, 94, 0.08) 0px, transparent 50%), radial-gradient(at 85% 15%, rgba(59, 130, 246, 0.08) 0px, transparent 50%), radial-gradient(at 50% 85%, rgba(245, 158, 11, 0.06) 0px, transparent 50%) !important;
+            background-attachment: fixed !important;
+            color: #0f172a !important;
+        }
+        body.admin-page.dark-theme,
+        body.dark-theme.admin-page {
+            background: #09130e !important;
+            background-image: radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.12) 0px, transparent 50%), radial-gradient(at 85% 15%, rgba(59, 130, 246, 0.1) 0px, transparent 50%), radial-gradient(at 50% 85%, rgba(245, 158, 11, 0.05) 0px, transparent 50%) !important;
+            color: #f1f5f9 !important;
+        }
+        .admin-page .analysis-panel,
+        .admin-page .admin-kpi,
+        .admin-page .admin-insight-strip {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+        .admin-page.dark-theme .analysis-panel,
+        .admin-page.dark-theme .admin-kpi,
+        .admin-page.dark-theme .admin-insight-strip {
+            background: rgba(15, 33, 24, 0.9) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+        }
+        .admin-page .admin-table-wrap {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            overflow-x: auto;
+        }
+        .admin-page.dark-theme .admin-table-wrap {
+            background: rgba(15, 33, 24, 0.9) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        .admin-page .admin-table th {
+            background: #f8fafc !important;
+            color: #475569 !important;
+        }
+        .admin-page.dark-theme .admin-table th {
+            background: rgba(255, 255, 255, 0.04) !important;
+            color: #94a3b8 !important;
+        }
+        .admin-page .admin-table td {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+        .admin-page.dark-theme .admin-table td {
+            background: transparent !important;
+            color: #e2e8f0 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+        }
+        .admin-page .activity-item,
+        .admin-page .risk-row {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+        }
+        .admin-page.dark-theme .activity-item,
+        .admin-page.dark-theme .risk-row {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        .admin-page .admin-filter {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        .admin-page.dark-theme .admin-filter {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            color: #f1f5f9 !important;
+        }
+    </style>
 </head>
 <body class="admin-page">
     <div id="toast-container" class="toast-container"></div>
@@ -30,6 +108,7 @@
                 <button id="admin-btn-en" class="btn-lang active" type="button" onclick="setAdminLanguage('en')">English</button>
                 <button id="admin-btn-hi" class="btn-lang" type="button" onclick="setAdminLanguage('hi')">हिंदी</button>
             </div>
+            <button id="admin-theme-btn" class="admin-refresh-link" type="button" onclick="toggleAdminTheme()">🌙 <span id="admin-theme-label" data-en="Dark mode" data-hi="डार्क मोड">Dark mode</span></button>
             <button class="admin-refresh-link" type="button" onclick="loadAdminOverview()">↻ <span data-en="Refresh data" data-hi="डेटा रीफ्रेश करें">Refresh data</span></button>
             <button class="admin-logout" type="button" onclick="logoutAdmin()" data-en="Sign out" data-hi="साइन आउट">Sign out</button>
         </div>
@@ -99,6 +178,6 @@
             </article>
         </section>
     </main>
-    <script src="/static/admin.js"></script>
+    <script src="/static/admin.js?v=20260917-admin2"></script>
 </body>
 </html>
