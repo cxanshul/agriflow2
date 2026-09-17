@@ -3323,7 +3323,7 @@ select option:checked {
 /* ============================================================
    MODAL OVERLAY & APPLE LIQUID GLASS CARDS
    ============================================================ */
-.modal-overlay {
+.modal-overlay, .modal-backdrop {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -4094,4 +4094,735 @@ body.dark-theme .msg-bot {
 }
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   APPLE LIQUID GLASS: STORED BATCH SELECTOR & SELL DECISION ENHANCEMENTS
+   ========================================================================== */
+.sell-batch-quick-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+    margin-bottom: 20px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sell-batch-quick-bar:hover {
+    box-shadow: 0 12px 36px 0 rgba(31, 38, 135, 0.12);
+    border-color: rgba(34, 197, 94, 0.35);
+}
+.sell-batch-bar-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sell-batch-bar-icon {
+    font-size: 1.7rem;
+    line-height: 1;
+}
+.sell-batch-bar-label strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-color, #1e293b);
+}
+.sell-batch-bar-desc {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+}
+.sell-batch-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 480px;
+    justify-content: flex-end;
+}
+.sell-batch-select {
+    flex: 1;
+    min-width: 240px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.88rem;
+    color: #1e293b;
+    outline: none;
+    transition: all 0.2s ease;
+}
+.sell-batch-select:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+.btn-refresh-batch-list {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    transition: all 0.25s ease;
+}
+.btn-refresh-batch-list:hover {
+    background: #f1f5f9;
+    transform: rotate(45deg);
+}
+
+.btn-full-profit-analysis {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(59, 130, 246, 0.18));
+    border: 1px solid rgba(34, 197, 94, 0.38);
+    color: #166534;
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-full-profit-analysis:hover {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.28), rgba(59, 130, 246, 0.28));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.22);
+}
+
+/* ==========================================================================
+   FULL ANALYSIS: INTERACTIVE VISUAL CHARTS & GEMINI ADVISORY
+   ========================================================================== */
+.analysis-charts-section {
+    margin-top: 22px;
+    margin-bottom: 22px;
+}
+.analysis-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+.analysis-chart-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+.analysis-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.analysis-chart-header h5 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.chart-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: rgba(34, 197, 94, 0.15);
+    color: #166534;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.svg-chart-wrap {
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.svg-chart-wrap svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+.chart-axis-label {
+    fill: #64748b;
+    font-size: 10px;
+}
+.chart-grid-line {
+    stroke: rgba(0, 0, 0, 0.08);
+}
+.chart-axis-base {
+    stroke: rgba(0, 0, 0, 0.2);
+}
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 500;
+}
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-price { background: #22c55e; }
+.dot-cost { background: #f59e0b; }
+.dot-margin { background: #38bdf8; }
+
+/* Microclimate Risk Bars */
+.risk-bars-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 6px 0;
+}
+.risk-bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.risk-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #334155;
+}
+.risk-bar-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.risk-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Gemini Profit & Loss Optimization Box */
+.analysis-gemini-profit-box {
+    margin-top: 22px;
+    background: linear-gradient(135deg, rgba(254, 240, 138, 0.25) 0%, rgba(187, 247, 208, 0.35) 50%, rgba(191, 219, 254, 0.25) 100%);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 12px 36px rgba(34, 197, 94, 0.12);
+}
+.gemini-profit-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(34, 197, 94, 0.25);
+}
+.gemini-profit-badge {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.gemini-profit-gain-chip {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.84rem;
+    color: #14532d;
+}
+.gemini-profit-gain-chip strong {
+    font-size: 1.02rem;
+    color: #15803d;
+    margin-left: 4px;
+}
+.gemini-advisory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+}
+.gemini-advisory-card {
+    display: flex;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+.gemini-card-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+.gemini-card-content {
+    flex: 1;
+}
+.gemini-card-content h6 {
+    margin: 0 0 6px 0;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.gemini-card-content p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #334155;
+}
+.rec-crop-headline {
+    font-size: 0.92rem !important;
+    font-weight: 700;
+    color: #15803d !important;
+}
+
+/* ==========================================================================
+   DARK THEME LIQUID GLASS OVERRIDES
+   ========================================================================== */
+body.dark-theme .sell-batch-quick-bar {
+    background: rgba(26, 36, 33, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+}
+body.dark-theme .sell-batch-bar-label strong {
+    color: #f1f5f9;
+}
+body.dark-theme .sell-batch-bar-desc {
+    color: #94a3b8;
+}
+body.dark-theme .sell-batch-select {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+}
+body.dark-theme .btn-refresh-batch-list {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+}
+body.dark-theme .btn-full-profit-analysis {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(59, 130, 246, 0.25));
+    border-color: rgba(34, 197, 94, 0.45);
+    color: #86efac;
+}
+body.dark-theme .analysis-chart-card {
+    background: rgba(26, 36, 33, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+body.dark-theme .analysis-chart-header h5 {
+    color: #f1f5f9;
+}
+body.dark-theme .chart-badge {
+    background: rgba(34, 197, 94, 0.25);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+body.dark-theme .chart-axis-label {
+    fill: #94a3b8;
+}
+body.dark-theme .chart-grid-line {
+    stroke: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .chart-axis-base {
+    stroke: rgba(255, 255, 255, 0.25);
+}
+body.dark-theme .chart-legend {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-theme .legend-item {
+    color: #94a3b8;
+}
+body.dark-theme .risk-bar-meta {
+    color: #f1f5f9;
+}
+body.dark-theme .risk-bar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+body.dark-theme .analysis-gemini-profit-box {
+    background: linear-gradient(135deg, rgba(20, 83, 45, 0.35) 0%, rgba(30, 58, 138, 0.35) 100%);
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+}
+body.dark-theme .gemini-profit-banner {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .gemini-profit-badge {
+    color: #86efac;
+}
+body.dark-theme .gemini-profit-gain-chip {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: #bbf7d0;
+}
+body.dark-theme .gemini-profit-gain-chip strong {
+    color: #4ade80;
+}
+body.dark-theme .gemini-advisory-card {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .gemini-card-content h6 {
+    color: #f1f5f9;
+}
+body.dark-theme .gemini-card-content p {
+    color: #cbd5e1;
+}
+body.dark-theme .rec-crop-headline {
+    color: #4ade80 !important;
+}
+
+/* ==========================================================================
+   APPLE LIQUID GLASS: YEARLY & FUTURE CROP ANALYSIS
+   ========================================================================== */
+.horizon-badge-pill {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(59, 130, 246, 0.18));
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #7e22ce;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.horizon-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    margin-bottom: 24px;
+}
+
+.horizon-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 200px;
+}
+.horizon-filter-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+}
+.horizon-filter-group select {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(203, 213, 225, 0.85);
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.88rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.horizon-filter-group select:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+.btn-horizon-refresh {
+    padding: 9px 18px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.horizon-card-section {
+    margin-bottom: 28px;
+}
+.horizon-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.horizon-section-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+.horizon-section-head h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+.horizon-section-head p {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.horizon-chart-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    margin-bottom: 18px;
+}
+.horizon-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.horizon-chart-header .chart-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1e293b;
+}
+.chart-badges-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.badge-glut {
+    background: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.badge-peak {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.cropping-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+.calendar-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+.calendar-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+.calendar-tile strong {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+.calendar-tile p {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Future Metrics Grid */
+.horizon-future-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.horizon-future-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+}
+.future-card-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+.future-card-val {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.trend-badge {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+    align-self: flex-start;
+}
+.trend-badge.positive {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.horizon-gemini-card {
+    background: linear-gradient(135deg, rgba(254, 240, 138, 0.25) 0%, rgba(187, 247, 208, 0.35) 50%, rgba(191, 219, 254, 0.25) 100%);
+    backdrop-filter: blur(20px) saturate(190%);
+    -webkit-backdrop-filter: blur(20px) saturate(190%);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.1);
+}
+.gemini-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(34, 197, 94, 0.25);
+}
+.gemini-card-header strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #166534;
+    font-weight: 700;
+}
+.gemini-card-header p {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: #334155;
+}
+.gemini-strategy-body {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #14532d;
+    font-weight: 500;
+}
+
+/* Dark Theme Overrides for Horizon Analysis */
+body.dark-theme .horizon-badge-pill {
+    background: rgba(168, 85, 247, 0.25);
+    color: #d8b4fe;
+    border-color: rgba(168, 85, 247, 0.45);
+}
+body.dark-theme .horizon-filter-bar {
+    background: rgba(26, 36, 33, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .horizon-filter-group label {
+    color: #f1f5f9;
+}
+body.dark-theme .horizon-filter-group select {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+}
+body.dark-theme .horizon-section-head h4 {
+    color: #f1f5f9;
+}
+body.dark-theme .horizon-section-head p {
+    color: #94a3b8;
+}
+body.dark-theme .horizon-chart-card {
+    background: rgba(26, 36, 33, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .horizon-chart-header .chart-title {
+    color: #f1f5f9;
+}
+body.dark-theme .calendar-tile {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .calendar-tile strong {
+    color: #94a3b8;
+}
+body.dark-theme .calendar-tile p {
+    color: #f1f5f9;
+}
+body.dark-theme .horizon-future-card {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .future-card-label {
+    color: #94a3b8;
+}
+body.dark-theme .future-card-val {
+    color: #f1f5f9;
+}
+body.dark-theme .horizon-gemini-card {
+    background: linear-gradient(135deg, rgba(20, 83, 45, 0.35) 0%, rgba(30, 58, 138, 0.35) 100%);
+    border-color: rgba(34, 197, 94, 0.4);
+}
+body.dark-theme .gemini-card-header {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+body.dark-theme .gemini-card-header strong {
+    color: #86efac;
+}
+body.dark-theme .gemini-card-header p {
+    color: #cbd5e1;
+}
+body.dark-theme .gemini-strategy-body {
+    color: #bbf7d0;
 }

@@ -38,6 +38,9 @@
             <button class="nav-item" onclick="switchTab('weather'); closeMobileSidebar();">
                 <span class="icon">🌦️</span> <span data-en="Weather & Soil" data-hi="मौसम व मिट्टी">Weather & Soil</span>
             </button>
+            <button class="nav-item" onclick="switchTab('crop-analysis'); closeMobileSidebar();">
+                <span class="icon">📊</span> <span data-en="Yearly & Future Analysis" data-hi="वार्षिक व भविष्य विश्लेषण">Yearly & Future Analysis</span>
+            </button>
             <button class="nav-item" onclick="switchTab('mandi'); closeMobileSidebar();">
                 <span class="icon">🏛️</span> <span data-en="Mandi Market Rates" data-hi="मंडी भाव">Mandi Market Rates</span>
             </button>
@@ -394,6 +397,166 @@
             </div>
         </div>
 
+        <!-- TAB: YEARLY & FUTURE CROP ANALYSIS -->
+        <div id="tab-crop-analysis" class="tab-panel">
+            <div class="form-container">
+                <div class="card-header-flex">
+                    <div>
+                        <div class="modal-eyebrow">
+                            <span class="pulse-dot-green"></span>
+                            <span data-en="PREDICTIVE AGRONOMY & HORIZON INSIGHTS" data-hi="पूर्वानुमान व भविष्य कृषि विश्लेषण">PREDICTIVE AGRONOMY & HORIZON INSIGHTS</span>
+                        </div>
+                        <h3 data-en="Yearly & Future Crop Analysis" data-hi="वार्षिक व भविष्य फसल विश्लेषण">Yearly & Future Crop Analysis</h3>
+                        <p class="subtitle" data-en="12-Month cyclical seasonality, harvest glut patterns, and 3-6 month forward predictive price trajectories." data-hi="12 महीने का मौसमी चक्र, आवक का दबाव और 3-6 महीने का भविष्य भाव पूर्वानुमान।">12-Month cyclical seasonality, harvest glut patterns, and 3-6 month forward predictive price trajectories.</p>
+                    </div>
+                    <div class="horizon-badge-pill">
+                        <span>🔮 AI Powered</span>
+                    </div>
+                </div>
+
+                <!-- Crop & Region Selection Bar -->
+                <div class="horizon-filter-bar">
+                    <div class="horizon-filter-group">
+                        <label for="horizon-crop-select" data-en="Target Crop:" data-hi="फसल:">Target Crop:</label>
+                        <select id="horizon-crop-select" onchange="loadCropHorizonAnalysis()">
+                            <option value="wheat">🌾 Wheat (गेहूं)</option>
+                            <option value="potato">🥔 Potato (आलू)</option>
+                            <option value="tomato">🍅 Tomato (टमाटर)</option>
+                            <option value="mustard">🌿 Mustard (सरसों)</option>
+                            <option value="paddy">🌾 Paddy / Rice (धान)</option>
+                            <option value="onion">🧅 Onion (प्याज)</option>
+                        </select>
+                    </div>
+                    <div class="horizon-filter-group">
+                        <label for="horizon-state-select" data-en="Region / State:" data-hi="राज्य / क्षेत्र:">Region / State:</label>
+                        <select id="horizon-state-select" onchange="loadCropHorizonAnalysis()">
+                            <option value="Punjab">Punjab</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Bihar">Bihar</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary btn-horizon-refresh" type="button" onclick="loadCropHorizonAnalysis()">
+                        🔄 <span data-en="Refresh Projections" data-hi="पूर्वानुमान रीफ्रेश करें">Refresh Projections</span>
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="horizon-loading" class="analysis-loading-state hidden">
+                    <div class="analysis-spinner"></div>
+                    <p data-en="Computing 12-month seasonality and Gemini predictive projections..." data-hi="12 माह का मौसमी चक्र और जेमिनी पूर्वानुमान तैयार हो रहा है...">Computing 12-month seasonality and Gemini predictive projections...</p>
+                </div>
+
+                <div id="horizon-content-body">
+                    <!-- SECTION 1: 12-MONTH YEARLY CYCLICAL ANALYSIS -->
+                    <div class="horizon-card-section">
+                        <div class="horizon-section-head">
+                            <span class="horizon-section-icon">📅</span>
+                            <div>
+                                <h4 data-en="12-Month Cyclical Mandi Price & Arrival Intensity" data-hi="12 माह का मंडी भाव व आवक चक्र">12-Month Cyclical Mandi Price & Arrival Intensity</h4>
+                                <p class="subtitle" data-en="Pinpoints historical off-season peak price windows vs harvest arrival gluts." data-hi="कटाई के समय मंदी और ऑफ-सीजन में उच्चतम भाव के महीनों की स्पष्ट पहचान।">Pinpoints historical off-season peak price windows vs harvest arrival gluts.</p>
+                            </div>
+                        </div>
+
+                        <div class="horizon-chart-card">
+                            <div class="horizon-chart-header">
+                                <span class="chart-title">📈 <span id="hz-crop-chart-title">Wheat</span> Annual Price & Arrival Curve</span>
+                                <div class="chart-badges-wrap">
+                                    <span class="badge-glut" id="hz-glut-tag">Glut: Mar - May</span>
+                                    <span class="badge-peak" id="hz-peak-tag">Peak Window: Nov - Jan</span>
+                                </div>
+                            </div>
+                            <div id="hz-svg-chart-container" class="svg-chart-wrap">
+                                <!-- Dynamic SVG 12-Month Chart -->
+                            </div>
+                            <div class="chart-legend">
+                                <span><i class="legend-dot dot-price"></i> <span data-en="Historical Mandi Benchmark (₹/q)" data-hi="ऐतिहासिक मंडी भाव (₹/क्विंटल)">Historical Mandi Benchmark (₹/q)</span></span>
+                                <span><i class="legend-dot dot-cost"></i> <span data-en="Market Arrival Volume (%)" data-hi="मंडी आवक तीव्रता (%)">Market Arrival Volume (%)</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Cropping Calendar Milestones -->
+                        <div class="cropping-calendar-grid">
+                            <div class="calendar-tile">
+                                <span class="calendar-icon">🌱</span>
+                                <div>
+                                    <strong data-en="Optimal Sowing Window" data-hi="बुवाई का सर्वोत्तम समय">Optimal Sowing Window</strong>
+                                    <p id="hz-sowing-val">25 Oct – 20 Nov</p>
+                                </div>
+                            </div>
+                            <div class="calendar-tile">
+                                <span class="calendar-icon">🌾</span>
+                                <div>
+                                    <strong data-en="Harvest Window" data-hi="कटाई का समय">Harvest Window</strong>
+                                    <p id="hz-harvest-val">25 Mar – 25 Apr</p>
+                                </div>
+                            </div>
+                            <div class="calendar-tile">
+                                <span class="calendar-icon">⚠️</span>
+                                <div>
+                                    <strong data-en="Key Seasonality Risk" data-hi="प्रमुख मौसमी जोखिम">Key Seasonality Risk</strong>
+                                    <p id="hz-risk-val">Terminal heat stress vulnerability</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: 3 TO 6 MONTH NEAR-FUTURE OUTLOOK -->
+                    <div class="horizon-card-section">
+                        <div class="horizon-section-head">
+                            <span class="horizon-section-icon">🔮</span>
+                            <div>
+                                <h4 data-en="Near-Future Outlook (Upcoming 3–6 Months)" data-hi="निकट भविष्य का पूर्वानुमान (आगामी 3-6 महीने)">Near-Future Outlook (Upcoming 3–6 Months)</h4>
+                                <p class="subtitle" data-en="Predictive market intelligence and profit opportunities for the coming harvest." data-hi="आगामी फसल चक्र के लिए मांग, भाव दिशा और शुद्ध मुनाफे का पूर्वानुमान।">Predictive market intelligence and profit opportunities for the coming harvest.</p>
+                            </div>
+                        </div>
+
+                        <!-- 4 Future Metric Cards -->
+                        <div class="horizon-future-grid">
+                            <div class="horizon-future-card">
+                                <span class="future-card-label" data-en="Projected Mandi Range" data-hi="अनुमानित मंडी भाव">Projected Mandi Range</span>
+                                <strong class="future-card-val text-green" id="hz-fut-price">₹2,650 – ₹2,920</strong>
+                                <small id="hz-fut-trend" class="trend-badge positive">Bullish (+9.2%)</small>
+                            </div>
+                            <div class="horizon-future-card">
+                                <span class="future-card-label" data-en="Demand Outlook" data-hi="मांग का रुझान">Demand Outlook</span>
+                                <strong class="future-card-val" id="hz-fut-demand">High Processing Demand</strong>
+                                <small data-en="Firm institutional procurement" data-hi="मजबूत संस्थागत खरीद">Firm institutional procurement</small>
+                            </div>
+                            <div class="horizon-future-card">
+                                <span class="future-card-label" data-en="Recommended Next Rotation" data-hi="अगली अनुशंसित फसल">Recommended Next Rotation</span>
+                                <strong class="future-card-val text-primary" id="hz-fut-rotation">Moong (Green Gram)</strong>
+                                <small data-en="60-day short duration break" data-hi="60 दिन की अल्पावधि फसल">60-day short duration break</small>
+                            </div>
+                            <div class="horizon-future-card">
+                                <span class="future-card-label" data-en="Projected Net Margin / Acre" data-hi="अनुमानित शुद्ध लाभ / एकड़">Projected Net Margin / Acre</span>
+                                <strong class="future-card-val text-gold" id="hz-fut-margin">₹42,000 – ₹56,000</strong>
+                                <small data-en="Net of production costs" data-hi="उत्पादन लागत घटाकर">Net of production costs</small>
+                            </div>
+                        </div>
+
+                        <!-- Gemini Predictive Strategy Card -->
+                        <div class="horizon-gemini-card">
+                            <div class="gemini-card-header">
+                                <span class="gemini-sparkle-icon">✨</span>
+                                <div>
+                                    <strong data-en="Gemini AI Predictive Strategy & Arbitrage Roadmap" data-hi="जेमिनी एआई भविष्य रणनीति व लाभ कार्ययोजना">Gemini AI Predictive Strategy & Arbitrage Roadmap</strong>
+                                    <p data-en="Tailored guidance to protect margins and capitalize on near-future market movements." data-hi="आगामी बाजार उतार-चढ़ाव से लाभ कमाने और नुकसान से बचने के व्यावहारिक सुझाव।">Tailored guidance to protect margins and capitalize on near-future market movements.</p>
+                                </div>
+                            </div>
+                            <p id="hz-gemini-strategy-text" class="gemini-strategy-body">
+                                Loading predictive recommendations...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- TAB 2: COMPREHENSIVE MANDI RATES -->
         <div id="tab-mandi" class="tab-panel">
             <div class="mandi-filter-bar">
@@ -455,17 +618,37 @@
                 </div>
                 <div class="sell-decision-mode" role="group" aria-label="Sell timing input method">
                     <label class="sell-mode-option active"><input type="radio" name="sell-decision-mode" value="manual" checked onchange="toggleSellDecisionMode()"><span data-en="Enter details manually" data-hi="जानकारी खुद भरें">Enter details manually</span></label>
-                    <label class="sell-mode-option"><input type="radio" name="sell-decision-mode" value="batch" onchange="toggleSellDecisionMode()"><span data-en="Use an active batch" data-hi="सक्रिय बैच चुनें">Use an active batch</span></label>
+                    <label class="sell-mode-option"><input type="radio" name="sell-decision-mode" value="batch" onchange="toggleSellDecisionMode()"><span data-en="Select from stored batches" data-hi="भंडारित बैच में से चुनें">Select from stored batches</span></label>
                 </div>
+                
+                <!-- PROMINENT STORED BATCH PICKER -->
+                <div class="sell-batch-quick-bar" id="sell-batch-quick-bar">
+                    <div class="sell-batch-bar-left">
+                        <span class="sell-batch-icon">📦</span>
+                        <div>
+                            <strong data-en="Select Stored Produce Batch:" data-hi="भंडारित उपज बैच चुनें:">Select Stored Produce Batch:</strong>
+                            <span class="sell-batch-hint" data-en="Auto-populates crop, weight, and storage economics" data-hi="फसल, वजन और भंडारण लागत स्वतः भरता है">Auto-populates crop, weight, and storage economics</span>
+                        </div>
+                    </div>
+                    <div class="sell-batch-bar-right">
+                        <select id="sell-decision-batch" class="sell-batch-select" onchange="selectSellDecisionBatch()">
+                            <option value="" data-en="-- Choose an active batch or enter below --" data-hi="-- सक्रिय बैच चुनें या नीचे खुद भरें --">-- Choose an active batch or enter below --</option>
+                        </select>
+                        <button type="button" class="btn-refresh-batch-list" onclick="populateSellDecisionBatches()" title="Refresh batches">↻</button>
+                    </div>
+                </div>
+
                 <div class="form-grid sell-decision-inputs">
-                    <div class="form-group sell-batch-choice hidden"><label data-en="Select active batch" data-hi="सक्रिय बैच चुनें">Select active batch</label><select id="sell-decision-batch" onchange="selectSellDecisionBatch()"><option value="" data-en="Choose an active batch" data-hi="सक्रिय बैच चुनें">Choose an active batch</option></select></div>
                     <div class="form-group"><label data-en="Select crop" data-hi="फसल चुनें">Select crop</label><select id="sell-decision-crop" onchange="prefillSellDecision()"><option value="Wheat">Wheat (गेहूं)</option><option value="Potato">Potato (आलू)</option><option value="Tomato">Tomato (टमाटर)</option><option value="Mustard">Mustard (सरसों)</option><option value="Onion">Onion (प्याज)</option><option value="Soybean">Soybean (सोयाबीन)</option><option value="Cotton">Cotton (कपास)</option><option value="Maize">Maize (मक्का)</option></select></div>
                     <div class="form-group"><label data-en="Expected harvest volume (kg)" data-hi="अनुमानित उपज मात्रा (किलो)">Expected harvest volume (kg)</label><input id="sell-decision-quantity" type="number" min="1" step="any" value="1000"></div>
                     <div class="form-group"><label data-en="Storage option" data-hi="भंडारण विकल्प">Storage option</label><select id="sell-decision-storage" onchange="updateSellStorageCost()"><option value="none" data-en="Sell without storage" data-hi="बिना भंडारण बेचें">Sell without storage</option><option value="farm" data-en="Farm shade" data-hi="खेत की छाया">Farm shade</option><option value="godown" data-en="Godown / warehouse" data-hi="गोदाम / वेयरहाउस">Godown / warehouse</option><option value="cold" data-en="Cold storage" data-hi="कोल्ड स्टोरेज">Cold storage</option></select></div>
                     <div class="form-group"><label data-en="Storage cost per day (₹)" data-hi="प्रतिदिन भंडारण लागत (₹)">Storage cost per day (₹)</label><input id="sell-decision-storage-cost" type="number" min="0" step="any" value="0"></div>
                     <div class="form-group"><label data-en="Days to wait" data-hi="कितने दिन रुकें">Days to wait</label><input id="sell-decision-days" type="number" min="1" max="30" value="7"></div>
                 </div>
-                <button class="btn-primary-action" type="button" id="sell-decision-button" onclick="runSellDecision()" data-en="Analyze sell timing" data-hi="बिक्री का समय जांचें">Analyze sell timing</button>
+                <div class="sell-decision-btn-group">
+                    <button class="btn-primary-action" type="button" id="sell-decision-button" onclick="runSellDecision()" data-en="Analyze Sell Timing" data-hi="बिक्री का समय जांचें">Analyze Sell Timing</button>
+                    <button class="btn-secondary-action btn-full-profit-analysis" type="button" onclick="openFullAnalysisModal()" data-en="🔬 Full Profit & Loss Analysis" data-hi="🔬 पूर्ण लाभ व हानि विश्लेषण">🔬 Full Profit & Loss Analysis</button>
+                </div>
                 <div id="sell-decision-result" class="sell-decision-result hidden"></div>
             </div>
         </div>
@@ -1186,7 +1369,7 @@
             </div>
         </div>
     <!-- MODAL: DEEP AGRONOMIC & MICROCLIMATE FULL ANALYSIS -->
-    <div id="full-analysis-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeFullAnalysisModal()">
+    <div id="full-analysis-modal" class="modal-overlay hidden" style="display: none;" onclick="if(event.target===this) closeFullAnalysisModal()">
         <div class="modal-card full-analysis-modal-card">
             <div class="modal-header">
                 <div>
@@ -1221,6 +1404,9 @@
                     </button>
                     <button type="button" class="btn-top-tool btn-whatsapp-share" onclick="shareFullAnalysisWhatsApp()" title="Share complete advisory on WhatsApp">
                         💬 <span data-en="Share Advisory" data-hi="व्हाट्सएप साझा करें">Share Advisory</span>
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeFullAnalysisModal(); switchTab('crop-analysis');" title="Open 12-Month Yearly & Future Horizon Analysis">
+                        📅 <span data-en="Yearly & Future Analysis" data-hi="वार्षिक व भविष्य विश्लेषण">Yearly & Future Analysis</span>
                     </button>
                     <button type="button" class="btn-secondary" onclick="runFullAgronomicAnalysis()">
                         ↻ <span data-en="Refresh" data-hi="रीफ्रेश">Refresh</span>
@@ -1350,6 +1536,77 @@
                     <h5 data-en="Immediate Operational Checklist" data-hi="खेत कार्य प्राथमिकता सूची">Immediate Operational Checklist</h5>
                     <div id="an-action-items" class="action-checklist-list">
                         <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Interactive Visual Graphs & Breakeven Curves -->
+                <div class="analysis-charts-section">
+                    <div class="analysis-section-title-wrap">
+                        <span class="analysis-section-badge">📊</span>
+                        <div>
+                            <h5 data-en="14-Day Mandi Price Trend vs Storage Economics" data-hi="14 दिवसीय मंडी भाव रुझान व भंडारण लागत">14-Day Mandi Price Trend vs Storage Economics</h5>
+                            <p class="subtitle" data-en="Visual breakeven trajectory: Identifies the highest net realization peak window before quality decay." data-hi="दृश्यमान लाभ-हानि वक्र: गुणवत्ता गिरावट से पहले सर्वाधिक शुद्ध मुनाफे का दिन पहचानें।">Visual breakeven trajectory: Identifies the highest net realization peak window before quality decay.</p>
+                        </div>
+                    </div>
+                    <div class="analysis-charts-grid">
+                        <div class="analysis-chart-card">
+                            <div class="chart-card-header">
+                                <span class="chart-title" data-en="📈 Market Price vs Storage Cost Curve" data-hi="📈 मंडी भाव बनाम भंडारण लागत वक्र">📈 Market Price vs Storage Cost Curve</span>
+                                <span class="chart-peak-tag" id="an-chart-peak-tag">Peak: Day 6 - Day 8</span>
+                            </div>
+                            <div id="an-svg-chart-container" class="svg-chart-wrap">
+                                <!-- Dynamic SVG Graph generated by renderFullAnalysisReport -->
+                            </div>
+                            <div class="chart-legend">
+                                <span><i class="legend-dot dot-green"></i> <span data-en="Mandi Price (₹/q)" data-hi="मंडी भाव (₹/क्विंटल)">Mandi Price (₹/q)</span></span>
+                                <span><i class="legend-dot dot-blue"></i> <span data-en="Net Profit Margin (₹/q)" data-hi="शुद्ध मुनाफा (₹/क्विंटल)">Net Profit Margin (₹/q)</span></span>
+                                <span><i class="legend-dot dot-amber"></i> <span data-en="Storage Cost (₹/q)" data-hi="भंडारण लागत (₹/क्विंटल)">Storage Cost (₹/q)</span></span>
+                            </div>
+                        </div>
+                        <div class="analysis-chart-card">
+                            <div class="chart-card-header">
+                                <span class="chart-title" data-en="🛡️ Microclimate & Crop Hazard Breakdown" data-hi="🛡️ सूक्ष्म जलवायु व फसल जोखिम स्तर">🛡️ Microclimate & Crop Hazard Breakdown</span>
+                                <span class="chart-status-tag" id="an-risk-summary-tag">Safe Zone</span>
+                            </div>
+                            <div class="risk-bars-wrap" id="an-risk-bars-container">
+                                <!-- Dynamic Risk Bars -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gemini Strategic Profit & Loss Optimization Engine -->
+                <div class="analysis-gemini-profit-box" id="analysis-gemini-profit-box">
+                    <div class="gemini-profit-head">
+                        <div class="gemini-title-group">
+                            <span class="gemini-sparkle-icon">✨</span>
+                            <div>
+                                <h4 data-en="Gemini AI: Final Profit Maximization & Loss Minimization Engine" data-hi="जेमिनी एआई: अंतिम लाभ वृद्धि व हानि निवारण विश्लेषण">Gemini AI: Final Profit Maximization & Loss Minimization Engine</h4>
+                                <p class="subtitle" data-en="Autonomous agronomic intelligence to maximize net in-hand returns and protect produce value." data-hi="शुद्ध आमदनी बढ़ाने और फसल के मूल्य को सुरक्षित रखने के लिए स्वायत्त एआई सलाह।">Autonomous agronomic intelligence to maximize net in-hand returns and protect produce value.</p>
+                            </div>
+                        </div>
+                        <div class="gemini-profit-gain-chip" id="an-profit-gain-chip">
+                            <span class="gain-lbl" data-en="Projected Profit Uplift" data-hi="अनुमानित अतिरिक्त लाभ">Projected Profit Uplift</span>
+                            <strong id="an-profit-gain-val">+₹18,000 – ₹32,000</strong>
+                        </div>
+                    </div>
+
+                    <div class="gemini-advisory-grid">
+                        <div class="gemini-advisory-card next-crop-card">
+                            <div class="advisory-card-badge">🌾 <span data-en="Recommended Next Rotation Crop" data-hi="अगली अनुशंसित फसल (न्यूनतम जोखिम)">Recommended Next Rotation Crop</span></div>
+                            <h5 id="an-rec-next-crop" class="rec-crop-headline">Mustard (सरसों) / Chickpea (चना)</h5>
+                            <p class="advisory-card-sub" data-en="Selected to break pest/fungal cycles, restore root nitrogen, and capitalize on high mandi demand." data-hi="रोग चक्र तोड़ने, मिट्टी में नाइट्रोजन लौटाने और आगामी उच्च मंडी मांग का लाभ उठाने के लिए चुनी गई।">Selected to break pest/fungal cycles, restore root nitrogen, and capitalize on high mandi demand.</p>
+                        </div>
+
+                        <div class="gemini-advisory-card loss-strategy-card">
+                            <div class="advisory-card-badge">🛡️ <span data-en="Loss Minimization & Storage Protection" data-hi="हानि निवारण व भंडारण सुरक्षा नियम">Loss Minimization & Storage Protection</span></div>
+                            <p id="an-loss-strategy-text" class="advisory-text">Loading personalized loss mitigation steps...</p>
+                        </div>
+
+                        <div class="gemini-advisory-card profit-boost-card">
+                            <div class="advisory-card-badge">💰 <span data-en="Profit Enhancement Action Roadmap" data-hi="शुद्ध लाभ वृद्धि कार्ययोजना">Profit Enhancement Action Roadmap</span></div>
+                            <p id="an-profit-boost-text" class="advisory-text">Loading personalized profit maximization strategy...</p>
+                        </div>
                     </div>
                 </div>
             </div>
