@@ -63,12 +63,6 @@
             <button class="nav-item" onclick="switchTab('ledger-history'); closeMobileSidebar();">
                 <span class="icon">📜</span> <span data-en="History & Next Crop" data-hi="उपज इतिहास व अगली फसल">History & Next Crop</span>
             </button>
-        <div class="nav-group-label" data-en="Administration" data-hi="व्यवस्थापन">Administration</div>
-        <nav class="nav-menu">
-            <a class="nav-item admin-link" href="/admin">
-                <span class="icon">📊</span> <span data-en="Admin Control Panel" data-hi="व्यवस्थापक नियंत्रण कक्ष">Admin Control Panel</span>
-            </a>
-        </nav>
         </nav>
 
         <div class="sidebar-footer">
@@ -78,7 +72,7 @@
                     <span class="lang-label" data-en="Language" data-hi="भाषा" data-pa="ਭਾਸ਼ਾ" data-mr="भाषा" data-gu="ભાષા">Language</span>
                     <span id="lang-auto-tag" class="lang-auto-tag" title="Auto-detects language based on location">✨ Auto</span>
                 </div>
-                <select id="app-lang-select" class="lang-select-dropdown" onchange="setLanguage(this.value, false)">
+                <select id="app-lang-select" class="lang-select-dropdown" onchange="setLanguage(this.value, true)">
                     <option value="en">English (India)</option>
                     <option value="hi">हिंदी (Hindi)</option>
                     <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
@@ -112,9 +106,6 @@
                     </span>
                     <span id="theme-toggle-label" class="theme-toggle-text">Dark</span>
                 </button>
-                <a class="btn-top-tool btn-admin-tool" href="/admin" title="Open Admin & Operations Intelligence">
-                    📊 <span data-en="Admin" data-hi="व्यवस्थापक">Admin</span>
-                </a>
                 <button class="btn-top-tool" onclick="openUnitConverter()" title="Agricultural Land & Weight Unit Converter">
                     📐 <span data-en="Unit Converter" data-hi="इकाई परिवर्तक">Unit Converter</span>
                 </button>
@@ -313,7 +304,7 @@
                                 <span class="iot-cell-lbl" data-en="Soil Health" data-hi="मिट्टी स्वास्थ्य">Soil Health</span>
                             </div>
                             <div class="iot-cell-val" id="telemetry-soil-health">78% <small class="text-green">Optimal</small></div>
-                            <div class="iot-cell-sub" data-en="pH 6.8 · NPK Balanced" data-hi="पीएच 6.8 · संतुलित खाद">pH 6.8 · NPK Balanced</div>
+                            <div class="iot-cell-sub" id="telemetry-sub-soil" data-en="pH 6.8 · NPK Balanced" data-hi="पीएच 6.8 · संतुलित खाद">pH 6.8 · NPK Balanced</div>
                         </div>
 
                         <div class="iot-metric-cell">
@@ -322,7 +313,7 @@
                                 <span class="iot-cell-lbl" data-en="Soil Moisture" data-hi="मिट्टी नमी">Soil Moisture</span>
                             </div>
                             <div class="iot-cell-val" id="telemetry-moisture">65% <small class="text-turmeric">Field Capacity</small></div>
-                            <div class="iot-cell-sub" data-en="Irrigation: Next in 3 Days" data-hi="सिंचाई: 3 दिन बाद">Irrigation: Next in 3 Days</div>
+                            <div class="iot-cell-sub" id="telemetry-sub-moisture" data-en="Irrigation: Next in 3 Days" data-hi="सिंचाई: 3 दिन बाद">Irrigation: Next in 3 Days</div>
                         </div>
 
                         <div class="iot-metric-cell">
@@ -331,7 +322,7 @@
                                 <span class="iot-cell-lbl" data-en="Field Canopy Temp" data-hi="खेत का तापमान">Field Canopy Temp</span>
                             </div>
                             <div class="iot-cell-val" id="telemetry-temp">32°C <small>Warm</small></div>
-                            <div class="iot-cell-sub" data-en="Weather: Clear · 11 km/h" data-hi="मौसम: साफ़ · 11 किमी/घं">Weather: Clear · 11 km/h</div>
+                            <div class="iot-cell-sub" id="telemetry-sub-temp" data-en="Weather: Clear · 11 km/h" data-hi="मौसम: साफ़ · 11 किमी/घं">Weather: Clear · 11 km/h</div>
                         </div>
 
                         <div class="iot-metric-cell">
@@ -340,7 +331,7 @@
                                 <span class="iot-cell-lbl" data-en="NDVI Crop Index" data-hi="फसल हरियाली सूचकांक">NDVI Crop Index</span>
                             </div>
                             <div class="iot-cell-val text-green" id="telemetry-ndvi">0.82 <small>Vibrant</small></div>
-                            <div class="iot-cell-sub" data-en="Canopy Health: Good" data-hi="फसल स्वास्थ्य: उत्तम">Canopy Health: Good</div>
+                            <div class="iot-cell-sub" id="telemetry-sub-ndvi" data-en="Canopy Health: Good" data-hi="फसल स्वास्थ्य: उत्तम">Canopy Health: Good</div>
                         </div>
                     </div>
 
