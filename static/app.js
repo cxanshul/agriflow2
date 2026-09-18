@@ -1135,7 +1135,15 @@ function updateTallyStrip() {
     if (statActive) statActive.innerHTML = `${activeQty.toLocaleString()} <small>${kgUnit}</small>`;
     if (statRisk) statRisk.innerHTML = `${highRiskCount} <small>${batchUnit}</small>`;
     if (statRev) statRev.innerText = `₹ ${totalRevenue.toLocaleString()}`;
-    if (statProfit) statProfit.innerText = `₹ ${totalProfit.toLocaleString()}`;
+    if (statProfit) {
+        if (totalProfit < 0) {
+            statProfit.innerText = `- ₹ ${Math.abs(totalProfit).toLocaleString()}`;
+            statProfit.style.color = 'var(--risk-high, #ef4444)';
+        } else {
+            statProfit.innerText = `₹ ${totalProfit.toLocaleString()}`;
+            statProfit.style.color = '';
+        }
+    }
 }
 
 // ============================================================
@@ -1192,7 +1200,7 @@ async function handlePreCostCalculation(e) {
             }
 
             const unitEl = document.getElementById("res-profit-unit");
-            const unitNameHi = { 'Acre': 'एकड़', 'Hectare': 'हेक्टेयर', 'Bigha': 'बीघा' }[unit] || unit;
+            const unitNameHi = { 'Acre': 'एकड़', 'Hectare': 'हेक्टेयर', 'Bigha': 'बीघा', 'Guntha': 'गुंठा', 'Kanal': 'कनाल', 'Biswa': 'बिस्वा', 'Marla': 'मरला' }[unit] || unit;
             if (unitEl) unitEl.innerText = `${d.profit_per_selected_unit >= 0 ? '+' : '-'} ₹ ${Math.abs(d.profit_per_selected_unit).toLocaleString()} / ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? unitNameHi : unit}`;
 
             // Render Visual Cost Breakdown Bar
@@ -1517,9 +1525,9 @@ function renderSellDecision(result) {
             <div class="sell-decision-metric"><span>${t('trend')}</span><strong>${escapeSellText(result.trend_label)} (${Number(result.trend_percent || 0).toFixed(1)}%)</strong></div>
             <div class="sell-decision-metric"><span>${t('storageCost')}</span><strong>${money(result.storage_cost_total)}</strong></div>
             <div class="sell-decision-metric"><span>${t('volume')}</span><strong>${Number(result.expected_harvest_volume_kg || 0).toLocaleString()} kg</strong></div>
-            <div class="sell-decision-metric"><span>${t('weatherRisk')}</span><strong>${result.weather_risk ? t('available') : t('unavailable')}</strong></div>
+            <div class="sell-decision-metric"><span>${t('weatherRisk')}</span><strong>${result.weather_risk ? ((typeof currentLang !== 'undefined' && currentLang === 'hi') ? '⚠️ उच्च जोखिम' : '⚠️ High Risk') : ((typeof currentLang !== 'undefined' && currentLang === 'hi') ? '✅ अनुकूल' : '✅ Low / Normal')}</strong></div>
             <div class="sell-decision-metric"><span>${t('storage')}</span><strong>${result.storage_available ? t('available') : t('unavailable')}</strong></div>
-            <div class="sell-decision-metric"><span>${t('records')}</span><strong>${result.market_records_count || result.storage_facilities || 0}</strong></div>
+            <div class="sell-decision-metric"><span>${t('records')}</span><strong>${result.market_records_count ?? 0}</strong></div>
         </div>
         <p class="sell-decision-note">${result.source === 'ai' ? (currentLang === 'hi' ? 'एआई सहायता से तैयार सुझाव।' : 'AI-assisted recommendation.') : (currentLang === 'hi' ? 'उपलब्ध लाइव संकेतों पर आधारित नियम-सुझाव।' : 'Rule-based recommendation using the available live signals.')}</p>`;
 }
@@ -1553,8 +1561,15 @@ function renderSellDecisionCharts(opts = {}) {
         const prices = pool.map(r => parseFloat(r.modal_price) || 0).filter(p => p > 0);
         if (prices.length > 0) basePriceQtl = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
     } else {
-        const defaults = { 'Wheat': 2450, 'Potato': 1420, 'Tomato': 1850, 'Mustard': 5350, 'Onion': 2150, 'Soybean': 4650, 'Cotton': 7200, 'Maize': 2250 };
-        basePriceQtl = defaults[crop] || 2400;
+        const defaults = {
+            'Wheat': 2450, 'गेहूं': 2450, 'Potato': 1420, 'आलू': 1420, 'Tomato': 1850, 'टमाटर': 1850,
+            'Mustard': 5350, 'सरसों': 5350, 'Onion': 2150, 'प्याज': 2150, 'Soybean': 4650, 'सोयाबीन': 4650,
+            'Cotton': 7200, 'कपास': 7200, 'Maize': 2250, 'मक्का': 2250, 'Paddy': 2300, 'धान': 2300, 'Rice': 2300,
+            'Gram': 5800, 'Chana': 5800, 'चना': 5800, 'Moong': 7900, 'मूंग': 7900, 'Cumin': 26500, 'Jeera': 26500, 'जीरा': 26500,
+            'Groundnut': 6200, 'मूंगफली': 6200
+        };
+        const matched = Object.entries(defaults).find(([k]) => crop.toLowerCase().includes(k.toLowerCase()));
+        basePriceQtl = matched ? matched[1] : (defaults[crop] || 2400);
     }
 
     const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
@@ -2445,9 +2460,9 @@ async function generateWeatherAction() {
     
     // Auto-fetch if farm coordinates exist
     if (!weatherCache?.data) {
-        if (typeof farmProfile !== 'undefined' && farmProfile?.latitude && farmProfile?.longitude) {
+        if (typeof farmerProfile !== 'undefined' && farmerProfile?.latitude && farmerProfile?.longitude) {
             try {
-                await fetchWeather(farmProfile.latitude, farmProfile.longitude, farmProfile.district || "Farm Location");
+                await fetchWeather(farmerProfile.latitude, farmerProfile.longitude, farmerProfile.district || "Farm Location");
             } catch (_) {}
         }
     }
@@ -2518,11 +2533,14 @@ async function generateWeatherAction() {
 window.generateWeatherAction = generateWeatherAction;
 
 function haversineKm(lat1, lon1, lat2, lon2) {
+    const l1 = Number(lat1), o1 = Number(lon1), l2 = Number(lat2), o2 = Number(lon2);
+    if (!Number.isFinite(l1) || !Number.isFinite(o1) || !Number.isFinite(l2) || !Number.isFinite(o2)) return 0;
     const earthRadiusKm = 6371;
-    const deltaLat = (lat2 - lat1) * Math.PI / 180;
-    const deltaLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(deltaLon / 2) ** 2;
-    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const deltaLat = (l2 - l1) * Math.PI / 180;
+    const deltaLon = (o2 - o1) * Math.PI / 180;
+    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(l1 * Math.PI / 180) * Math.cos(l2 * Math.PI / 180) * Math.sin(deltaLon / 2) ** 2;
+    const safeA = Math.min(1.0, Math.max(0.0, a));
+    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(safeA), Math.sqrt(1 - safeA));
 }
 
 function openStorageFinder(batchId) {
@@ -4081,15 +4099,19 @@ function renderFullAnalysisSvgChart(chartData) {
     const costs = chartData?.storage_costs || [0, 45, 90, 140, 220, 310];
     const margins = chartData?.net_margins || [2400, 2400, 2410, 2410, 2260, 2130];
     
-    const maxVal = Math.max(...prices, 2800);
-    const minVal = Math.min(...margins, 1800);
+    const allVals = [...prices, ...margins];
+    const rawMin = Math.min(...allVals);
+    const rawMax = Math.max(...allVals);
+    const span = Math.max(10, rawMax - rawMin);
+    const minVal = Math.max(0, Math.floor(rawMin - span * 0.15));
+    const maxVal = Math.ceil(rawMax + span * 0.15);
     const width = 520;
     const height = 180;
     const padX = 42;
     const padY = 28;
     const stepX = (width - 2 * padX) / (timeline.length - 1);
     
-    const getY = val => Math.round(height - padY - ((val - minVal) / (maxVal - minVal)) * (height - 2 * padY));
+    const getY = val => Math.round(height - padY - ((val - minVal) / Math.max(1, (maxVal - minVal))) * (height - 2 * padY));
     
     const pathPrices = prices.map((p, i) => `${i === 0 ? 'M' : 'L'} ${padX + i * stepX} ${getY(p)}`).join(' ');
     const pathMargins = margins.map((m, i) => `${i === 0 ? 'M' : 'L'} ${padX + i * stepX} ${getY(m)}`).join(' ');
@@ -4292,9 +4314,13 @@ function renderCropHorizonSvgChart(yearly) {
     const prices = yearly?.historical_prices || [2450, 2480, 2260, 2180, 2220, 2290, 2360, 2420, 2500, 2590, 2680, 2620];
     const arrivals = yearly?.arrival_volume_pct || [6, 8, 35, 28, 8, 4, 2, 1, 1, 1, 3, 3];
 
-    const maxPrice = Math.max(...prices, 3000);
-    const minPrice = Math.min(...prices, 1500) - 100;
-    const maxArrival = Math.max(...arrivals, 40);
+    const rawMin = Math.min(...prices);
+    const rawMax = Math.max(...prices);
+    const priceSpan = Math.max(10, rawMax - rawMin);
+    const minPrice = Math.max(0, Math.floor(rawMin - priceSpan * 0.15));
+    const maxPrice = Math.ceil(rawMax + priceSpan * 0.15);
+    const rawMaxArrival = Math.max(...arrivals);
+    const maxArrival = Math.max(10, Math.ceil(rawMaxArrival * 1.15));
 
     const width = 640;
     const height = 210;

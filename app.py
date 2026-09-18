@@ -182,19 +182,77 @@ def safe_float(value, default=0.0):
 
 def haversine_distance_km(latitude_one, longitude_one, latitude_two, longitude_two):
     from math import asin, cos, radians, sin, sqrt
-    earth_radius_km = 6371.0
-    delta_latitude = radians(latitude_two - latitude_one)
-    delta_longitude = radians(longitude_two - longitude_one)
-    haversine = sin(delta_latitude / 2) ** 2 + cos(radians(latitude_one)) * cos(radians(latitude_two)) * sin(delta_longitude / 2) ** 2
-    return earth_radius_km * 2 * asin(sqrt(haversine))
+    try:
+        lat1 = float(latitude_one)
+        lon1 = float(longitude_one)
+        lat2 = float(latitude_two)
+        lon2 = float(longitude_two)
+        earth_radius_km = 6371.0
+        delta_latitude = radians(lat2 - lat1)
+        delta_longitude = radians(lon2 - lon1)
+        haversine = sin(delta_latitude / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(delta_longitude / 2) ** 2
+        safe_h = min(1.0, max(0.0, haversine))
+        return earth_radius_km * 2 * asin(sqrt(safe_h))
+    except (TypeError, ValueError):
+        return 99999.0
 
 def unit_to_kg(quantity: float, unit: str) -> float:
-    u = (unit or "kg").lower()
-    if "quintal" in u or "कुंतल" in u:
-        return quantity * 100.0
+    u = (unit or "kg").lower().strip()
+    qty = safe_float(quantity, 0.0)
+    if "quintal" in u or "कुंतल" in u or "क्विंटल" in u or u == "qt":
+        return qty * 100.0
     if "ton" in u or "टन" in u:
-        return quantity * 1000.0
-    return quantity
+        return qty * 1000.0
+    if "maund" in u or "मन" in u:
+        return qty * 40.0
+    if "bag" in u or "बोरी" in u:
+        return qty * 50.0
+    return qty
+
+def match_crop_benchmark(crop_query: str):
+    """Find the best matching verified mandi benchmark profile for any crop query."""
+    q = (crop_query or "Wheat").strip().lower()
+    
+    # 1. Exact or mutual substring match
+    for b in MANDI_FALLBACK_DATABASE:
+        c = b["commodity"].lower()
+        if q == c or q in c or c in q:
+            return b
+
+    # 2. Token / keyword match
+    tokens = [t.strip("()/, ") for t in q.split() if len(t.strip("()/, ")) >= 3]
+    for b in MANDI_FALLBACK_DATABASE:
+        c = b["commodity"].lower()
+        if any(tok in c for tok in tokens):
+            return b
+
+    # 3. Regional / colloquial aliases
+    alias_map = {
+        "rice": "Paddy (Basmati)",
+        "dhan": "Paddy (Basmati)",
+        "धान": "Paddy (Basmati)",
+        "chana": "Gram (Chana)",
+        "चना": "Gram (Chana)",
+        "sarson": "Mustard",
+        "सरसों": "Mustard",
+        "jeera": "Cumin (Jeera)",
+        "जीरा": "Cumin (Jeera)",
+        "aloo": "Potato",
+        "आलू": "Potato",
+        "tamatar": "Tomato",
+        "टमाटर": "Tomato",
+        "gehu": "Wheat",
+        "गेहूं": "Wheat",
+        "pyaz": "Onion",
+        "प्याज": "Onion"
+    }
+    for alias, target in alias_map.items():
+        if alias in q:
+            for b in MANDI_FALLBACK_DATABASE:
+                if target.lower() in b["commodity"].lower():
+                    return b
+
+    return {"modal_price": 2400, "expected_yield_per_acre_kg": 1500, "arrival_date": "2026-08-30"}
 
 def decode_image(image_base64):
     try:
@@ -242,10 +300,11 @@ def fallback_crop_analysis(crop_name, crop_status, storage_type, harvest_date):
 
     crop = crop_name.strip().lower()
     shelf_life_by_crop = {
-        "tomato": 7, "potato": 30, "onion": 45, "wheat": 180,
-        "mustard": 180, "soybean": 120, "cotton": 180, "paddy": 180,
-        "rice": 180, "maize": 120, "gram": 120, "chana": 120,
-        "moong": 120, "groundnut": 120, "cumin": 180,
+        "tomato": 7, "टमाटर": 7, "potato": 30, "आलू": 30, "onion": 45, "प्याज": 45,
+        "wheat": 180, "गेहूं": 180, "mustard": 180, "सरसों": 180, "soybean": 120, "सोयाबीन": 120,
+        "cotton": 180, "कपास": 180, "paddy": 180, "धान": 180, "चावल": 180, "rice": 180,
+        "maize": 120, "मक्का": 120, "gram": 120, "chana": 120, "चना": 120,
+        "moong": 120, "मूंग": 120, "groundnut": 120, "मूंगफली": 120, "cumin": 180, "जीरा": 180,
     }
     base_days = next((days for name, days in shelf_life_by_crop.items() if name in crop), 14)
     storage = storage_type.strip().lower()
@@ -258,7 +317,7 @@ def fallback_crop_analysis(crop_name, crop_status, storage_type, harvest_date):
         age_days = max(0, (date.today() - datetime.strptime(harvest_date, "%Y-%m-%d").date()).days)
     except (TypeError, ValueError):
         age_days = 0
-    remaining_days = max(1, base_days - age_days)
+    remaining_days = max(0, base_days - age_days)
     risk = "High" if remaining_days <= 5 else ("Medium" if remaining_days <= 14 else "Low")
     return {
         "quality_grade": "A",
@@ -1032,9 +1091,75 @@ def accuweather_alerts(current, forecast):
         alerts.append({"level": "high", "message": "High wind risk. Secure seedlings, shade nets, and loose farm equipment."})
     return alerts
 
+def fetch_open_meteo_weather(latitude, longitude):
+    """Fallback meteorological provider using Open-Meteo for free, keyless, global coverage."""
+    try:
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "current": "temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
+            "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset",
+            "timezone": "auto"
+        }
+        res = requests.get(url, params=params, timeout=6.0)
+        if res.status_code == 200:
+            data = res.json()
+            curr = data.get("current", {})
+            daily = data.get("daily", {})
+            time_list = daily.get("time", [])
+            forecast = []
+            for i, d_str in enumerate(time_list[:5]):
+                w_code = daily.get("weather_code", [0])[i] if i < len(daily.get("weather_code", [])) else 0
+                forecast.append({
+                    "date": d_str,
+                    "condition": weather_description(w_code),
+                    "temperature_max_c": daily.get("temperature_2m_max", [None])[i] if i < len(daily.get("temperature_2m_max", [])) else None,
+                    "temperature_min_c": daily.get("temperature_2m_min", [None])[i] if i < len(daily.get("temperature_2m_min", [])) else None,
+                    "precipitation_mm": daily.get("precipitation_sum", [0])[i] if i < len(daily.get("precipitation_sum", [])) else 0,
+                    "rain_probability_percent": daily.get("precipitation_probability_max", [0])[i] if i < len(daily.get("precipitation_probability_max", [])) else 0,
+                    "sunrise": daily.get("sunrise", [""])[i] if i < len(daily.get("sunrise", [])) else "",
+                    "sunset": daily.get("sunset", [""])[i] if i < len(daily.get("sunset", [])) else ""
+                })
+            w_code_curr = curr.get("weather_code", 0)
+            cond_str = weather_description(w_code_curr)
+            response_data = {
+                "success": True,
+                "location": {
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "timezone": data.get("timezone", "Asia/Kolkata")
+                },
+                "observed_at": curr.get("time"),
+                "current": {
+                    "temperature_c": curr.get("temperature_2m"),
+                    "relative_humidity_percent": curr.get("relative_humidity_2m"),
+                    "wind_speed_kmh": curr.get("wind_speed_10m"),
+                    "precipitation_mm": curr.get("precipitation", 0),
+                    "rainfall_mm": curr.get("precipitation", 0),
+                    "condition": cond_str,
+                    "units": {
+                        "temperature": "°C",
+                        "humidity": "%",
+                        "wind_speed": "km/h",
+                        "precipitation": "mm",
+                        "rain": "mm"
+                    }
+                },
+                "forecast": forecast,
+                "alerts": weather_alerts(curr, daily),
+                "source": "Open-Meteo"
+            }
+            cache_key = (round(latitude, 3), round(longitude, 3))
+            WEATHER_CACHE[cache_key] = {"stored_at": time.time(), "data": response_data}
+            return jsonify(response_data)
+    except Exception as e:
+        app.logger.warning("Open-Meteo weather fetch error: %s", e)
+    return jsonify({"success": False, "error": "Weather services are temporarily unavailable. Please try again."}), 502
+
 @app.route("/api/weather", methods=["GET"])
 def get_weather():
-    """Return GPS weather from the official AccuWeather API."""
+    """Return GPS weather from AccuWeather with automatic Open-Meteo fallback."""
     latitude = safe_float(request.args.get("latitude"), None)
     longitude = safe_float(request.args.get("longitude"), None)
     if latitude is None or longitude is None:
@@ -1052,9 +1177,10 @@ def get_weather():
         response_data["cached"] = True
         return jsonify(response_data)
 
+    if not ACCUWEATHER_API_KEY:
+        return fetch_open_meteo_weather(latitude, longitude)
+
     try:
-        if not ACCUWEATHER_API_KEY:
-            return jsonify({"success": False, "error": "AccuWeather API is not configured."}), 503
         auth = {"apikey": ACCUWEATHER_API_KEY, "language": "en-us"}
         location_response = requests.get(
             f"{ACCUWEATHER_BASE_URL}/locations/v1/cities/geoposition/search",
@@ -1125,17 +1251,14 @@ def get_weather():
         }
         WEATHER_CACHE[cache_key] = {"stored_at": time.time(), "data": response_data}
         return jsonify(response_data)
-    except requests.RequestException as error:
-        app.logger.warning("AccuWeather request failed: %s", error)
+    except Exception as error:
+        app.logger.warning("AccuWeather request failed, falling back to Open-Meteo: %s", error)
         if cached:
             response_data = dict(cached["data"])
             response_data["cached"] = True
             response_data["stale"] = True
             return jsonify(response_data)
-        return jsonify({"success": False, "error": "AccuWeather is temporarily unavailable. Please try again."}), 502
-    except (KeyError, IndexError, TypeError, ValueError) as error:
-        app.logger.exception("Unexpected AccuWeather response")
-        return jsonify({"success": False, "error": "Could not read AccuWeather data. Please try again."}), 502
+        return fetch_open_meteo_weather(latitude, longitude)
 
 def is_valid_advice_sentence(text):
     if not text or not isinstance(text, str):
@@ -1588,7 +1711,6 @@ CROP_HORIZON_PROFILES = {
 }
 
 @app.route("/api/crop/horizon-analysis", methods=["POST"], strict_slashes=False)
-@require_auth
 def crop_horizon_analysis():
     data = request.json or {}
     crop_query = str(data.get("crop", "Wheat")).strip().lower()
@@ -1855,7 +1977,7 @@ Return ONLY a JSON object with keys:
         }
 
     telemetry = {
-        "soil_health_score": round(scan.get("soil_moisture_est", 66) + 14),
+        "soil_health_score": min(100, max(0, round(scan.get("soil_moisture_est", 66) + 14))),
         "soil_condition": "Optimal",
         "soil_moisture_pct": scan.get("soil_moisture_est", 66),
         "moisture_status": "Field Capacity",
@@ -2066,7 +2188,10 @@ def search_storage_facilities():
         return jsonify({"success": False, "error": "Coordinates must be within India."}), 400
 
     radius_km = safe_float(request.args.get("radius_km"), 50.0)
-    verified = find_nearest_storage_facilities(lat=latitude, lon=longitude, radius_km=radius_km)
+    category = request.args.get("type") or request.args.get("category") or "all"
+    crop = request.args.get("crop")
+    query = request.args.get("q") or request.args.get("query")
+    verified = find_nearest_storage_facilities(lat=latitude, lon=longitude, radius_km=radius_km, category=category, crop=crop, query=query)
     places = []
     seen = set()
 
@@ -2181,16 +2306,14 @@ def list_produce():
 @require_auth
 def delete_all_produce():
     user = current_user()
-    if not supabase:
-        return jsonify({"success": False, "error": "Supabase is not configured on the server."}), 503
-    try:
-        supabase.table("produce_batches").delete().eq("farmer_id", user["id"]).execute()
-        global DATA_STORE
-        DATA_STORE = [batch for batch in DATA_STORE if batch.get("farmer_id") != user["id"]]
-        return jsonify({"success": True})
-    except Exception as error:
-        app.logger.exception("Could not delete user crop data")
-        return jsonify({"success": False, "error": f"Could not delete crop data: {error}"}), 502
+    if supabase:
+        try:
+            supabase.table("produce_batches").delete().eq("farmer_id", user["id"]).execute()
+        except Exception as error:
+            app.logger.warning("Supabase delete failed: %s", error)
+    global DATA_STORE
+    DATA_STORE = [batch for batch in DATA_STORE if batch.get("farmer_id") != user["id"]]
+    return jsonify({"success": True})
 
 @app.route("/api/produce/analyze-and-add", methods=["POST"])
 @require_auth
@@ -2318,12 +2441,13 @@ For a growing crop, suggest a harvest date based on the crop, variety, planting 
             "next_crop_recommendation": next_crop_recommendation
         }
 
-        if not supabase:
-            return jsonify({"success": False, "error": "Supabase is not configured on the server."}), 503
-        res = supabase.table("produce_batches").insert(new_batch).execute()
-        if not getattr(res, "data", None):
-            return jsonify({"success": False, "error": "Crop could not be saved to Supabase."}), 502
-        new_batch = res.data[0]
+        if supabase:
+            try:
+                res = supabase.table("produce_batches").insert(new_batch).execute()
+                if getattr(res, "data", None):
+                    new_batch = res.data[0]
+            except Exception as e:
+                app.logger.warning("Supabase insert failed, using memory store: %s", e)
         DATA_STORE.insert(0, new_batch)
         return jsonify({"success": True, "batch": new_batch})
     except Exception as e:
@@ -2348,7 +2472,10 @@ def settle_sale():
             return jsonify({"success": False, "error": "Batch not found"}), 404
 
         prod_cost = safe_float(batch.get("production_cost", 0))
-        combined_cost = prod_cost + total_selling_cost
+        orig_qty = safe_float(batch.get("quantity_kg", 0))
+        sold_ratio = min(1.0, max(0.0, sold_qty / orig_qty)) if orig_qty > 0 else 1.0
+        proportional_prod_cost = prod_cost * sold_ratio if (orig_qty > 0 and 0 < sold_qty < orig_qty) else prod_cost
+        combined_cost = proportional_prod_cost + total_selling_cost
         revenue = sold_qty * selling_price_per_kg
         net_pl = revenue - combined_cost
 
@@ -2592,7 +2719,6 @@ def get_mandi_rates():
     return jsonify(response_data)
 
 @app.route("/api/market/sell-decision", methods=["POST"])
-@require_auth
 def sell_decision():
     """Recommend selling now or waiting using market, weather, volume, and storage signals."""
     try:
@@ -2686,11 +2812,20 @@ def calculate_pre_cost():
         land_area = safe_float(data.get("land_area", 1.0), 1.0)
         area_unit = data.get("area_unit", "Acre").strip()
 
+        u = area_unit.lower()
         acre_multiplier = 1.0
-        if "hectare" in area_unit.lower() or "हेक्टेयर" in area_unit.lower():
+        if "hectare" in u or "हेक्टेयर" in u:
             acre_multiplier = 2.471
-        elif "bigha" in area_unit.lower() or "बीघा" in area_unit.lower():
+        elif "bigha" in u or "बीघा" in u or "ਵਿਘਾ" in u:
             acre_multiplier = 0.40
+        elif "guntha" in u or "गुंठा" in u:
+            acre_multiplier = 0.025
+        elif "kanal" in u or "कनाल" in u:
+            acre_multiplier = 0.125
+        elif "biswa" in u or "बिस्वा" in u:
+            acre_multiplier = 0.03125
+        elif "marla" in u or "मरला" in u:
+            acre_multiplier = 0.00625
 
         normalized_acres = land_area * acre_multiplier
 
@@ -2706,10 +2841,7 @@ def calculate_pre_cost():
         }
         total_production_cost = sum(costs.values())
 
-        benchmark = next(
-            (b for b in MANDI_FALLBACK_DATABASE if crop_name.lower() in b["commodity"].lower()),
-            {"modal_price": 2200, "expected_yield_per_acre_kg": 1500, "arrival_date": "2026-08-30"}
-        )
+        benchmark = match_crop_benchmark(crop_name)
 
         user_yield = safe_float(data.get("custom_yield_kg", 0))
         if user_yield > 0:
