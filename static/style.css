@@ -3293,7 +3293,9 @@ body.dark-theme .activity-item span {
 }
 
 @media (max-width: 1024px) {
-    .ledger-stat-strip {
+    .ledger-stat-strip,
+    .storage-stat-strip,
+    .iot-metrics-strip {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -3321,7 +3323,7 @@ body.dark-theme .activity-item span {
     }
 
     .main-content {
-        padding: 16px 16px 80px;
+        padding: 12px 14px calc(86px + env(safe-area-inset-bottom, 0px));
     }
 
     .mobile-bottom-nav {
@@ -3329,15 +3331,18 @@ body.dark-theme .activity-item span {
     }
 
     .assistant-bubble {
-        bottom: 76px;
-        right: 16px;
+        bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+        right: 14px;
+        z-index: 96;
     }
 
     .assistant-panel {
-        bottom: 136px;
-        right: 16px;
-        left: 16px;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        right: 10px;
+        left: 10px;
         width: auto;
+        max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px));
+        z-index: 97;
     }
 
     .auth-shell {
@@ -3358,19 +3363,45 @@ body.dark-theme .activity-item span {
     }
 }
 
-@media (max-width: 540px) {
-    .ledger-stat-strip {
-        grid-template-columns: 1fr;
-    }
-
+@media (max-width: 640px) {
     .top-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px 14px;
+    }
+
+    .top-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
     }
 
     .top-header-actions {
         width: 100%;
-        justify-content: space-between;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 4px 2px 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .top-header-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .top-header-actions > * {
+        flex-shrink: 0;
+    }
+
+    .ledger-stat-strip,
+    .storage-stat-strip,
+    .iot-metrics-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 }
 
@@ -5467,4 +5498,510 @@ body.dark-theme .gemini-card-header p {
 }
 body.dark-theme .gemini-strategy-body {
     color: #bbf7d0;
+}
+
+/* ============================================================
+   MASTER MOBILE UI / UX & TOUCH ERGONOMICS OVERHAUL
+   Ensures 100% responsiveness, thumb-friendly buttons (>=48px),
+   and zero horizontal overflow across phone screens (320px-540px).
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Viewport Containment */
+    html, body {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .main-content {
+        padding: 12px 14px calc(86px + env(safe-area-inset-bottom, 0px)) !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+
+    .tab-panel {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Top Header & Horizontal Action Carousel */
+    .top-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .top-header-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .mobile-menu-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.35rem !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+        cursor: pointer !important;
+    }
+
+    body.dark-theme .mobile-menu-btn {
+        background: rgba(30, 41, 59, 0.9) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+        color: #f1f5f9 !important;
+    }
+
+    .page-title {
+        font-size: 1.25rem !important;
+        line-height: 1.25 !important;
+        word-break: break-word !important;
+    }
+
+    .top-header .subtitle {
+        font-size: 0.8rem !important;
+        line-height: 1.35 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .top-header-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        padding: 4px 2px 8px !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    .top-header-actions::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .btn-top-tool,
+    .btn-theme-glass-toggle,
+    .btn-whatsapp-toggle,
+    .btn-quick-demo,
+    .farmer-profile-chip {
+        flex-shrink: 0 !important;
+        min-height: 42px !important;
+        padding: 8px 14px !important;
+        border-radius: 999px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+    }
+
+    /* 2x2 Dense Grid for Dashboard Stat Strips */
+    .ledger-stat-strip,
+    .storage-stat-strip,
+    .iot-metrics-strip,
+    .metrics-grid,
+    .weather-summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .stat-cell {
+        padding: 12px 10px !important;
+        border-radius: 14px !important;
+        min-width: 0 !important;
+    }
+
+    .stat-value {
+        font-size: 1.25rem !important;
+        word-break: break-word !important;
+    }
+
+    .stat-label {
+        font-size: 0.68rem !important;
+        letter-spacing: 0.2px !important;
+    }
+
+    /* Single-Column Forms & iOS Auto-Zoom Prevention */
+    .form-grid,
+    .cost-grid,
+    .filter-grid,
+    .storage-filter-grid,
+    .converter-inputs,
+    .form-row,
+    .two-col-grid,
+    .three-col-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px !important; /* Prevents iOS Safari auto-zoom */
+        min-height: 48px !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 48px Touch Ergonomics for Action Buttons */
+    .btn-primary-action,
+    .btn-secondary-action,
+    .auth-submit,
+    #btn-settle-sale,
+    #btn-submit-produce,
+    #btn-drone-scan,
+    #sell-decision-button,
+    .btn-full-profit-analysis,
+    #storage-finder-locate-btn,
+    .btn-drone-scan,
+    #weather-action-button,
+    #btn-full-analysis {
+        min-height: 48px !important;
+        padding: 12px 18px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
+    }
+
+    /* Clean Vertical Stacks for Action Bars */
+    .weather-action-btns,
+    .sell-decision-btn-group,
+    .profile-actions,
+    .profile-danger,
+    .farm-slip-actions,
+    .full-analysis-actions,
+    .storage-actions-bar,
+    .weather-location-form {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+
+    .weather-action-btns > *,
+    .sell-decision-btn-group > *,
+    .profile-actions > *,
+    .profile-danger > *,
+    .farm-slip-actions > *,
+    .full-analysis-actions > *,
+    .storage-actions-bar > * {
+        width: 100% !important;
+        min-height: 48px !important;
+        border-radius: 14px !important;
+        justify-content: center !important;
+    }
+
+    /* Mandi Horizontal Quick-Chips Strip */
+    .mandi-filter-strip,
+    .quick-chips {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 8px !important;
+        padding: 4px 2px 10px !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        width: 100% !important;
+    }
+
+    .mandi-filter-strip::-webkit-scrollbar,
+    .quick-chips::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .quick-chip {
+        flex-shrink: 0 !important;
+        min-height: 42px !important;
+        padding: 8px 16px !important;
+        font-size: 0.86rem !important;
+        border-radius: 999px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Touch Tables with Native Momentum Scrolling */
+    .table-responsive,
+    .mandi-table-wrap,
+    .ledger-table-wrap,
+    .weather-table-container,
+    .storage-table-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 14px !important;
+        margin-bottom: 16px !important;
+        -webkit-backface-visibility: hidden;
+    }
+
+    table {
+        min-width: 540px !important;
+    }
+
+    /* Leaflet Maps Responsive Heights */
+    #storage-map,
+    #weather-map,
+    .map-container {
+        height: 280px !important;
+        min-height: 280px !important;
+        max-height: 300px !important;
+        border-radius: 16px !important;
+        width: 100% !important;
+    }
+
+    /* SVG Charts & Visuals */
+    .chart-wrapper,
+    .crop-horizon-chart-container,
+    .weather-chart-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    svg.chart,
+    .crop-horizon-chart-container svg,
+    .chart-wrapper svg {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+    }
+
+    .horizon-filter-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 12px !important;
+        width: 100% !important;
+    }
+
+    .horizon-filter-group {
+        width: 100% !important;
+    }
+
+    .horizon-filter-group select {
+        width: 100% !important;
+        min-height: 46px !important;
+    }
+
+    .calendar-heat-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .horizon-future-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    /* Apple Mobile Bottom-Sheet Modal Styling */
+    .modal-overlay,
+    #full-analysis-modal.modal-overlay,
+    .modal-backdrop {
+        padding: 8px !important;
+        align-items: flex-end !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .modal-card,
+    .full-analysis-modal-card,
+    .unit-converter-card,
+    .farm-slip-card,
+    .profile-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 92dvh !important;
+        border-radius: 22px 22px 14px 14px !important;
+        padding: 18px 14px !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .btn-modal-close,
+    .btn-close-profile {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 12px !important;
+        font-size: 1.4rem !important;
+        cursor: pointer !important;
+    }
+
+    /* Modal Specific Inner Elements */
+    .analysis-controls-strip {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 12px !important;
+    }
+
+    .analysis-crop-picker {
+        width: 100% !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .analysis-crop-picker select {
+        width: 100% !important;
+        min-height: 46px !important;
+    }
+
+    .analysis-action-btns {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .analysis-action-btns > * {
+        width: 100% !important;
+        min-height: 44px !important;
+        justify-content: center !important;
+    }
+
+    .analysis-metrics-strip {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .analysis-metric-pill {
+        min-width: 0 !important;
+        padding: 10px 12px !important;
+    }
+
+    .analysis-diagnostics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .analysis-yield-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .farm-slip-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .converter-mode-tabs {
+        display: flex !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .converter-tab-btn {
+        min-height: 44px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .conv-results-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    /* AI Assistant Copilot Clean Positioning Above Bottom Nav */
+    .mobile-bottom-nav {
+        height: 64px !important;
+        z-index: 95 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    }
+
+    .bottom-nav-item {
+        min-height: 48px !important;
+        min-width: 48px !important;
+        padding: 6px 4px !important;
+    }
+
+    .assistant-bubble {
+        bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+        right: 14px !important;
+        width: 52px !important;
+        height: 52px !important;
+        z-index: 96 !important;
+        box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45) !important;
+    }
+
+    .assistant-panel {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px)) !important;
+        border-radius: 20px !important;
+        z-index: 97 !important;
+    }
+
+    .assistant-chat-body {
+        max-height: calc(100dvh - 240px) !important;
+    }
+
+    .prompt-chips {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 6px !important;
+        padding-bottom: 6px !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .prompt-chip {
+        flex-shrink: 0 !important;
+        font-size: 0.78rem !important;
+        padding: 6px 12px !important;
+        min-height: 38px !important;
+    }
+}
+
+/* Extra Small Phones (<= 480px) */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 10px 10px calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .page-title {
+        font-size: 1.15rem !important;
+    }
+
+    .analysis-action-btns {
+        grid-template-columns: 1fr !important;
+    }
+
+    .stat-value {
+        font-size: 1.15rem !important;
+    }
 }

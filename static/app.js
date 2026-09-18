@@ -540,10 +540,32 @@ function switchTab(tabId) {
         setTimeout(renderSellDecisionCharts, 80);
     }
 
+    if (tabId === 'storage-finder' || tabId === 'weather') {
+        setTimeout(() => {
+            if (typeof mainStorageMap !== 'undefined' && mainStorageMap && typeof mainStorageMap.invalidateSize === 'function') {
+                mainStorageMap.invalidateSize();
+            }
+        }, 200);
+    }
+
     if (typeof applyFullPageTranslation === 'function') {
         setTimeout(() => applyFullPageTranslation(currentLang), 50);
     }
 }
+
+// Ensure Leaflet map recalculates its dimensions on mobile device orientation changes and resizes
+window.addEventListener('resize', () => {
+    if (typeof mainStorageMap !== 'undefined' && mainStorageMap && typeof mainStorageMap.invalidateSize === 'function') {
+        mainStorageMap.invalidateSize();
+    }
+});
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        if (typeof mainStorageMap !== 'undefined' && mainStorageMap && typeof mainStorageMap.invalidateSize === 'function') {
+            mainStorageMap.invalidateSize();
+        }
+    }, 250);
+});
 
 function showToast(msg, type = "info") {
     const container = document.getElementById("toast-container");
