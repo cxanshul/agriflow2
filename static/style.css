@@ -6005,3 +6005,528 @@ body.dark-theme .gemini-strategy-body {
         font-size: 1.15rem !important;
     }
 }
+
+/* ============================================================
+   FARMER INTERACTIVE TUTORIAL & MULTILINGUAL GUIDE MODAL
+   ============================================================ */
+.tutorial-modal-card {
+    max-width: 900px;
+    width: 95%;
+    border-radius: 26px;
+    padding: 26px 30px;
+}
+
+.tutorial-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tutorial-header-left {
+    flex: 1;
+}
+
+.tutorial-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btn-tutorial-audio {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.18) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #065f46;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-tutorial-audio:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.3) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-tutorial-audio.speaking {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    animation: pulseAudioBtn 1.2s infinite;
+}
+
+@keyframes pulseAudioBtn {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+/* Stepper Pill Strip */
+.tutorial-stepper-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tutorial-step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #334155;
+    font-size: 0.84rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    flex-shrink: 0;
+}
+
+.tutorial-step-pill .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.tutorial-step-pill:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #065f46;
+}
+
+.tutorial-step-pill.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.tutorial-step-pill.active .step-num {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+/* Active Step Card Content */
+.tutorial-step-content-card {
+    min-height: 330px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.tutorial-hero-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.tutorial-hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.85rem;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.15);
+}
+
+.tutorial-hero-text h4 {
+    margin: 0 0 6px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.tutorial-hero-text p {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: #475569;
+}
+
+/* Action Points Grid */
+.step-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.step-action-box {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.step-action-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.step-action-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.step-action-detail {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: #1e293b;
+}
+
+.step-action-detail strong {
+    display: block;
+    color: #0f172a;
+    margin-bottom: 3px;
+    font-size: 0.9rem;
+}
+
+/* Pro Tip Box */
+.kisan-tip-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(245, 158, 11, 0.02) 100%);
+    border-left: 4px solid #f59e0b;
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+}
+
+.kisan-tip-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #b45309;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.kisan-tip-body {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: #78350f;
+    margin: 0;
+}
+
+/* Step CTA & Action Strip */
+.step-cta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.btn-step-jump {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btn-step-jump:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+.btn-step-listen-single {
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #334155;
+    border-radius: 12px;
+    padding: 9px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-step-listen-single:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Modal Footer */
+.tutorial-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tutorial-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tutorial-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tutorial-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tutorial-dot.active {
+    width: 24px;
+    border-radius: 10px;
+    background: #10b981;
+}
+
+.btn-tutorial-start {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 22px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-tutorial-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+}
+
+/* Sidebar & Header Tutorial Buttons */
+.btn-tutorial-trigger {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    color: #065f46 !important;
+    font-weight: 600;
+}
+
+.btn-tutorial-trigger:hover {
+    background: rgba(16, 185, 129, 0.22) !important;
+    transform: translateY(-1px);
+}
+
+.nav-tutorial-btn {
+    color: #059669 !important;
+    font-weight: 600;
+}
+
+.nav-tutorial-btn:hover {
+    background: rgba(16, 185, 129, 0.12) !important;
+}
+
+/* Dark Mode Overrides */
+body.dark-theme .tutorial-modal-card {
+    background: rgba(10, 26, 18, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9;
+}
+
+body.dark-theme .tutorial-modal-header,
+body.dark-theme .tutorial-stepper-strip,
+body.dark-theme .step-cta-strip,
+body.dark-theme .tutorial-modal-footer {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .btn-tutorial-audio {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+}
+
+body.dark-theme .tutorial-step-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+}
+
+body.dark-theme .tutorial-step-pill .step-num {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .tutorial-step-pill:hover {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+body.dark-theme .tutorial-hero-text h4 {
+    color: #f8fafc;
+}
+
+body.dark-theme .tutorial-hero-text p {
+    color: #94a3b8;
+}
+
+body.dark-theme .step-action-box {
+    background: rgba(15, 30, 23, 0.7);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-theme .step-action-detail {
+    color: #cbd5e1;
+}
+
+body.dark-theme .step-action-detail strong {
+    color: #f8fafc;
+}
+
+body.dark-theme .kisan-tip-box {
+    background: rgba(245, 158, 11, 0.12);
+    border-left-color: #f59e0b;
+}
+
+body.dark-theme .kisan-tip-header {
+    color: #fcd34d;
+}
+
+body.dark-theme .kisan-tip-body {
+    color: #fef3c7;
+}
+
+body.dark-theme .btn-step-listen-single {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+}
+
+body.dark-theme .tutorial-dot {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-theme .tutorial-dot.active {
+    background: #34d399;
+}
+
+body.dark-theme .btn-tutorial-trigger {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+body.dark-theme .nav-tutorial-btn {
+    color: #34d399 !important;
+}
+
+@media (max-width: 768px) {
+    .tutorial-modal-card {
+        padding: 18px 16px;
+        border-radius: 20px;
+    }
+
+    .tutorial-modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .tutorial-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .tutorial-hero-box {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .step-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .step-cta-strip {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .step-cta-strip button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tutorial-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tutorial-footer-left {
+        justify-content: space-between;
+    }
+
+    .btn-tutorial-start {
+        width: 100%;
+        text-align: center;
+    }
+}
+

@@ -111,6 +111,11 @@
             <button class="nav-item" onclick="switchTab('ledger-history'); closeMobileSidebar();">
                 <span class="icon">📜</span> <span data-en="History & Next Crop" data-hi="उपज इतिहास व अगली फसल">History & Next Crop</span>
             </button>
+        <div class="nav-group-label" data-en="Help &amp; Tutorial" data-hi="सहायता व सीख" data-pa="ਮਦਦ ਅਤੇ ਗਾਈਡ" data-mr="मदत व मार्गदर्शन" data-gu="મદદ અને માર્ગદર્શન" data-kn="ಸಹಾಯ ಮತ್ತು ಮಾರ್ಗದರ್ಶಿ" data-te="సహాయం మరియు గైడ్" data-ta="உதவி மற்றும் பயிற்சி" data-bn="সাহায্য ও টিউটোরিয়াল">Help &amp; Tutorial</div>
+        <nav class="nav-menu">
+            <button class="nav-item nav-tutorial-btn" onclick="openTutorialModal(); closeMobileSidebar();">
+                <span class="icon">📖</span> <span data-en="Farmer User Guide" data-hi="किसान उपयोग गाइड" data-pa="ਕਿਸਾਨ ਵਰਤੋਂ ਗਾਈਡ" data-mr="शेतकरी वापर मार्गदर्शक" data-gu="ખેડૂત ઉપયોગ માર્ગદર્શિકા" data-kn="ರೈತ ಬಳಕೆ ಮಾರ್ಗದರ್ಶಿ" data-te="రైతు వినియోగ గైడ్" data-ta="விவசாயி பயன்பாட்டு வழிகாட்டி" data-bn="কৃষক ব্যবহার নির্দেশিকা">Farmer User Guide</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -153,6 +158,9 @@
                         <span class="theme-icon-dark">🌙</span>
                     </span>
                     <span id="theme-toggle-label" class="theme-toggle-text" data-en="Dark" data-hi="डार्क">Dark</span>
+                </button>
+                <button class="btn-top-tool btn-tutorial-trigger" onclick="openTutorialModal()" title="Farmer User Guide & Tutorial">
+                    📖 <span data-en="Tutorial Guide" data-hi="ट्यूटोरियल गाइड" data-pa="ਟਿਊਟੋਰੀਅਲ ਗਾਈਡ" data-mr="मार्गदर्शक" data-gu="ટ્યુટોરીયલ" data-kn="ಮಾರ್ಗದರ್ಶಿ" data-te="గైడ్" data-ta="பயிற்சி வழிகாட்டி" data-bn="টিউটোরিয়াল">Tutorial Guide</span>
                 </button>
                 <button class="btn-top-tool" onclick="openUnitConverter()" title="Agricultural Land & Weight Unit Converter">
                     📐 <span data-en="Unit Converter" data-hi="इकाई परिवर्तक">Unit Converter</span>
@@ -1660,6 +1668,87 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeFullAnalysisModal()" data-en="Close" data-hi="बंद करें">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: FARMER INTERACTIVE TUTORIAL & APP GUIDE -->
+    <div id="tutorial-modal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) closeTutorialModal()">
+        <div class="modal-card tutorial-modal-card">
+            <div class="modal-header tutorial-modal-header">
+                <div class="tutorial-header-left">
+                    <div class="modal-eyebrow">
+                        <span class="pulse-dot-green"></span>
+                        <span data-en="FARMER ONBOARDING &amp; TRAINING GUIDE" data-hi="किसान प्रशिक्षण व उपयोग मार्गदर्शिका" data-pa="ਕਿਸਾਨ ਸਿਖਲਾਈ ਅਤੇ ਮਾਰਗਦਰਸ਼ਨ" data-mr="शेतकरी प्रशिक्षण व वापर मार्गदर्शक" data-gu="ખેડૂત તાલીમ અને માર્ગદર્શિકા" data-kn="ರೈತ ತರಬೇತಿ ಮತ್ತು ಮಾರ್ಗದರ್ಶಿ" data-te="రైతు శిక్షణ మరియు గైడ్" data-ta="விவசாயி பயிற்சி மற்றும் வழிகாட்டி" data-bn="কৃষক প্রশিক্ষণ ও নির্দেশিকা">FARMER ONBOARDING &amp; TRAINING GUIDE</span>
+                    </div>
+                    <h3 id="tutorial-modal-title" data-en="How to Use AgriFlow: Farmer Guide" data-hi="एग्रीफ्लो का उपयोग कैसे करें: किसान मार्गदर्शिका" data-pa="ਐਗਰੀਫਲੋ ਦੀ ਵਰਤੋਂ ਕਿਵੇਂ ਕਰੀਏ: ਕਿਸਾਨ ਗਾਈਡ" data-mr="एग्रीफ्लो कसे वापरावे: शेतकरी मार्गदर्शक" data-gu="એગ્રીફ્લોનો ઉપયોગ કેવી રીતે કરવો: ખેડૂત માર્ગદર્શિકા" data-kn="ಅಗ್ರಿಫ್ಲೋ ಅನ್ನು ಹೇಗೆ ಬಳಸುವುದು: ರೈತ ಮಾರ್ಗದರ್ಶಿ" data-te="అగ్రిఫ్లోను ఎలా ఉపయోగించాలి: రైతు గైడ్" data-ta="அக்ரிஃப்ளோவை எவ்வாறு பயன்படுத்துவது: விவசாயி வழிகாட்டி" data-bn="অ্যাগ্রিফ্লো কীভাবে ব্যবহার করবেন: কৃষক নির্দেশিকা">How to Use AgriFlow: Farmer Guide</h3>
+                    <p class="subtitle" data-en="Master all 6 tools in simple steps: calculate costs, check satellite health, track mandi rates, and maximize your net farm income." data-hi="लागत निकालने, उपग्रह से फसल जांचने, मंडी भाव देखने और मुनाफा बढ़ाने के 6 आसान चरण।">Master all 6 tools in simple steps: calculate costs, check satellite health, track mandi rates, and maximize your net farm income.</p>
+                </div>
+                <div class="tutorial-header-actions">
+                    <button type="button" class="btn-speech-readout btn-tutorial-audio" onclick="toggleTutorialAudio()" title="Listen to tutorial aloud in your language">
+                        <span id="tutorial-audio-icon">🔊</span> <span id="tutorial-audio-label" data-en="Listen Guide" data-hi="गाइड सुनें" data-pa="ਗਾਈਡ ਸੁਣੋ" data-mr="मार्गदर्शक ऐका" data-gu="માર્ગદર્શિકા સાંભળો" data-kn="ಮಾರ್ಗದರ್ಶಿ ಕೇಳಿ" data-te="గైడ్ వినండి" data-ta="வழிகாட்டியை கேளுங்கள்" data-bn="নির্দেশিকা শুনুন">Listen Guide</span>
+                    </button>
+                    <button class="btn-modal-close" onclick="closeTutorialModal()" aria-label="Close tutorial">✕</button>
+                </div>
+            </div>
+
+            <!-- Stepper Progress & Pills -->
+            <div class="tutorial-stepper-strip" id="tutorial-stepper-strip">
+                <button type="button" class="tutorial-step-pill active" onclick="setTutorialStep(0)" data-step="0">
+                    <span class="step-num">1</span>
+                    <span class="step-icon">🌐</span>
+                    <span class="step-lbl" data-en="1. Language &amp; GPS" data-hi="1. भाषा व स्थान">1. Language &amp; GPS</span>
+                </button>
+                <button type="button" class="tutorial-step-pill" onclick="setTutorialStep(1)" data-step="1">
+                    <span class="step-num">2</span>
+                    <span class="step-icon">🧮</span>
+                    <span class="step-lbl" data-en="2. Pre-Cost Calc" data-hi="2. लागत कैलकुलेटर">2. Pre-Cost Calc</span>
+                </button>
+                <button type="button" class="tutorial-step-pill" onclick="setTutorialStep(2)" data-step="2">
+                    <span class="step-num">3</span>
+                    <span class="step-icon">🛰️</span>
+                    <span class="step-lbl" data-en="3. Weather &amp; ISRO" data-hi="3. मौसम व उपग्रह">3. Weather &amp; ISRO</span>
+                </button>
+                <button type="button" class="tutorial-step-pill" onclick="setTutorialStep(3)" data-step="3">
+                    <span class="step-num">4</span>
+                    <span class="step-icon">🏛️</span>
+                    <span class="step-lbl" data-en="4. Mandi Rates" data-hi="4. मंडी भाव">4. Mandi Rates</span>
+                </button>
+                <button type="button" class="tutorial-step-pill" onclick="setTutorialStep(4)" data-step="4">
+                    <span class="step-num">5</span>
+                    <span class="step-icon">⚖️</span>
+                    <span class="step-lbl" data-en="5. Sell or Wait?" data-hi="5. बेचें या रुकें?">5. Sell or Wait?</span>
+                </button>
+                <button type="button" class="tutorial-step-pill" onclick="setTutorialStep(5)" data-step="5">
+                    <span class="step-num">6</span>
+                    <span class="step-icon">📸</span>
+                    <span class="step-lbl" data-en="6. AI Photo Scan" data-hi="6. AI फोटो जांच">6. AI Photo Scan</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Active Step Content Card -->
+            <div id="tutorial-step-content" class="tutorial-step-content-card">
+                <!-- Rendered dynamically by renderTutorialStep() in static/app.js -->
+            </div>
+
+            <!-- Modal Footer Navigation -->
+            <div class="modal-footer tutorial-modal-footer">
+                <div class="tutorial-footer-left">
+                    <button type="button" id="btn-tutorial-prev" class="btn-secondary" onclick="prevTutorialStep()">
+                        ◀ <span data-en="Previous Step" data-hi="पिछला चरण" data-pa="ਪਿਛਲਾ ਕਦਮ" data-mr="मागील टप्पा" data-gu="પાછલું પગલું" data-kn="ಹಿಂದಿನ ಹಂತ" data-te="మునుపటి దశ" data-ta="முந்தைய படி" data-bn="পূর্ববর্তী ধাপ">Previous Step</span>
+                    </button>
+                    <div class="tutorial-dots" id="tutorial-step-dots">
+                        <!-- Dots rendered dynamically -->
+                    </div>
+                    <button type="button" id="btn-tutorial-next" class="btn-secondary" onclick="nextTutorialStep()">
+                        <span data-en="Next Step" data-hi="अगला चरण" data-pa="ਅਗਲਾ ਕਦਮ" data-mr="पुढील टप्पा" data-gu="આગલું પગલું" data-kn="ಮುಂದಿನ ಹಂತ" data-te="తదుపరి దశ" data-ta="அடுத்த படி" data-bn="পরবর্তী ধাপ">Next Step</span> ▶
+                    </button>
+                </div>
+                <div class="tutorial-footer-right">
+                    <button type="button" class="btn-primary btn-tutorial-start" onclick="closeTutorialModal()">
+                        🌾 <span data-en="Start Farming with AgriFlow" data-hi="एग्रीफ्लो का उपयोग शुरू करें" data-pa="ਐਗਰੀਫਲੋ ਵਰਤਣਾ ਸ਼ੁਰੂ ਕਰੋ" data-mr="वापर सुरू करा" data-gu="ઉપયોગ શરૂ કરો" data-kn="ಬಳಕೆ ಪ್ರಾರಂಭಿಸಿ" data-te="ఉపయోగించడం ప్రారంభించండి" data-ta="பயன்படுத்த தொடங்குங்கள்" data-bn="ব্যবহার শুরু করুন">Start Farming with AgriFlow</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
