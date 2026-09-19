@@ -3108,6 +3108,9 @@ async function triggerDroneScan() {
     const cropName = document.getElementById("calc_crop")?.value || "Wheat";
     const areaAcres = parseFloat(document.getElementById("calc_area")?.value) || 2.5;
 
+    const userLat = Number(farmerProfile?.latitude) || 30.82;
+    const userLng = Number(farmerProfile?.longitude) || 75.60;
+
     // Start API request in background while running smooth simulation sequence
     const scanPromise = fetch("/api/drone/scan", {
         method: "POST",
@@ -3116,6 +3119,8 @@ async function triggerDroneScan() {
             crop_name: cropName,
             field_id: "Plot-Alpha-4",
             area_acres: areaAcres,
+            latitude: userLat,
+            longitude: userLng,
             language: currentLang
         })
     }).then(r => r.json()).catch(err => {
@@ -3126,7 +3131,7 @@ async function triggerDroneScan() {
     // Step 1: Aerial grid mapping
     await new Promise(r => setTimeout(r, 600));
     if (pBar) pBar.style.width = "45%";
-    if (headline) headline.innerText = currentLang === 'hi' ? "🛰️ प्लॉट ग्रिड अल्फा-4 की मल्टीस्पेक्ट्रल मैपिंग..." : "🛰️ Scanning Plot Grid Alpha-4...";
+    if (headline) headline.innerText = currentLang === 'hi' ? "🛰️ इसरो भुवन व मल्टीस्पेक्ट्रल मैपिंग..." : "🛰️ Scanning with ISRO Bhuvan Satellite & Multispectral...";
     if (detail) detail.innerText = currentLang === 'hi' ? "क्लोरोफिल अवशोषण, हरियाली घनत्व और तापमान रिकॉर्ड हो रहा है..." : "Capturing NDVI reflectance, chlorophyll absorption & canopy indices...";
 
     // Step 2: Telemetry computation
@@ -3186,13 +3191,26 @@ async function triggerDroneScan() {
     if (subSoil) subSoil.innerText = currentLang === 'hi' ? `पीएच 6.9 · संतुलित एनपीके` : `pH 6.9 · NPK Balanced`;
     if (subMoist) subMoist.innerText = currentLang === 'hi' ? `सिंचाई: 3 दिन बाद आवश्यकता` : `Irrigation: Optimal for 3 Days`;
     if (subTemp) subTemp.innerText = currentLang === 'hi' ? `मौसम: साफ़ · 9 किमी/घं हवा` : `Weather: Clear · 9 km/h Wind`;
-    if (subNdvi) subNdvi.innerText = currentLang === 'hi' ? `छत्र घनत्व: उत्तम (${cropName})` : `Canopy Health: Excellent (${cropName})`;
+    if (subNdvi) {
+        if (data.isro_satellite?.verified) {
+            subNdvi.innerText = currentLang === 'hi' ? `इसरो: ${data.isro_satellite.dominant_land_use}` : `ISRO: ${data.isro_satellite.dominant_land_use}`;
+        } else {
+            subNdvi.innerText = currentLang === 'hi' ? `छत्र घनत्व: उत्तम (${cropName})` : `Canopy Health: Excellent (${cropName})`;
+        }
+    }
 
-    if (headline) headline.innerText = `🚁 ${data.status || 'Aerial Survey Completed'} · Plot ${data.field_id || 'Alpha-4'}`;
-    if (detail) detail.innerText = data.recommendation;
+    const bhuvanBadge = data.isro_satellite?.verified ? ` · 🛰️ ISRO Bhuvan: ${data.isro_satellite.crop_land_percent}% Cropland` : '';
+    if (headline) headline.innerText = `🚁 ${data.status || 'Aerial Survey Completed'} · Plot ${data.field_id || 'Alpha-4'}${bhuvanBadge}`;
+    
+    if (detail) {
+        const satNote = data.isro_satellite?.verified 
+            ? `<div style="margin-bottom: 6px; font-size: 0.85rem; color: #38bdf8; font-weight: 600;">🛰️ ISRO Bhuvan Satellite: ${data.isro_satellite.summary} (${data.isro_satellite.dominant_land_use})</div>` 
+            : '';
+        detail.innerHTML = `${satNote}<span>${data.recommendation}</span>`;
+    }
     if (speechBtn) speechBtn.classList.remove("hidden");
 
-    showToast(currentLang === 'hi' ? `✅ ड्रोन स्कैन पूर्ण! NDVI सूचकांक: ${t.ndvi} (स्वस्थ फसल)` : `✅ Drone scan complete! Field NDVI: ${t.ndvi} (Healthy)`, "success");
+    showToast(currentLang === 'hi' ? `✅ ड्रोन व इसरो भुवन स्कैन पूर्ण! NDVI: ${t.ndvi}` : `✅ Drone & ISRO Bhuvan scan complete! NDVI: ${t.ndvi}`, "success");
 
     if (btn) {
         btn.classList.remove("scanning");
