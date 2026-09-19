@@ -4061,6 +4061,29 @@ body.dark-theme .weather-action-btns .btn-primary {
     }
 }
 
+.slip-batch-selector-box {
+    transition: all 0.2s ease;
+}
+
+body.dark-theme .slip-batch-selector-box {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+body.dark-theme .slip-batch-selector-box label {
+    color: #6ee7b7 !important;
+}
+
+body.dark-theme .slip-batch-selector-box select {
+    background: rgba(15, 23, 42, 0.9) !important;
+    color: #f1f5f9 !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.dark-theme .slip-batch-selector-box p {
+    color: #94a3b8 !important;
+}
+
 .farm-slip-actions {
     display: flex;
     gap: 10px;

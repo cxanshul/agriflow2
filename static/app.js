@@ -1881,6 +1881,11 @@ function renderHistoryProduce() {
                 </div>
             </div>
             ${rotationHtml}
+            <div style="display: flex; justify-content: flex-end; margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,0.08);">
+                <button type="button" class="btn-secondary" style="font-size: 0.8rem; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="openFarmSlipModal('${b.id}')">
+                    📄 ${(typeof currentLang !== 'undefined' && currentLang === 'hi') ? 'डिजिटल रसीद / पर्ची बनाएं' : 'Generate / View Farm Slip'}
+                </button>
+            </div>
         `;
         container.appendChild(card);
     });
@@ -3418,24 +3423,40 @@ function calculateWeightConversion() {
 // FEATURE 5: DIGITAL FARM FINANCIAL SLIP & MANDI VOUCHER
 // ============================================================
 
-function openFarmSlipModal() {
+function openFarmSlipModal(preselectedBatchId = null) {
     const modal = document.getElementById("farm-slip-modal");
     if (!modal) return;
     
-    if (farmerProfile) {
-        if (farmerProfile.full_name) {
-            const el = document.getElementById("slip-farmer-name");
-            if (el && !el.value) el.value = farmerProfile.full_name;
-        }
-        if (farmerProfile.alert_phone) {
-            const el = document.getElementById("slip-phone");
-            if (el && !el.value) el.value = farmerProfile.alert_phone;
-        }
-        if (farmerProfile.location_name) {
-            const el = document.getElementById("slip-location");
-            if (el && !el.value) el.value = farmerProfile.location_name;
-        }
+    // 1. Populate Farmer Name, Phone, Location from REAL logged-in user profile
+    const farmerInput = document.getElementById("slip-farmer-name");
+    const phoneInput = document.getElementById("slip-phone");
+    const locInput = document.getElementById("slip-location");
+
+    const realName = (farmerProfile && farmerProfile.full_name && farmerProfile.full_name.trim()) 
+        ? farmerProfile.full_name 
+        : (document.getElementById("display-farmer")?.innerText && !['Signed in', 'लॉग इन', 'Sign in'].includes(document.getElementById("display-farmer")?.innerText) ? document.getElementById("display-farmer")?.innerText : "");
+
+    const realPhone = (farmerProfile && farmerProfile.alert_phone) ? farmerProfile.alert_phone.replace(/^\+91/, '').trim() : "";
+    
+    let realLoc = (farmerProfile && farmerProfile.location_name) ? farmerProfile.location_name : "";
+    if (!realLoc && typeof weatherCache !== 'undefined' && weatherCache?.data?.district) {
+        realLoc = `${weatherCache.data.district} APMC Mandi`;
     }
+
+    if (farmerInput && (!farmerInput.value || farmerInput.value === "Ramesh Singh")) {
+        farmerInput.value = realName;
+    }
+    if (phoneInput && (!phoneInput.value || phoneInput.value === "9876543210")) {
+        phoneInput.value = (realPhone === "9876543210") ? "" : realPhone;
+    }
+    if (locInput && (!locInput.value || locInput.value === "Khanna APMC Mandi")) {
+        locInput.value = realLoc;
+    }
+
+    // 2. Populate Batch Selector from actual produceBatches
+    populateSlipBatchDropdown(preselectedBatchId);
+
+    // 3. Set random voucher doc ID
     const docIdEl = document.getElementById("slip-doc-id");
     if (docIdEl) {
         const randNum = Math.floor(1000 + Math.random() * 9000);
@@ -3446,17 +3467,147 @@ function openFarmSlipModal() {
     renderFarmSlipPreview();
     if (typeof applyFullPageTranslation === 'function') applyFullPageTranslation(currentLang);
 }
+window.openFarmSlipModal = openFarmSlipModal;
 
 function closeFarmSlipModal() {
     const modal = document.getElementById("farm-slip-modal");
     if (modal) modal.style.display = "none";
 }
+window.closeFarmSlipModal = closeFarmSlipModal;
+
+function populateSlipBatchDropdown(preselectedBatchId = null) {
+    const select = document.getElementById("slip-batch-select");
+    const note = document.getElementById("slip-batch-status-note");
+    if (!select) return;
+
+    select.innerHTML = "";
+    
+    // Default manual option
+    const manualOpt = document.createElement("option");
+    manualOpt.value = "manual";
+    manualOpt.textContent = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "✍️ नया विवरण (मैनुअल रसीद)" : "✍️ Manual Entry (Custom Slip)";
+    select.appendChild(manualOpt);
+
+    const soldBatches = (typeof produceBatches !== 'undefined') 
+        ? produceBatches.filter(b => b.status === "sold" || b.is_sold || (b.selling_price_per_kg && Number(b.selling_price_per_kg) > 0)) 
+        : [];
+    const activeBatches = (typeof produceBatches !== 'undefined')
+        ? produceBatches.filter(b => b.status === "active" && !b.is_sold)
+        : [];
+
+    if (soldBatches.length > 0) {
+        const soldGroup = document.createElement("optgroup");
+        soldGroup.label = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "✅ बेची गई फसलें (Sold Produce)" : "✅ Sold Batches (Completed Sales)";
+        soldBatches.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b.id;
+            const qtl = (b.sold_quantity_kg ? (b.sold_quantity_kg / 100) : ((b.quantity_kg || 0) / 100)).toFixed(1);
+            const rate = (b.selling_price_per_kg ? (b.selling_price_per_kg * 100) : 0).toLocaleString('en-IN');
+            const dateStr = b.selling_date || b.harvest_date || "Recent";
+            opt.textContent = `Sold: ${b.crop_name} (${qtl} Qtl @ ₹${rate}) - ${dateStr}`;
+            soldGroup.appendChild(opt);
+        });
+        select.appendChild(soldGroup);
+    }
+
+    if (activeBatches.length > 0) {
+        const activeGroup = document.createElement("optgroup");
+        activeGroup.label = (typeof currentLang !== 'undefined' && currentLang === 'hi') ? "📦 भंडारित फसलें (Active Batches)" : "📦 Stored Batches (Unsold Produce)";
+        activeBatches.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b.id;
+            const qtl = ((b.quantity_kg || 0) / 100).toFixed(1);
+            opt.textContent = `Stored: ${b.crop_name} (${qtl} Qtl) - Harvested ${b.harvest_date || 'Recent'}`;
+            activeGroup.appendChild(opt);
+        });
+        select.appendChild(activeGroup);
+    }
+
+    if (note) {
+        if (soldBatches.length === 0 && activeBatches.length === 0) {
+            note.innerHTML = (typeof currentLang !== 'undefined' && currentLang === 'hi')
+                ? "ℹ️ आपके लेजर में अभी कोई फसल दर्ज नहीं है। आप नीचे सीधे विवरण भर सकते हैं।"
+                : "ℹ️ No batches found in your farm ledger. You can enter details manually below.";
+        } else if (soldBatches.length === 0) {
+            note.innerHTML = (typeof currentLang !== 'undefined' && currentLang === 'hi')
+                ? "ℹ️ लेजर में अभी कोई बिक्री (Sold) दर्ज नहीं है। आप भंडारित फसल चुन सकते हैं या नया विवरण भरें।"
+                : "ℹ️ No sales recorded in ledger yet. You can select an active batch or enter details manually.";
+        } else {
+            note.innerHTML = (typeof currentLang !== 'undefined' && currentLang === 'hi')
+                ? "💡 अपनी किसी बेची गई फसल को चुनकर उसकी अधिकृत रसीद एक क्लिक में बनाएं।"
+                : "💡 Select any sold batch above to automatically generate its verified mandi receipt.";
+        }
+    }
+
+    if (preselectedBatchId) {
+        select.value = preselectedBatchId;
+        onSlipBatchSelect(preselectedBatchId);
+    }
+}
+window.populateSlipBatchDropdown = populateSlipBatchDropdown;
+
+function onSlipBatchSelect(batchId) {
+    const cropInput = document.getElementById("slip-crop");
+    const qtyInput = document.getElementById("slip-quantity");
+    const rateInput = document.getElementById("slip-rate");
+    const dedInput = document.getElementById("slip-deductions");
+    const locInput = document.getElementById("slip-location");
+    const statusSelect = document.getElementById("slip-status");
+
+    if (batchId === "manual" || !batchId) {
+        // Clear transaction-specific fields if switching to manual
+        if (cropInput) cropInput.value = "";
+        if (qtyInput) qtyInput.value = "";
+        if (rateInput) rateInput.value = "";
+        if (dedInput) dedInput.value = "";
+        renderFarmSlipPreview();
+        return;
+    }
+
+    const batch = (typeof produceBatches !== 'undefined') ? produceBatches.find(b => String(b.id) === String(batchId)) : null;
+    if (!batch) return;
+
+    if (cropInput) {
+        cropInput.value = `${batch.crop_name}${batch.variety ? ' (' + batch.variety + ')' : ''}`;
+    }
+
+    if (batch.status === "sold" || batch.is_sold || batch.selling_price_per_kg) {
+        // Sold batch
+        const qtl = batch.sold_quantity_kg ? (batch.sold_quantity_kg / 100) : (batch.quantity_kg ? batch.quantity_kg / 100 : 0);
+        const rateQtl = batch.selling_price_per_kg ? (batch.selling_price_per_kg * 100) : 0;
+        
+        let totalDeductions = 0;
+        if (batch.selling_costs && typeof batch.selling_costs === 'object') {
+            totalDeductions = Object.values(batch.selling_costs).reduce((a, b) => a + (Number(b) || 0), 0);
+        }
+
+        if (qtyInput) qtyInput.value = qtl > 0 ? qtl.toFixed(1) : "";
+        if (rateInput) rateInput.value = rateQtl > 0 ? Math.round(rateQtl) : "";
+        if (dedInput) dedInput.value = totalDeductions > 0 ? Math.round(totalDeductions) : "0";
+        if (locInput && (batch.mandi_name || batch.buyer_name)) {
+            locInput.value = batch.mandi_name || batch.buyer_name;
+        }
+        if (statusSelect) statusSelect.value = "PAID - Bank Transfer";
+    } else {
+        // Active / Stored batch
+        const qtl = (batch.quantity_kg ? batch.quantity_kg / 100 : 0);
+        if (qtyInput) qtyInput.value = qtl > 0 ? qtl.toFixed(1) : "";
+        if (rateInput) rateInput.value = batch.expected_mandi_rate ? Math.round(batch.expected_mandi_rate * 100) : "";
+        if (dedInput) dedInput.value = "0";
+        if (locInput && batch.storage_facility) {
+            locInput.value = batch.storage_facility;
+        }
+    }
+
+    renderFarmSlipPreview();
+}
+window.onSlipBatchSelect = onSlipBatchSelect;
 
 function renderFarmSlipPreview() {
-    const farmer = document.getElementById("slip-farmer-name")?.value || "Ramesh Singh";
-    const phone = document.getElementById("slip-phone")?.value || "9876543210";
-    const loc = document.getElementById("slip-location")?.value || "Khanna APMC Mandi";
-    const crop = document.getElementById("slip-crop")?.value || "Wheat (Kanak)";
+    const farmer = document.getElementById("slip-farmer-name")?.value?.trim() || "";
+    const phone = document.getElementById("slip-phone")?.value?.trim() || "";
+    const loc = document.getElementById("slip-location")?.value?.trim() || "";
+    const crop = document.getElementById("slip-crop")?.value?.trim() || "";
     const qty = parseFloat(document.getElementById("slip-quantity")?.value) || 0;
     const rate = parseFloat(document.getElementById("slip-rate")?.value) || 0;
     const deductions = parseFloat(document.getElementById("slip-deductions")?.value) || 0;
@@ -3479,31 +3630,46 @@ function renderFarmSlipPreview() {
     const pvNet = document.getElementById("pv-net");
     const pvStatus = document.getElementById("pv-status");
 
-    if (pvFarmer) pvFarmer.innerText = farmer;
-    if (pvPhone) pvPhone.innerText = phone ? `+91 ${phone}` : '—';
-    if (pvLoc) pvLoc.innerText = loc;
-    if (pvDate) pvDate.innerText = todayStr;
-    if (pvCrop) pvCrop.innerText = crop;
-    if (pvQty) pvQty.innerText = qty.toFixed(1);
-    if (pvRate) pvRate.innerText = rate.toLocaleString('en-IN');
-    if (pvGross) pvGross.innerText = gross.toLocaleString('en-IN');
-    if (pvDeductions) pvDeductions.innerText = deductions.toLocaleString('en-IN');
-    if (pvNet) pvNet.innerText = net.toLocaleString('en-IN');
     const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+
+    if (pvFarmer) pvFarmer.innerText = farmer || (isHi ? "—" : "—");
+    if (pvPhone) {
+        if (phone && phone !== "9876543210") {
+            pvPhone.innerText = phone.startsWith('+') ? phone : `+91 ${phone}`;
+        } else {
+            pvPhone.innerText = "—";
+        }
+    }
+    if (pvLoc) pvLoc.innerText = loc || (isHi ? "—" : "—");
+    if (pvDate) pvDate.innerText = todayStr;
+    if (pvCrop) pvCrop.innerText = crop || (isHi ? "[फसल दर्ज करें]" : "[Enter produce]");
+    if (pvQty) pvQty.innerText = qty > 0 ? `${qty.toFixed(1)} Qtl` : "0.0 Qtl";
+    if (pvRate) pvRate.innerText = rate > 0 ? `₹${rate.toLocaleString('en-IN')}` : "₹0";
+    if (pvGross) pvGross.innerText = gross > 0 ? `₹${gross.toLocaleString('en-IN')}` : "₹0";
+    if (pvDeductions) pvDeductions.innerText = deductions > 0 ? `-₹${deductions.toLocaleString('en-IN')}` : "₹0";
+    if (pvNet) pvNet.innerText = net > 0 ? `₹${net.toLocaleString('en-IN')}` : "₹0";
+
     const statusMap = {
         "PAID - Bank Transfer": isHi ? "✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)" : "✅ Paid (Bank Transfer / RTGS)",
         "PAID - Cash": isHi ? "✅ भुगतान प्राप्त (नकद)" : "✅ Paid (Cash / नकद)",
         "PENDING - 3 Days": isHi ? "⏳ भुगतान लंबित (3 दिन)" : "⏳ Payment Pending (3 Days)",
         "CHEQUE ISSUED": isHi ? "📑 चेक जारी किया गया" : "📑 Cheque Issued"
     };
-    if (pvStatus) pvStatus.innerText = statusMap[status] || status;
+    if (pvStatus) {
+        if (qty === 0 && rate === 0) {
+            pvStatus.innerText = isHi ? "📝 ड्राफ्ट पर्ची (तैयार)" : "📝 Draft Voucher (Ready)";
+        } else {
+            pvStatus.innerText = statusMap[status] || status;
+        }
+    }
 }
+window.renderFarmSlipPreview = renderFarmSlipPreview;
 
 function shareFarmSlipViaWhatsApp() {
-    const farmer = document.getElementById("slip-farmer-name")?.value || "Ramesh Singh";
-    const phone = document.getElementById("slip-phone")?.value || "";
-    const loc = document.getElementById("slip-location")?.value || "APMC Mandi";
-    const crop = document.getElementById("slip-crop")?.value || "Wheat";
+    const farmer = document.getElementById("slip-farmer-name")?.value?.trim() || (farmerProfile?.full_name || "Farmer");
+    const phone = document.getElementById("slip-phone")?.value?.trim() || "";
+    const loc = document.getElementById("slip-location")?.value?.trim() || (farmerProfile?.location_name || "Mandi / Farm");
+    const crop = document.getElementById("slip-crop")?.value?.trim() || "Farm Produce";
     const qty = parseFloat(document.getElementById("slip-quantity")?.value) || 0;
     const rate = parseFloat(document.getElementById("slip-rate")?.value) || 0;
     const deductions = parseFloat(document.getElementById("slip-deductions")?.value) || 0;
@@ -3520,9 +3686,9 @@ function shareFarmSlipViaWhatsApp() {
 
 👨‍🌾 *Farmer:* ${farmer}
 📍 *Mandi / Location:* ${loc}
-${phone ? `📞 Contact: +91 ${phone}\n` : ''}
+${phone && phone !== "9876543210" ? `📞 Contact: +91 ${phone}\n` : ''}
 📦 *Produce:* ${crop}
-⚖️ *Quantity:* ${qty.toFixed(1)} Quintals
+⚖️ *Quantity:* ${qty > 0 ? qty.toFixed(1) + ' Quintals' : 'Not specified'}
 💰 *Sale Rate:* ₹${rate.toLocaleString('en-IN')} / Quintal
 💵 *Gross Sale Value:* ₹${gross.toLocaleString('en-IN')}
 📉 *Mandi Deductions / Labor:* -₹${deductions.toLocaleString('en-IN')}
@@ -3534,7 +3700,7 @@ Verified & Generated via AgriFlow Smart Farm Workspace.`;
 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     let waUrl = '';
-    if (cleanPhone.length === 10) {
+    if (cleanPhone.length === 10 && cleanPhone !== "9876543210") {
         waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(message)}`;
     } else if (cleanPhone.length > 10) {
         waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
@@ -3544,10 +3710,12 @@ Verified & Generated via AgriFlow Smart Farm Workspace.`;
 
     window.open(waUrl, '_blank');
 }
+window.shareFarmSlipViaWhatsApp = shareFarmSlipViaWhatsApp;
 
 function printFarmSlip() {
     window.print();
 }
+window.printFarmSlip = printFarmSlip;
 
 // ============================================================
 // REGIONAL UI DICTIONARY (9 INDIAN LANGUAGES)
@@ -5282,4 +5450,4 @@ function speakTutorialStep(stepIndex) {
         }
     }, 400);
 }
-window.speakTutorialStep = speakTutorialStep;
+window.speakTutorialStep = speakTutorialStep;

@@ -1349,34 +1349,43 @@
             <div class="farm-slip-layout">
                 <!-- FORM CONTROLS -->
                 <div class="farm-slip-form-side">
+                    <!-- LEDGER BATCH SYNC SELECTOR -->
+                    <div class="slip-batch-selector-box" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                        <label for="slip-batch-select" style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; color: #065f46;" data-en="📋 Select from Your Crop Ledger:" data-hi="📋 अपने फसल लेजर में से चुनें:">📋 Select from Your Crop Ledger:</label>
+                        <select id="slip-batch-select" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15); font-weight: 600; font-size: 0.88rem;" onchange="onSlipBatchSelect(this.value)">
+                            <option value="manual" data-en="✍️ Manual / Custom Entry (No sold batch selected)" data-hi="✍️ नया विवरण (कोई फसल नहीं चुनी)">✍️ Manual / Custom Entry (No sold batch selected)</option>
+                        </select>
+                        <p id="slip-batch-status-note" style="margin: 6px 0 0 0; font-size: 0.8rem; color: #64748b; line-height: 1.4;"></p>
+                    </div>
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label data-en="Farmer Name" data-hi="किसान का नाम">Farmer Name</label>
-                            <input type="text" id="slip-farmer-name" placeholder="e.g. Ramesh Singh" value="Ramesh Singh" oninput="renderFarmSlipPreview()">
+                            <input type="text" id="slip-farmer-name" data-placeholder-en="Enter farmer name" data-placeholder-hi="किसान का नाम लिखें" placeholder="Enter farmer name" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="WhatsApp / Phone" data-hi="व्हाट्सएप / फोन नंबर">WhatsApp / Phone</label>
-                            <input type="tel" id="slip-phone" placeholder="10-digit number" value="9876543210" oninput="renderFarmSlipPreview()">
+                            <input type="tel" id="slip-phone" data-placeholder-en="10-digit mobile number" data-placeholder-hi="10-अंकीय फोन नंबर" placeholder="10-digit mobile number" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Village / Mandi Market" data-hi="गाँव / मंडी बाजार">Village / Mandi Market</label>
-                            <input type="text" id="slip-location" placeholder="e.g. Khanna Mandi, Punjab" value="Khanna APMC Mandi" oninput="renderFarmSlipPreview()">
+                            <input type="text" id="slip-location" data-placeholder-en="e.g. Bareilly APMC Mandi" data-placeholder-hi="उदा. बरेली एपीएमसी मंडी" placeholder="e.g. Bareilly APMC Mandi" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Produce Crop & Variety" data-hi="फसल एवं किस्म">Produce Crop &amp; Variety</label>
-                            <input type="text" id="slip-crop" placeholder="e.g. Sharbati Wheat (HD-2967)" value="Wheat (Kanak)" oninput="renderFarmSlipPreview()">
+                            <input type="text" id="slip-crop" data-placeholder-en="e.g. Tomato, Wheat, Potato" data-placeholder-hi="उदा. टमाटर, गेहूं, आलू" placeholder="e.g. Tomato, Wheat, Potato" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Quantity (Quintals)" data-hi="मात्रा (क्विंटल)">Quantity (Quintals)</label>
-                            <input type="number" id="slip-quantity" step="any" value="45" oninput="renderFarmSlipPreview()">
+                            <input type="number" id="slip-quantity" step="any" placeholder="0.0" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Sale Rate (₹ / Quintal)" data-hi="बिक्री भाव (₹ / क्विंटल)">Sale Rate (₹ / Quintal)</label>
-                            <input type="number" id="slip-rate" step="any" value="2375" oninput="renderFarmSlipPreview()">
+                            <input type="number" id="slip-rate" step="any" placeholder="0" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Mandi Deductions / Labor (₹)" data-hi="पल्लेदारी / कमीशन खर्च (₹)">Mandi Deductions / Labor (₹)</label>
-                            <input type="number" id="slip-deductions" step="any" value="1250" oninput="renderFarmSlipPreview()">
+                            <input type="number" id="slip-deductions" step="any" placeholder="0" value="" oninput="renderFarmSlipPreview()">
                         </div>
                         <div class="form-group">
                             <label data-en="Settlement Status" data-hi="भुगतान स्थिति">Settlement Status</label>
@@ -1412,12 +1421,12 @@
                         </div>
                         <hr class="voucher-line">
                         <div class="voucher-meta-row">
-                            <div><strong data-en="Farmer:" data-hi="किसान:">Farmer:</strong> <span id="pv-farmer">Ramesh Singh</span></div>
-                            <div><strong data-en="Date:" data-hi="दिनांक:">Date:</strong> <span id="pv-date">17 Sep 2026</span></div>
+                            <div><strong data-en="Farmer:" data-hi="किसान:">Farmer:</strong> <span id="pv-farmer">—</span></div>
+                            <div><strong data-en="Date:" data-hi="दिनांक:">Date:</strong> <span id="pv-date">—</span></div>
                         </div>
                         <div class="voucher-meta-row">
-                            <div><strong data-en="Mandi/Location:" data-hi="मंडी / स्थान:">Mandi/Location:</strong> <span id="pv-location">Khanna APMC Mandi</span></div>
-                            <div><strong data-en="Phone:" data-hi="फ़ोन:">Phone:</strong> <span id="pv-phone">+91 98765 43210</span></div>
+                            <div><strong data-en="Mandi/Location:" data-hi="मंडी / स्थान:">Mandi/Location:</strong> <span id="pv-location">—</span></div>
+                            <div><strong data-en="Phone:" data-hi="फ़ोन:">Phone:</strong> <span id="pv-phone">—</span></div>
                         </div>
                         <table class="voucher-table">
                             <thead>
@@ -1430,25 +1439,25 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><span id="pv-crop">Wheat (Kanak)</span> (A-Grade)</td>
-                                    <td class="text-right"><span id="pv-qty">45.0</span> Qtl</td>
-                                    <td class="text-right">₹<span id="pv-rate">2,375</span></td>
-                                    <td class="text-right font-bold">₹<span id="pv-gross">1,06,875</span></td>
+                                    <td><span id="pv-crop">—</span></td>
+                                    <td class="text-right"><span id="pv-qty">—</span></td>
+                                    <td class="text-right"><span id="pv-rate">—</span></td>
+                                    <td class="text-right font-bold"><span id="pv-gross">₹0</span></td>
                                 </tr>
                                 <tr>
                                     <td colspan="3" class="text-muted" data-en="Less: Mandi Cess / Handling / Labor" data-hi="कटौती: मंडी उपकर / हम्माली / तुलाई">Less: Mandi Cess / Handling / Labor</td>
-                                    <td class="text-right text-danger">-₹<span id="pv-deductions">1,250</span></td>
+                                    <td class="text-right text-danger"><span id="pv-deductions">₹0</span></td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <th colspan="3" data-en="Net Payable to Farmer" data-hi="किसान को शुद्ध देय राशि">Net Payable to Farmer</th>
-                                    <th class="text-right voucher-net-total">₹<span id="pv-net">1,05,625</span></th>
+                                    <th class="text-right voucher-net-total"><span id="pv-net">₹0</span></th>
                                 </tr>
                             </tfoot>
                         </table>
                         <div class="voucher-footer-row">
-                            <div class="voucher-badge-status" id="pv-status" data-en="✅ Paid (Bank Transfer / RTGS)" data-hi="✅ भुगतान प्राप्त (बैंक ट्रांसफर / RTGS)">✅ Paid (Bank Transfer / RTGS)</div>
+                            <div class="voucher-badge-status" id="pv-status" data-en="📝 Draft Voucher (Ready)" data-hi="📝 ड्राफ्ट पर्ची (तैयार)">📝 Draft Voucher (Ready)</div>
                             <div class="voucher-qr-sim">
                                 <div class="qr-box">🏁 VERIFIED<br>AGRIFLOW</div>
                             </div>
