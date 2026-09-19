@@ -1923,6 +1923,9 @@ BHUVAN_LULC_LEGEND = {
     "l23": "Wetlands, Reservoir / Lakes / Ponds", "l24": "Snow and Glacier"
 }
 
+BHUVAN_CACHE = {}
+BHUVAN_CACHE_TTL_SECONDS = 3600
+
 def fetch_bhuvan_lulc(latitude, longitude, area_acres=2.5):
     """Fetch live Land Use / Land Cover classification from ISRO Bhuvan satellite services."""
     if not BHUVAN_API_TOKEN:
@@ -1931,12 +1934,17 @@ def fetch_bhuvan_lulc(latitude, longitude, area_acres=2.5):
         lat = safe_float(latitude, 27.17)
         lon = safe_float(longitude, 78.01)
         area = max(0.5, safe_float(area_acres, 2.5))
+        cache_key = (round(lat, 3), round(lon, 3), round(area, 1))
+        cached = BHUVAN_CACHE.get(cache_key)
+        if cached and (time.time() - cached.get("stored_at", 0) < BHUVAN_CACHE_TTL_SECONDS):
+            return cached.get("data")
+
         delta = max(0.003, min(0.025, (area ** 0.5) * 0.003))
         poly = f"POLYGON(({lon - delta:.6f} {lat - delta:.6f},{lon + delta:.6f} {lat - delta:.6f},{lon + delta:.6f} {lat + delta:.6f},{lon - delta:.6f} {lat + delta:.6f},{lon - delta:.6f} {lat - delta:.6f}))"
         url = "https://bhuvan-app1.nrsc.gov.in/api/lulc/curl_aoi.php"
         params = {"geom": poly, "token": BHUVAN_API_TOKEN}
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        res = requests.get(url, params=params, headers=headers, timeout=6.0)
+        res = requests.get(url, params=params, headers=headers, timeout=10.0)
         if res.status_code == 200:
             data = res.json()
             if isinstance(data, list) and len(data) > 0:
@@ -1959,7 +1967,7 @@ def fetch_bhuvan_lulc(latitude, longitude, area_acres=2.5):
                 dominant_code = max(class_areas, key=class_areas.get) if class_areas else "l04"
                 dominant_desc = BHUVAN_LULC_LEGEND.get(dominant_code, "Agriculture, Crop land")
                 
-                return {
+                result = {
                     "verified": True,
                     "provider": "ISRO Bhuvan (LULC 50k)",
                     "state": state_code,
@@ -1968,6 +1976,8 @@ def fetch_bhuvan_lulc(latitude, longitude, area_acres=2.5):
                     "water_access_detected": water_detected,
                     "summary": f"{crop_pct}% Active Cropland verified by ISRO Bhuvan" + (" · Canal / River proximity" if water_detected else "")
                 }
+                BHUVAN_CACHE[cache_key] = {"stored_at": time.time(), "data": result}
+                return result
     except Exception as e:
         app.logger.warning("ISRO Bhuvan satellite fetch error: %s", e)
     return None
@@ -1987,7 +1997,46 @@ def drone_scan():
 
     # Query live ISRO Bhuvan Satellite data for the farmer's plot
     bhuvan_sat = fetch_bhuvan_lulc(latitude, longitude, area)
-    sat_context = f"- ISRO Bhuvan Satellite Observation: {bhuvan_sat.get('summary')} (Dominant: {bhuvan_sat.get('dominant_land_use')})" if bhuvan_sat else "- ISRO Satellite Observation: High vegetation index across surveyed agrarian plot"
+    is_non_crop = False
+    if bhuvan_sat:
+        dominant = bhuvan_sat.get("dominant_land_use", "")
+        crop_pct = bhuvan_sat.get("crop_land_percent", 100)
+        if ("Builtup" in dominant or "Wastelands" in dominant or "Barren" in dominant or "Mining" in dominant) and crop_pct < 30:
+            is_non_crop = True
+        bhuvan_sat["is_non_crop"] = is_non_crop
+
+    if is_non_crop:
+        sat_context = (
+            f"- CRITICAL ISRO SATELLITE GROUND TRUTH: The coordinates are verified by ISRO Bhuvan satellite as '{bhuvan_sat.get('dominant_land_use')}' "
+            f"with only {bhuvan_sat.get('crop_land_percent')}% cropland in {bhuvan_sat.get('state', 'India')}. This is a residential / urban built-up settlement, NOT active farmland."
+        )
+        ndvi_rule = '- "ndvi_score": a float between 0.16 and 0.26 (e.g. 0.21) representing non-agricultural urban concrete / sparse surface'
+        canopy_rule = '- "canopy_health": "Urban / Built-up Area"'
+        moisture_rule = '- "soil_moisture_est": int percentage between 18 and 32'
+        action_rule = f"- \"action_plan\": in {language}, alert the user clearly that ISRO Bhuvan satellite detects this location is predominantly an urban residential / built-up zone ({bhuvan_sat.get('dominant_land_use')}), not active farmland, and advise verifying or updating their farm GPS coordinates for accurate crop monitoring."
+        default_ndvi = 0.21
+        default_recs = {
+            "hi": f"⚠️ इसरो भुवन उपग्रह ने पुष्टि की है कि यह स्थान खुला कृषि क्षेत्र नहीं बल्कि आवासीय / शहरी क्षेत्र (Builtup, Urban - {bhuvan_sat.get('crop_land_percent')}% फसल भूमि) है। वास्तविक फसल निगरानी और सटीक कृषि सलाह के लिए कृपया अपने खेत के जीपीएस निर्देशांक चुनें।",
+            "en": f"⚠️ ISRO Bhuvan satellite confirms this location is an urban residential / built-up area in {bhuvan_sat.get('state', 'India')} ({bhuvan_sat.get('crop_land_percent')}% Cropland), not open agricultural land. Please select your farm plot GPS coordinates for crop telemetry."
+        }
+    else:
+        sat_context = f"- ISRO Bhuvan Satellite Observation: {bhuvan_sat.get('summary')} (Dominant: {bhuvan_sat.get('dominant_land_use')})" if bhuvan_sat else "- ISRO Satellite Observation: High vegetation index across surveyed agrarian plot"
+        ndvi_rule = '- "ndvi_score": a float between 0.72 and 0.88 (e.g. 0.82)'
+        canopy_rule = '- "canopy_health": short string (e.g. "Optimal Dense Canopy")'
+        moisture_rule = '- "soil_moisture_est": int percentage between 58 and 72 (e.g. 65)'
+        action_rule = f'- "action_plan": 1-2 practical sentences for the farmer in {language}.'
+        default_ndvi = 0.83
+        default_recs = {
+            "hi": f"मल्टीस्पेक्ट्रल ड्रोन स्कैन पुष्टि करता है कि {crop} फसल का NDVI सूचकांक {default_ndvi} उत्तम व स्वस्थ है। पौधों में क्लोरोफिल और नाइट्रोजन अवशोषण संतुलित है। अगली हल्की सिंचाई 3 दिन बाद अनुशंसित है।",
+            "pa": f"ਮਲਟੀਸਪੈਕਟ੍ਰਲ ਡਰੋਨ ਸਕੈਨ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹੈ ਕਿ {crop} ਦਾ NDVI {default_ndvi} ਬਹੁਤ ਵਧੀਆ ਹੈ। ਪੌਦਿਆਂ ਦਾ ਵਾਧਾ ਤੇ ਨਮੀ ਸੰਤੁਲਿਤ ਹੈ। ਅਗਲੀ ਸਿੰਚਾਈ 3 ਦਿਨਾਂ ਬਾਅਦ ਕਰੋ।",
+            "mr": f"मल्टीस्पेक्ट्रल ड्रोन स्कॅन पुष्टी करतो की {crop} पिकाचा NDVI {default_ndvi} निरोगी आहे. ओलावा चांगला असून पुढील हलके पाणी 3 दिवसांनंतर द्यावे.",
+            "gu": f"મલ્ટિસ્પેક્ટ્રલ ડ્રોન સ્કેન પુષ્ટિ કરે છે કે {crop} પાકનો NDVI {default_ndvi} ઉત્તમ છે. પાંદડાનો વિકાસ અને ભેજ સારો છે, આગામી પિયત 3 દિવસ પછી આપો.",
+            "kn": f"ಮಲ್ಟಿಸ್ಪೆಕ್ಟ್ರಲ್ ಡ್ರೋನ್ ಸ್ಕ್ಯಾನ್ {crop} ಬೆಳೆಯ NDVI {default_ndvi} ಆರೋಗ್ಯಕರವಾಗಿದೆ ಎಂದು ಖಚಿತಪಡಿಸುತ್ತದೆ. ಮುಂದಿನ ನೀರಾವರಿ 3 ದಿನಗಳ ನಂತರ ಸೂಕ್ತ.",
+            "te": f"మల్టీస్పెక్ట్రల్ డ్రోన్ స్కాన్ {crop} పంట NDVI {default_ndvi} ఆరోగ్యకరంగా ఉందని నిర్ధారిస్తుంది. 3 రోజుల తర్వాత నీటిపారుదల సిఫార్సు చేయబడింది.",
+            "ta": f"மல்டிஸ்பெக்ட்ரல் ட்ரோன் ஸ்கேன் {crop} பயிரின் NDVI {default_ndvi} ஆரோக்கியமாக இருப்பதை உறுதி செய்கிறது. 3 நாட்களுக்குப் பிறகு நீர் பாய்ச்சவும்.",
+            "bn": f"মাল্টিস্পেকট্রাল ড্রোন স্ক্যান নিশ্চিত করে যে {crop} ফসলের NDVI {default_ndvi} স্বাস্থ্যকর। ৩ দিন পর পরবর্তী সেচ দিন।",
+            "en": f"Multispectral scan confirms {crop} vegetation index is optimal at {default_ndvi} (Healthy). Drone sensors indicate robust nitrogen absorption and dense canopy development. Next irrigation cycle in 3-4 days."
+        }
 
     prompt = f"""You are an agricultural drone multispectral imaging AI.
 Analyze the following field survey:
@@ -1997,16 +2046,16 @@ Analyze the following field survey:
 - Flight Altitude: 45m AGL (Drone Quadcopter)
 - Sensor: 4K Multispectral NDVI + Thermal Sensor
 {sat_context}
-- Farmer Preferred Language: {language} (Provide 'action_plan' and 'irrigation_advice' in this language if hindi or punjabi or marathi, else english)
+- Farmer Preferred Language: {language}
 
 Return ONLY a JSON object with keys:
-- "ndvi_score": a float between 0.72 and 0.88 (e.g. 0.82)
-- "canopy_health": short string (e.g. "Optimal Dense Canopy")
-- "soil_moisture_est": int percentage between 58 and 72 (e.g. 65)
+{ndvi_rule}
+{canopy_rule}
+{moisture_rule}
 - "field_temp_c": int between 28 and 34
 - "stress_detected": short description
 - "irrigation_advice": concise advice
-- "action_plan": 1-2 practical sentences for the farmer in the requested language.
+{action_rule}
 """
     scan = None
     try:
@@ -2020,40 +2069,39 @@ Return ONLY a JSON object with keys:
     except Exception as e:
         app.logger.warning("Gemini drone scan fallback: %s", e)
 
-    default_ndvi = 0.83
-    default_recs = {
-        "hi": f"मल्टीस्पेक्ट्रल ड्रोन स्कैन पुष्टि करता है कि {crop} फसल का NDVI सूचकांक {default_ndvi} उत्तम व स्वस्थ है। पौधों में क्लोरोफिल और नाइट्रोजन अवशोषण संतुलित है। अगली हल्की सिंचाई 3 दिन बाद अनुशंसित है।",
-        "pa": f"ਮਲਟੀਸਪੈਕਟ੍ਰਲ ਡਰੋਨ ਸਕੈਨ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹੈ ਕਿ {crop} ਦਾ NDVI {default_ndvi} ਬਹੁਤ ਵਧੀਆ ਹੈ। ਪੌਦਿਆਂ ਦਾ ਵਾਧਾ ਤੇ ਨਮੀ ਸੰਤੁਲਿਤ ਹੈ। ਅਗਲੀ ਸਿੰਚਾਈ 3 ਦਿਨਾਂ ਬਾਅਦ ਕਰੋ।",
-        "mr": f"मल्टीस्पेक्ट्रल ड्रोन स्कॅन पुष्टी करतो की {crop} पिकाचा NDVI {default_ndvi} निरोगी आहे. ओलावा चांगला असून पुढील हलके पाणी 3 दिवसांनंतर द्यावे.",
-        "gu": f"મલ્ટિસ્પેક્ટ્રલ ડ્રોન સ્કેન પુષ્ટિ કરે છે કે {crop} પાકનો NDVI {default_ndvi} ઉત્તમ છે. પાંદડાનો વિકાસ અને ભેજ સારો છે, આગામી પિયત 3 દિવસ પછી આપો.",
-        "kn": f"ಮಲ್ಟಿಸ್ಪೆಕ್ಟ್ರಲ್ ಡ್ರೋನ್ ಸ್ಕ್ಯಾನ್ {crop} ಬೆಳೆಯ NDVI {default_ndvi} ಆರೋಗ್ಯಕರವಾಗಿದೆ ಎಂದು ಖಚಿತಪಡಿಸುತ್ತದೆ. ಮುಂದಿನ ನೀರಾವರಿ 3 ದಿನಗಳ ನಂತರ ಸೂಕ್ತ.",
-        "te": f"మల్టీస్పెక్ట్రల్ డ్రోన్ స్కాన్ {crop} పంట NDVI {default_ndvi} ఆరోగ్యకరంగా ఉందని నిర్ధారిస్తుంది. 3 రోజుల తర్వాత ನೀటిపారుదల సిఫార్సు చేయబడింది.",
-        "ta": f"மல்டிஸ்பெக்ட்ரல் ட்ரோன் ஸ்கேன் {crop} பயிரின் NDVI {default_ndvi} ஆரோக்கியமாக இருப்பதை உறுதி செய்கிறது. 3 நாட்களுக்குப் பிறகு நீர் பாய்ச்சவும்.",
-        "bn": f"মাল্টিস্পেকট্রাল ড্রোন স্ক্যান নিশ্চিত করে যে {crop} ফসলের NDVI {default_ndvi} স্বাস্থ্যকর। ৩ দিন পর পরবর্তী সেচ দিন।",
-        "en": f"Multispectral scan confirms {crop} vegetation index is optimal at {default_ndvi} (Healthy). Drone sensors indicate robust nitrogen absorption and dense canopy development. Next irrigation cycle in 3-4 days."
-    }
-
     if not scan:
         scan = {
             "ndvi_score": default_ndvi,
-            "canopy_health": "Healthy & Dense Canopy",
-            "soil_moisture_est": 66,
-            "field_temp_c": 31,
-            "stress_detected": "None detected; high chlorophyll density across plots",
-            "irrigation_advice": "Soil moisture is currently 66%. Irrigation cycle recommended in 3 days.",
-            "action_plan": default_recs.get(language, default_recs["en"])
+            "canopy_health": "Urban / Built-up Area" if is_non_crop else "Healthy & Dense Canopy",
+            "soil_moisture_est": 22 if is_non_crop else 66,
+            "field_temp_c": 33 if is_non_crop else 31,
+            "stress_detected": "Non-crop paved surface detected" if is_non_crop else "None detected; high chlorophyll density across plots",
+            "irrigation_advice": "Non-agricultural built-up ground" if is_non_crop else "Soil moisture is currently 66%. Irrigation cycle recommended in 3 days.",
+            "action_plan": default_recs.get(language, default_recs.get("en"))
         }
 
-    telemetry = {
-        "soil_health_score": min(100, max(0, round(scan.get("soil_moisture_est", 66) + 14))),
-        "soil_condition": "Optimal",
-        "soil_moisture_pct": scan.get("soil_moisture_est", 66),
-        "moisture_status": "Field Capacity",
-        "canopy_temp_c": scan.get("field_temp_c", 31),
-        "canopy_status": scan.get("canopy_health", "Optimal"),
-        "ndvi": scan.get("ndvi_score", default_ndvi),
-        "ndvi_rating": "Vibrant Vegetation"
-    }
+    if is_non_crop:
+        telemetry = {
+            "soil_health_score": min(100, max(0, round(scan.get("soil_moisture_est", 22)))),
+            "soil_condition": "Built-up / Urban Ground",
+            "soil_moisture_pct": scan.get("soil_moisture_est", 22),
+            "moisture_status": "Non-Agricultural",
+            "canopy_temp_c": scan.get("field_temp_c", 33),
+            "canopy_status": scan.get("canopy_health", "Urban Surface"),
+            "ndvi": scan.get("ndvi_score", default_ndvi),
+            "ndvi_rating": "Built-up / Urban Surface"
+        }
+    else:
+        telemetry = {
+            "soil_health_score": min(100, max(0, round(scan.get("soil_moisture_est", 66) + 14))),
+            "soil_condition": "Optimal",
+            "soil_moisture_pct": scan.get("soil_moisture_est", 66),
+            "moisture_status": "Field Capacity",
+            "canopy_temp_c": scan.get("field_temp_c", 31),
+            "canopy_status": scan.get("canopy_health", "Optimal"),
+            "ndvi": scan.get("ndvi_score", default_ndvi),
+            "ndvi_rating": "Vibrant Vegetation"
+        }
 
     rec = scan.get("action_plan") or default_recs.get(language, default_recs["en"])
 

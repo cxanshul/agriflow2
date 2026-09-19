@@ -3188,9 +3188,11 @@ async function triggerDroneScan() {
     const subTemp = document.getElementById("telemetry-sub-temp");
     const subNdvi = document.getElementById("telemetry-sub-ndvi");
 
-    if (subSoil) subSoil.innerText = currentLang === 'hi' ? `पीएच 6.9 · संतुलित एनपीके` : `pH 6.9 · NPK Balanced`;
-    if (subMoist) subMoist.innerText = currentLang === 'hi' ? `सिंचाई: 3 दिन बाद आवश्यकता` : `Irrigation: Optimal for 3 Days`;
-    if (subTemp) subTemp.innerText = currentLang === 'hi' ? `मौसम: साफ़ · 9 किमी/घं हवा` : `Weather: Clear · 9 km/h Wind`;
+    const isNonCrop = data.isro_satellite?.is_non_crop || false;
+
+    if (subSoil) subSoil.innerText = isNonCrop ? (currentLang === 'hi' ? 'आवासीय / पक्की सतह' : 'Built-up Surface') : (currentLang === 'hi' ? 'पीएच 6.9 · संतुलित एनपीके' : 'pH 6.9 · NPK Balanced');
+    if (subMoist) subMoist.innerText = isNonCrop ? (currentLang === 'hi' ? 'गैर-कृषि क्षेत्र' : 'Non-Agricultural Zone') : (currentLang === 'hi' ? 'सिंचाई: 3 दिन बाद आवश्यकता' : 'Irrigation: Optimal for 3 Days');
+    if (subTemp) subTemp.innerText = isNonCrop ? (currentLang === 'hi' ? 'शहरी सतह तापमान' : 'Urban Surface Temp') : (currentLang === 'hi' ? 'मौसम: साफ़ · 9 किमी/घं हवा' : 'Weather: Clear · 9 km/h Wind');
     if (subNdvi) {
         if (data.isro_satellite?.verified) {
             subNdvi.innerText = currentLang === 'hi' ? `इसरो: ${data.isro_satellite.dominant_land_use}` : `ISRO: ${data.isro_satellite.dominant_land_use}`;
@@ -3199,18 +3201,26 @@ async function triggerDroneScan() {
         }
     }
 
-    const bhuvanBadge = data.isro_satellite?.verified ? ` · 🛰️ ISRO Bhuvan: ${data.isro_satellite.crop_land_percent}% Cropland` : '';
+    const bhuvanBadge = data.isro_satellite?.verified 
+        ? (isNonCrop ? ` · ⚠️ ISRO Bhuvan: Urban (${data.isro_satellite.crop_land_percent}% Crop)` : ` · 🛰️ ISRO Bhuvan: ${data.isro_satellite.crop_land_percent}% Cropland`) 
+        : '';
     if (headline) headline.innerText = `🚁 ${data.status || 'Aerial Survey Completed'} · Plot ${data.field_id || 'Alpha-4'}${bhuvanBadge}`;
     
     if (detail) {
+        const satNoteColor = isNonCrop ? '#f59e0b' : '#38bdf8';
+        const satNotePrefix = isNonCrop ? '⚠️ ISRO Bhuvan Satellite (Non-Agricultural Plot Alert):' : '🛰️ ISRO Bhuvan Satellite:';
         const satNote = data.isro_satellite?.verified 
-            ? `<div style="margin-bottom: 6px; font-size: 0.85rem; color: #38bdf8; font-weight: 600;">🛰️ ISRO Bhuvan Satellite: ${data.isro_satellite.summary} (${data.isro_satellite.dominant_land_use})</div>` 
+            ? `<div style="margin-bottom: 6px; font-size: 0.85rem; color: ${satNoteColor}; font-weight: 600;">${satNotePrefix} ${data.isro_satellite.summary} (${data.isro_satellite.dominant_land_use})</div>` 
             : '';
         detail.innerHTML = `${satNote}<span>${data.recommendation}</span>`;
     }
     if (speechBtn) speechBtn.classList.remove("hidden");
 
-    showToast(currentLang === 'hi' ? `✅ ड्रोन व इसरो भुवन स्कैन पूर्ण! NDVI: ${t.ndvi}` : `✅ Drone & ISRO Bhuvan scan complete! NDVI: ${t.ndvi}`, "success");
+    if (isNonCrop) {
+        showToast(currentLang === 'hi' ? `⚠️ इसरो भुवन: आवासीय/गैर-कृषि क्षेत्र पहचाना गया (${t.ndvi} NDVI)` : `⚠️ ISRO Bhuvan: Urban / Built-up area detected (${t.ndvi} NDVI)`, "warning");
+    } else {
+        showToast(currentLang === 'hi' ? `✅ ड्रोन व इसरो भुवन स्कैन पूर्ण! NDVI: ${t.ndvi}` : `✅ Drone & ISRO Bhuvan scan complete! NDVI: ${t.ndvi}`, "success");
+    }
 
     if (btn) {
         btn.classList.remove("scanning");
